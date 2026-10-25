@@ -17,12 +17,36 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev libxdo-dev
       - run: cargo test --workspace
       - run: cargo build --release -p canbec
+      - name: Package
+        shell: bash
+        run: |
+          v=$(sed -n 's/^version = "\(.*\)"/\1/p' src/app/Cargo.toml | head -1)
+          case "$RUNNER_OS" in
+            macOS) tools/bundle-macos.sh ;;
+            Windows) mkdir -p dist && 7z a "dist/canbec-$v-windows-x64.zip" ./target/release/canbec.exe ;;
+            Linux) mkdir -p dist && tar -czf "dist/canbec-$v-linux-x64.tar.gz" -C target/release canbec ;;
+          esac
       - uses: actions/upload-artifact@v4
         with:
           name: canbec-${{ matrix.os }}
-          path: |
-            target/release/canbec
-            target/release/canbec.exe
+          path: dist/canbec-*
+
+  # Push a tag like v0.1.0 to publish the packages as a GitHub release.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
 
   audit:
     runs-on: ubuntu-latest

@@ -2,6 +2,9 @@
 //! the sidebar (our UI, `src/ui/sidebar.html`) and the content (websites).
 //! All events funnel into the event loop, which owns the `BrowserService`.
 
+// No console window next to the browser on Windows (debug builds keep it for eprintln!).
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 

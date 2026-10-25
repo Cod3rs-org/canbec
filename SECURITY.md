@@ -8,7 +8,7 @@ canbec is early alpha. Please report vulnerabilities privately through GitHub's
 | Surface | Protection | Status |
 |---|---|---|
 | **Running code on your computer** | Websites run inside the OS web engine's sandbox (WebKit / WebView2 / WebKitGTK). canbec adds no native code paths that websites can call. | ✅ |
-| **Talking to the browser core** | Websites can post to `window.ipc`. Content messages are parsed as JSON, and only `adsHidden` (a number, clamped) is accepted; everything else is ignored. | ✅ |
+| **Talking to the browser core** | Websites can post to `window.ipc`. Content messages are parsed as JSON. Only `adsHidden` (a number, clamped) and shortcuts are accepted. Shortcuts must carry a random per-run token that only canbec's content script knows (captured before page scripts run), and come from real key presses (`isTrusted`). The worst a page could do with them is open or close a tab. Everything else is ignored. | ✅ |
 | **Taking over the trusted sidebar** | The sidebar is a separate webview. All website-controlled text (titles, URLs) is HTML-escaped before display. The sidebar can't navigate anywhere or open windows (locked in `app`). | ✅ |
 | **Popups bypassing filters** | `window.open` / `target=_blank` never create native windows; they're loaded in the current tab, through the adult check. Fixture: `test/fixtures/popup.html`. | ✅ |
 | **Script injection through state** | State goes to the sidebar as `serde_json` output; page flags are booleans only. No string concatenation of untrusted text into scripts. | ✅ |

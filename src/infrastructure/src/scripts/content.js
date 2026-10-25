@@ -1,5 +1,6 @@
 // canbec content script — injected at document start into every website.
-// Three jobs: cover ads (blur + grey hatching), show the slop warning border, hide infinite feeds.
+// Jobs: cover ads (blur + grey hatching), show the slop warning border, hide infinite feeds,
+// and forward browser shortcuts (Cmd/Ctrl+T, W, L, R, …) while the page has focus.
 // Edit freely: selectors are plain lists at the top.
 (() => {
   if (window.__canbec) return;
@@ -39,7 +40,29 @@
       background: #1f2328; color: #f6f1e7; font: 600 13px system-ui, sans-serif; padding: 6px 12px; border-radius: 999px;
       box-shadow: 0 2px 10px rgba(0,0,0,.25); cursor: pointer; }`;
 
-  const send = (msg) => window.ipc && window.ipc.postMessage(JSON.stringify(msg));
+  // Captured before any page script runs, so a page can't wrap it to steal the shortcut token.
+  const post = window.ipc && window.ipc.postMessage.bind(window.ipc);
+  const send = (msg) => post && post(JSON.stringify(msg));
+
+  // Shortcuts. The token is a per-run secret filled in by the browser; pages can post to
+  // window.ipc too, but without the token their fake shortcuts are ignored.
+  const KEY_TOKEN = "__CANBEC_KEY_TOKEN__";
+  const mac = /Mac/.test(navigator.platform);
+  function shortcut(e) {
+    const mod = mac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === "F5") return "reload";
+    if (e.altKey && !mod) return { ArrowLeft: "back", ArrowRight: "forward" }[k];
+    if (!mod || e.altKey) return;
+    return { t: "newTab", w: "closeTab", l: "focusAddress", r: "reload", "[": "back", "]": "forward", ",": "settings", d: "pinPage" }[k];
+  }
+  addEventListener("keydown", (e) => {
+    const key = e.isTrusted && shortcut(e); // pages can dispatch fake key events; only real ones count
+    if (!key) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    send({ type: "key", key, token: KEY_TOKEN });
+  }, true);
   let adCount = -1;
 
   function coverAds() {

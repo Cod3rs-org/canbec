@@ -204,7 +204,16 @@ $("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type
 $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
 $("cfg").onclick=function(){send({type:"openConfig"})};
 var baseRender=render;render=function(s){baseRender(s);if(document.body.classList.contains("settings"))renderSettings()};
-window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()}};
+function toggleSettings(){$("gear").click()}
+window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},toggleSettings:toggleSettings,
+ focusUrl:function(){$("url").focus();$("url").select()}};
+// Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
+addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,
+ k=e.key.length===1?e.key.toLowerCase():e.key,a;
+ if(k==="F5")a="reload";else if(e.altKey&&!mod)a={ArrowLeft:"back",ArrowRight:"forward"}[k];
+ else if(mod&&!e.altKey)a={t:"newTab",w:"closeTab",l:"focusAddress",r:"reload","[":"back","]":"forward",",":"settings",d:"pinPage"}[k];
+ if(!a)return;e.preventDefault();
+ if(a==="focusAddress")window.canbec.focusUrl();else if(a==="settings")toggleSettings();else send({type:"key",key:a})},true);
 // Window chrome: macOS draws traffic lights itself; Windows/Linux get our own buttons.
 (function(){var top=$("top"),mac=(window.__platform||"macos")==="macos";
  if(!mac){top.classList.add("winctl");top.innerHTML='<button data-a="minimize" aria-label="Minimize"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button><button data-a="maximize" aria-label="Maximize"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button><button data-a="close" class="x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>';}

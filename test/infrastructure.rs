@@ -5,7 +5,7 @@ use canbec_application::Snapshot;
 use canbec_domain::slop::SlopScope;
 use canbec_infrastructure::blocklists::{load_adult, needs_refresh};
 use canbec_infrastructure::store::JsonFileStore;
-use canbec_infrastructure::CONTENT_SCRIPT;
+use canbec_infrastructure::{content_script, random_token, CONTENT_SCRIPT};
 
 fn temp_dir(name: &str) -> std::path::PathBuf {
     let dir = std::env::temp_dir().join(format!("canbec-test-{name}-{}", std::process::id()));
@@ -53,6 +53,15 @@ fn content_script_exposes_the_hooks_the_engine_calls() {
     for hook in ["window.__canbec", "flags(slop, feedsLocked)", "adsHidden", "canbec-feeds-locked"] {
         assert!(CONTENT_SCRIPT.contains(hook), "content script lost `{hook}`");
     }
+}
+
+#[test]
+fn shortcut_token_is_random_and_filled_in() {
+    let (a, b) = (random_token(), random_token());
+    assert_ne!(a, b);
+    assert_eq!(a.len(), 32);
+    let script = content_script(&a);
+    assert!(script.contains(&a) && !script.contains("__CANBEC_KEY_TOKEN__"));
 }
 
 mod icon {

@@ -12,7 +12,7 @@ use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_infrastructure::icon::{load_icon, AppIcon, BUILT_IN};
-use canbec_infrastructure::{blocklists, config_dir, CONTENT_SCRIPT};
+use canbec_infrastructure::{blocklists, config_dir, content_script, random_token};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -27,6 +27,8 @@ const CARD_RADIUS: f64 = 12.0;
 
 enum AppEvent {
     Ui(String),
+    /// A browser shortcut (from the sidebar, or from a page with the right token).
+    Key(String),
     Content(String),
     PageLoad { url: String, finished: bool },
     Popup(String),
@@ -105,6 +107,8 @@ fn main() -> wry::Result<()> {
     let builder = builder.with_decorations(false);
     let window = builder.build(&event_loop).expect("window");
     set_dock_icon(&icon);
+    set_main_menu();
+    let key_token = random_token();
 
     let adult_cache = dir.join("blocklists").join("adult.txt");
     let adult = Arc::new(RwLock::new(blocklists::load_adult(&adult_cache)));
@@ -133,7 +137,7 @@ fn main() -> wry::Result<()> {
         let (p1, p2, p3, p4) = (proxy.clone(), proxy.clone(), proxy.clone(), proxy.clone());
         let adult = adult.clone();
         WebViewBuilder::new()
-            .with_initialization_script(CONTENT_SCRIPT)
+            .with_initialization_script(&content_script(&key_token))
             .with_bounds(bounds(&window, false))
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
             .with_navigation_handler(move |url| {
@@ -225,6 +229,35 @@ fn main() -> wry::Result<()> {
                 }
                 false
             }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"key""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                send(&proxy, AppEvent::Key(msg["key"].as_str().unwrap_or_default().to_owned()));
+                false
+            }
+            Event::UserEvent(AppEvent::Key(key)) => {
+                let cmd = match key.as_str() {
+                    "newTab" => Some(UiCommand::NewTab),
+                    "reload" => Some(UiCommand::Reload),
+                    "back" => Some(UiCommand::Back),
+                    "forward" => Some(UiCommand::Forward),
+                    "pinPage" => Some(UiCommand::PinPage),
+                    "closeTab" => service.state(now()).tabs.iter().find(|t| t.active).map(|t| UiCommand::CloseTab { id: t.id }),
+                    "focusAddress" | "settings" => {
+                        let _ = sidebar.focus();
+                        let call = if key == "settings" { "toggleSettings" } else { "focusUrl" };
+                        let _ = sidebar.evaluate_script(&format!("window.canbec.{call}()"));
+                        None
+                    }
+                    _ => None,
+                };
+                match cmd {
+                    Some(cmd) => {
+                        service.handle(cmd, now());
+                        true
+                    }
+                    None => false,
+                }
+            }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"openConfig""#) => {
                 open_config_folder(&dir);
                 false
@@ -239,13 +272,18 @@ fn main() -> wry::Result<()> {
                     false
                 }
             },
-            // Websites can post to window.ipc too, so only harmless counters are accepted from content.
+            // Websites can post to window.ipc too: only harmless counters, and shortcuts that carry
+            // this run's secret token (which only our content script knows), are accepted.
             Event::UserEvent(AppEvent::Content(json)) => {
                 let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
                 match (msg["type"].as_str(), msg["count"].as_u64()) {
                     (Some("adsHidden"), Some(n)) => {
                         service.on_ads_hidden(n.min(10_000) as u32);
                         true
+                    }
+                    (Some("key"), _) if msg["token"].as_str() == Some(&key_token) => {
+                        send(&proxy, AppEvent::Key(msg["key"].as_str().unwrap_or_default().to_owned()));
+                        false
                     }
                     _ => false,
                 }
@@ -303,6 +341,43 @@ fn set_dock_icon(icon: &AppIcon) {
 
 #[cfg(not(target_os = "macos"))]
 fn set_dock_icon(_icon: &AppIcon) {}
+
+/// macOS routes Cmd+C/V/X/A/Z and Cmd+Q through the main menu; without one they do nothing.
+/// Browser shortcuts (Cmd+T, W, L, …) come from the page/sidebar key handlers instead.
+#[cfg(target_os = "macos")]
+fn set_main_menu() {
+    use objc2::{sel, MainThreadMarker, MainThreadOnly};
+    use objc2_app_kit::{NSApplication, NSMenu, NSMenuItem};
+    use objc2_foundation::NSString;
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let bar = NSMenu::new(mtm);
+    let submenu = |title: &str, items: &[(&str, objc2::runtime::Sel, &str)]| {
+        let menu = NSMenu::initWithTitle(NSMenu::alloc(mtm), &NSString::from_str(title));
+        for (name, action, key) in items {
+            // SAFETY: standard responder-chain selectors with no arguments beyond the sender.
+            unsafe { menu.addItemWithTitle_action_keyEquivalent(&NSString::from_str(name), Some(*action), &NSString::from_str(key)) };
+        }
+        let item = NSMenuItem::new(mtm);
+        item.setSubmenu(Some(&menu));
+        bar.addItem(&item);
+    };
+    submenu("canbec", &[("Hide canbec", sel!(hide:), "h"), ("Quit canbec", sel!(terminate:), "q")]);
+    submenu(
+        "Edit",
+        &[
+            ("Undo", sel!(undo:), "z"),
+            ("Redo", sel!(redo:), "Z"),
+            ("Cut", sel!(cut:), "x"),
+            ("Copy", sel!(copy:), "c"),
+            ("Paste", sel!(paste:), "v"),
+            ("Select All", sel!(selectAll:), "a"),
+        ],
+    );
+    NSApplication::sharedApplication(mtm).setMainMenu(Some(&bar));
+}
+
+#[cfg(not(target_os = "macos"))]
+fn set_main_menu() {}
 
 #[cfg(target_os = "macos")]
 fn round_corners(view: &wry::WebView) {

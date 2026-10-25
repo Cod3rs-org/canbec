@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+# Clean architecture: domain <- application <- infrastructure <- app (composition root).
+members = ["src/domain", "src/application", "src/infrastructure", "src/app"]
+exclude = ["src/prototypes"]
+
+[workspace.package]
+edition = "2021"
+license = "Unlicense"
+
+[workspace.dependencies]
+canbec-domain = { path = "src/domain" }
+canbec-application = { path = "src/application" }
+canbec-infrastructure = { path = "src/infrastructure" }
+url = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

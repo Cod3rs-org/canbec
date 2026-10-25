@@ -20,7 +20,8 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
   "archive":   [ { "folder": "GitHub", "tabs": [ { "id": 7, "title": "...", "url": "...", "idleDays": 4 } ] } ],
   "essentials":[ { "title": "Mail", "url": "https://mail.example/" } ],
   "workspaces":[ { "id": "personal", "name": "Personal", "color": "#ff7a45", "active": true } ],
-  "feedLock":  { "locked": true, "unlockedUntil": null }   // News-feed blocker; unlock max 6 h, settings only
+  "feedLock":  { "locked": true, "unlockedUntil": null },  // News-feed blocker; unlock max 6 h, settings only
+  "notice":    null                     // one-line message, e.g. "Blocked: adult content"
 }
 ```
 

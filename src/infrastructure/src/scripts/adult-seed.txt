@@ -1,0 +1,11 @@
+# Built-in seed so blocking works offline on first run. The full list is downloaded weekly.
+pornhub.com
+xvideos.com
+xnxx.com
+xhamster.com
+redtube.com
+youporn.com
+onlyfans.com
+chaturbate.com
+stripchat.com
+spankbang.com

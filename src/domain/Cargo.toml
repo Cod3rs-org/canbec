@@ -1,0 +1,14 @@
+[package]
+name = "canbec-domain"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Pure browser rules: tab discipline, slop tags, feed lock, host blocklists. No I/O."
+
+[dependencies]
+url.workspace = true
+serde.workspace = true
+
+[[test]]
+name = "domain"
+path = "../../test/domain.rs"

@@ -1,0 +1,18 @@
+[package]
+name = "canbec-infrastructure"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Adapters: wry engine, JSON state store, blocklist download, injected scripts."
+
+[dependencies]
+canbec-domain.workspace = true
+canbec-application.workspace = true
+serde_json.workspace = true
+wry = "0.57"
+dirs = "7"
+ureq = "3"
+
+[[test]]
+name = "infrastructure"
+path = "../../test/infrastructure.rs"

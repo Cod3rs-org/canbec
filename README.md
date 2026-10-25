@@ -14,7 +14,7 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 ![status](https://img.shields.io/badge/status-early%20alpha-orange)
 ![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
 ![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-23%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-36%20passing-brightgreen)
 ![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
 ![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
 
@@ -43,17 +43,23 @@ a weak moment.
    months, but nothing is ever really deleted.
 4. 🪶 **Small and fast.** 4 MB app, opens in 0.3 s and uses about **2.7× less memory than Safari**
    ([benchmarks](docs/benchmarks/2026-10-25-macos.md)).
-5. 🔒 **Private and yours.** No telemetry, no accounts. Theme and icon are plain files you can edit,
-   and AI agents get in only if you allow it, per profile.
+5. 🕵️ **Nobody tracks you.** Every start is a fresh browser: cookies, storage and cache from last
+   time are gone, every site sees a slightly different fingerprint, tracker requests are blocked
+   and `utm_`/`fbclid` junk is cut from links. You stay logged in only where you say so. No
+   telemetry, no accounts.
 
 | | |
 |:-:|:-:|
 | <img src="docs/img/real-youtube-feed-locked.png" width="420" alt="YouTube with the recommendation feed removed"> | <img src="docs/img/real-slop-tagged.png" width="420" alt="A page tagged as AI slop, with an orange frame and banner"> |
 | 🔕 **No infinite feeds.** The YouTube home feed is just gone. Unlocking is only in settings, **6 hours max**. | ⚠️ **What you tag stays tagged.** One click on the shield, and the site has an orange frame on every visit. |
 | <img src="docs/img/canbec-probe.png" width="420" alt="Engine probe page with an ad covered by grey hatching"> | <img src="docs/img/real-hn.png" width="420" alt="Hacker News in canbec"> |
-| 🚫 **Ads become grey hatching.** The layout stays the same, the ad just doesn't get your attention. | 🧘 **Calm by default.** Vertical tabs, max 20 open, idle tabs move to folders by themselves. |
+| 🚫 **Ads become grey hatching.** About 24k EasyList rules, updated every week. The layout stays the same, the ad just doesn't get your attention. | 🧘 **Calm by default.** Vertical tabs, max 20 open, idle tabs move to folders by themselves. |
+| <img src="docs/img/ads-easylist.png" width="420" alt="A test page where three ads became blurred grey stripes"> | <img src="docs/img/ui-settings.png" width="160" alt="The settings panel: feed lock with a 10 second wait, privacy, privacy tools, adult content, pinned sites, app icon"> |
+| 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Settings in the sidebar.** Feeds unlock only after a 10 s wait, privacy tools like 10 Minute Mail, pinned sites, app icon. |
 
 And under the hood:
+- ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), `[` `]`, copy/paste, downloads
+  to your Downloads folder.
 - 🔞 **Adult content is blocked** on every navigation, also offline, no off switch (system DNS lock is next).
 - 🫥 **AI images get a spoiler overlay** (C2PA / IPTC metadata first). *In progress.*
 - 🔎 **Human search**: results first seen after 2023 are marked *obsolete*. For now, search goes
@@ -75,11 +81,14 @@ timeline
     Build    : Clean-architecture core
              : Ad hatching, slop frame, feed lock
              : Integrated title bar, rounded card
-             : 20 tests + 3-OS CI
+             : 36 tests + 3-OS CI
     Measure  : ~2.7x less memory than Safari
              : 3-5x less than Edge
     Polish   : 5 selling points
              : Sprout icon, customizable
+    Ready    : Settings, shortcuts, downloads
+             : EasyList ads, .app + releases
+             : No tracking, fresh every start
 ```
 
 | # | Step | Status | Read more |
@@ -96,7 +105,12 @@ timeline
 | 10 | Integrated title bar (macOS) + own window buttons (Windows / Linux), rounded card | ✅ | |
 | 11 | Benchmarks vs Safari and Edge: about 2.7× less memory | ✅ | [benchmarks](docs/benchmarks/2026-10-25-macos.md) |
 | 12 | 5 selling points, sprout as the default icon, customizable app icon | ✅ | [icons](#-icons) |
-| 13 | Roadmap: customization, local model, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
+| 13 | Settings panel: feed unlock after a 10 s wait, pinned sites, live icon picker | ✅ | [contract](docs/architecture/ui-contract.md) |
+| 14 | Keyboard shortcuts, macOS Edit menu (copy/paste), downloads | ✅ | |
+| 15 | Real ad covering with EasyList, updated weekly | ✅ | [benchmarks](docs/benchmarks/2026-10-25-macos.md) |
+| 16 | `canbec.app` bundle, packaged builds for 3 OSes, tag → GitHub release | ✅ | [ci.yml](.github/workflows/ci.yml) |
+| 17 | **No tracking:** fresh browser every start, fingerprint noise, tracker blocking, clean links, privacy tools | ✅ | [08](docs/research/08-privacy.md) |
+| 18 | Roadmap: profiles + MCP, extensions, own search, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md)
 
@@ -129,9 +143,11 @@ pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 | 🧱 **Engine** | Real web apps (WASM, WebGL, Canvas) on 3 OSes, pluggable engines | `▓▓▓▓▓▓░░░░` wry works |
 | 🗂️ **Tab discipline** | At most 20 open, auto-archive into folders, soft delete after 2 months | `▓▓▓▓▓▓░░░░` core + UI |
 | ⚠️ **Slop tagging** | One click, orange frame on every next visit | `▓▓▓▓▓▓░░░░` works |
-| 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓░░░░░` works, no settings UI yet |
+| 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓▓▓▓░░` works, settings with a 10 s wait |
 | 🚫 **No ads** | Ads blurred + grey hatching | `▓▓▓▓▓▓▓░░░` EasyList cosmetic rules, updated weekly |
 | 🔞 **Adult lock** | Every navigation checked + system DNS lock | `▓▓▓▓░░░░░░` browser part done |
+| 🕵️ **No tracking** | Fresh profile every start, fingerprint noise, tracker blocking, clean links | `▓▓▓▓▓▓▓░░░` done; tracker blocking macOS only |
+| ⚙️ **Settings** | Feeds, privacy, pinned sites, icon, all in the sidebar | `▓▓▓▓▓▓▓░░░` works |
 | 👤 **Profiles** | Separate identities, MCP access per profile | `▓░░░░░░░░░` designed |
 | 🔎 **Human search** | "Obsolete" badge for results first seen after 2023 | `▓▓░░░░░░░░` designed |
 | 🫥 **AI spoilers** | AI images behind a click-to-reveal overlay | `▓░░░░░░░░░` researched |
@@ -141,10 +157,16 @@ pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 
 ## 🚀 Try it
 
+**Download:** grab the build for your OS from [Releases](https://github.com/Cod3rs-org/canbec/releases)
+(or the latest CI run's artifacts). The macOS app isn't signed yet, so the first time right-click
+it → **Open**. Linux needs WebKitGTK 4.1 installed.
+
+**Or build it yourself:**
+
 ```sh
 git clone https://github.com/Cod3rs-org/canbec && cd canbec
 cargo run --release -p canbec              # Linux also needs WebKitGTK 4.1 (see CI workflow)
-cargo test --workspace                     # 23 tests
+cargo test --workspace                     # 36 tests
 ```
 
 **Make it yours:** put CSS variables into `theme.css` in your config folder, and they override the

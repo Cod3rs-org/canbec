@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>canbec</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#f6f1e7;--fg:#1f2328;--mut:#6b6f76;--card:rgba(31,35,40,.06);--hov:rgba(31,35,40,.09);--act:#fffdf8;--line:rgba(31,35,40,.12);--acc:#ff7a45;--amber:#d98a00;--red:#d93025;--sh:0 1px 3px rgba(31,35,40,.15)}
+@media (prefers-color-scheme:dark){:root{--bg:#1f2328;--fg:#f6f1e7;--mut:#9a9ca0;--card:rgba(246,241,231,.07);--hov:rgba(246,241,231,.11);--act:#2e343b;--line:rgba(246,241,231,.14);--amber:#f5b73b;--red:#ff6b5e;--sh:0 1px 3px rgba(0,0,0,.4)}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;border-radius:10px;display:inline-flex;align-items:center;justify-content:center}
+button:hover{background:var(--hov)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ib{width:30px;height:30px}.ib:disabled{opacity:.3;cursor:default;background:none}
+.ib.spin svg{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+#top{height:28px;flex:none;-webkit-app-region:drag}
+#nav{display:flex;gap:2px;padding:0 10px 8px 12px;margin-top:6px}
+#nav .sp{flex:1}
+#bar{display:flex;align-items:center;gap:4px;margin:0 10px 8px;padding:0 3px 0 12px;background:var(--card);border-radius:12px;height:36px}
+#bar:focus-within{background:var(--act);box-shadow:0 0 0 2px var(--acc)}
+#url{flex:1;min-width:0;background:none;border:0;outline:0;color:inherit;font:inherit;user-select:text;-webkit-user-select:text}
+#shield{width:28px;height:28px;color:var(--mut)}
+#shield.on{color:#fff;background:var(--acc)}
+#chips{display:flex;gap:6px;padding:0 12px;flex-wrap:wrap}
+#chips:not(:empty){margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;background:var(--card);border-radius:20px;color:var(--mut)}
+.chip svg{width:12px;height:12px}
+#ess{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 10px 10px}
+#ess:empty{display:none}
+.ess{flex-direction:column;gap:4px;height:62px;background:var(--card);font-size:11px;color:var(--mut);padding:4px;min-width:0;border-radius:14px}
+.ess b{width:30px;height:30px;border-radius:10px;background:var(--fg);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px}
+.ess span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ws{padding:4px 14px 6px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+#main{flex:1;overflow-y:auto;padding:0 8px}
+.tab{display:flex;align-items:center;gap:8px;height:34px;padding:0 4px 0 8px;border-radius:10px;cursor:pointer;position:relative}
+.tab:hover{background:var(--hov)}
+.tab.act{background:var(--act);box-shadow:var(--sh)}
+.tab:focus-within{outline:2px solid var(--acc);outline-offset:-2px}
+.tab .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:none;justify-content:flex-start;height:100%;border-radius:0;text-align:left}
+.tab .t:hover{background:none}.tab .t:focus-visible{outline:0}
+.dot{width:16px;height:16px;border-radius:5px;background:var(--card);color:var(--mut);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.act .dot{background:var(--fg);color:var(--bg)}
+.warn{color:var(--acc);font-size:13px}
+.tab .x{width:22px;height:22px;opacity:0;border-radius:7px}
+.tab .x svg{width:12px;height:12px}
+.tab:hover .x,.tab:focus-within .x{opacity:.7}.tab .x:hover{opacity:1}
+.tab.slop{box-shadow:inset 2px 0 var(--acc)}
+.row{width:100%;justify-content:flex-start;gap:8px;height:34px;padding:0 8px;color:var(--mut)}
+details{margin-top:8px}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);border-radius:10px}
+summary:hover{background:var(--hov)}summary::-webkit-details-marker{display:none}
+summary svg{width:12px;height:12px;transition:transform .15s}details[open]>summary svg{transform:rotate(90deg)}
+.fold{padding:4px 8px 2px;font-weight:600;font-size:12px}
+.arc{display:flex;width:100%;justify-content:flex-start;gap:8px;height:30px;padding:0 8px 0 18px;color:var(--mut)}
+.arc span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.arc small{font-size:11px;opacity:.8}
+.empty{padding:2px 10px;color:var(--mut);font-size:12px}
+#foot{flex:none;display:flex;align-items:center;gap:6px;padding:8px 10px 10px;border-top:1px solid var(--line)}
+#cnt{font-size:12px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--card);font-variant-numeric:tabular-nums}
+#cnt.amber{background:var(--amber);color:#1f2328}#cnt.red{background:var(--red);color:#fff}
+#hint{display:none;font-size:11px;color:var(--red);padding:0 12px 4px}
+#hint.show{display:block}
+#wsd{display:flex;gap:6px;flex:1;justify-content:center}
+.wd{width:18px;height:18px;padding:0;border-radius:50%;border:2px solid transparent}
+.wd i{width:10px;height:10px;border-radius:50%;display:block}
+.wd.act{border-color:var(--fg)}
+</style></head><body>
+<div id="top"></div>
+<div id="nav">
+ <button class="ib" id="back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+ <button class="ib" id="fwd" aria-label="Forward"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+ <button class="ib" id="rl" aria-label="Reload"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg></button>
+ <span class="sp"></span>
+</div>
+<form id="bar" autocomplete="off">
+ <input id="url" type="text" spellcheck="false" placeholder="Search or enter address" aria-label="Address or search">
+ <button type="button" class="ib" id="shield" aria-label="Tag this site as AI slop" aria-pressed="false" title="Tag this site as AI slop"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/></svg></button>
+</form>
+<div id="chips"></div>
+<div id="ess"></div>
+<div id="ws"></div>
+<div id="main">
+ <div id="tabs"></div>
+ <button class="row" id="new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New tab</button>
+ <div id="hint" style="padding:0 8px"></div>
+ <details id="arch"><summary><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>Archive</summary><div id="arc"></div></details>
+</div>
+<div id="foot">
+ <span id="cnt" role="status"></span>
+ <div id="wsd" role="group" aria-label="Workspaces"></div>
+ <button class="ib" id="gear" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)},S={tabs:[],current:{}};
+var X='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function send(c){var m=JSON.stringify(c);if(window.ipc&&window.ipc.postMessage)window.ipc.postMessage(m);else console.log("[canbec ipc]",m)}
+// ponytail: dev harness hook, only active with ?mock (mock.html drives it via postMessage)
+if(/[?&]mock/.test(location.search)){window.ipc={postMessage:function(m){parent.postMessage({canbecCmd:m},"*")}};
+ addEventListener("message",function(e){if(e.data&&e.data.canbecState)window.canbec.render(e.data.canbecState)});
+ addEventListener("load",function(){parent.postMessage({canbecReady:1},"*")})}
+function h(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function mono(t){return h((String(t||"?").trim()[0]||"?").toUpperCase())}
+function render(s){
+ S=s=s||{};var c=s.current||{},tabs=s.tabs||[],lim=s.tabLimit||20,n=tabs.length;
+ $("back").disabled=!c.canGoBack;$("fwd").disabled=!c.canGoForward;
+ $("rl").classList.toggle("spin",!!c.loading);
+ if(document.activeElement!==$("url"))$("url").value=c.url||"";
+ var sh=$("shield");sh.classList.toggle("on",!!c.slop);sh.setAttribute("aria-pressed",!!c.slop);
+ sh.setAttribute("aria-label",c.slop?"Remove AI slop tag":"Tag this site as AI slop");sh.title=sh.getAttribute("aria-label");
+ var ch="";
+ if(c.adsHidden>0)ch+='<span class="chip"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/></svg>'+c.adsHidden+' ads hidden</span>';
+ if(s.feedLock&&s.feedLock.locked)ch+='<span class="chip" title="News feeds are locked"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Feeds locked</span>';
+ $("chips").innerHTML=ch;
+ $("ess").innerHTML=(s.essentials||[]).map(function(e,i){return'<button class="ess" data-i="'+i+'" title="'+h(e.title)+'"><b>'+mono(e.title)+'</b><span>'+h(e.title)+'</span></button>'}).join("");
+ var w=(s.workspaces||[]).filter(function(x){return x.active})[0];$("ws").textContent=w?w.name:"";
+ $("tabs").innerHTML=tabs.map(function(t){return'<div class="tab'+(t.active?" act":"")+(t.slop?" slop":"")+'" data-id="'+t.id+'"><span class="dot">'+mono(t.title)+'</span><button class="t" data-a="act" title="'+h(t.url)+'"'+(t.active?' aria-current="page"':"")+'>'+h(t.title||t.url)+'</button>'+(t.slop?'<span class="warn" title="Tagged as AI slop" aria-label="AI slop">⚠</span>':"")+'<button class="x" data-a="arch" aria-label="Archive tab" title="Archive tab"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg></button><button class="x" data-a="close" aria-label="Close tab" title="Close tab">'+X+'</button></div>'}).join("");
+ var ar=s.archive||[];
+ $("arc").innerHTML=ar.length?ar.map(function(f){return'<div class="fold">'+h(f.folder)+'</div>'+(f.tabs||[]).map(function(t){return'<button class="arc" data-r="'+t.id+'" title="Restore: '+h(t.url)+'"><span>'+h(t.title||t.url)+'</span><small>'+t.idleDays+'d</small></button>'}).join("")}).join(""):'<div class="empty">Nothing archived</div>';
+ var k=$("cnt");k.textContent=n+"/"+lim;k.className=n>=lim?"red":n>=lim*0.8?"amber":"";
+ $("hint").className=n>=lim?"show":"";$("hint").innerHTML=n>=lim?'<span style="color:var(--red);font-size:11px">Close or archive a tab first</span>':"";
+ $("wsd").innerHTML=(s.workspaces||[]).map(function(x){return'<button class="wd'+(x.active?" act":"")+'" data-w="'+h(x.id)+'" aria-label="'+h(x.name)+'" title="'+h(x.name)+'"><i style="background:'+h(x.color||"#ff7a45")+'"></i></button>'}).join("");
+}
+$("back").onclick=function(){send({type:"back"})};
+$("fwd").onclick=function(){send({type:"forward"})};
+$("rl").onclick=function(){send({type:"reload"})};
+$("new").onclick=function(){send({type:"newTab"})};
+$("gear").onclick=function(){send({type:"openSettings"})};
+$("shield").onclick=function(){send((S.current||{}).slop?{type:"untagSlop"}:{type:"tagSlop",scope:"domain"})};
+$("bar").onsubmit=function(e){e.preventDefault();var v=$("url").value.trim();if(v){send({type:"navigate",url:v});$("url").blur()}};
+$("url").onfocus=function(){this.select()};
+$("ess").onclick=function(e){var b=e.target.closest("[data-i]");if(b)send({type:"navigate",url:S.essentials[b.dataset.i].url})};
+$("wsd").onclick=function(e){var b=e.target.closest("[data-w]");if(b)send({type:"switchWorkspace",id:b.dataset.w})};
+$("arc").onclick=function(e){var b=e.target.closest("[data-r]");if(b)send({type:"restoreTab",id:+b.dataset.r})};
+$("tabs").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;var id=+b.closest(".tab").dataset.id,a=b.dataset.a;
+ send({type:a=="act"?"activateTab":a=="close"?"closeTab":"archiveTab",id:id})};
+$("tabs").onauxclick=function(e){if(e.button!=1)return;e.preventDefault();var t=e.target.closest(".tab");if(t)send({type:"archiveTab",id:+t.dataset.id})};
+$("tabs").onmousedown=function(e){if(e.button==1)e.preventDefault()};
+window.canbec={render:render};
+render({});
+})();
+</script></body></html>

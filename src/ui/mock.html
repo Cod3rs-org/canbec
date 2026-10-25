@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>canbec UI mock</title>
+<style>
+body{margin:0;display:flex;height:100vh;font:13px system-ui;background:#1f2328}
+iframe{width:300px;border:0;flex:none;height:100%}
+#c{flex:1;margin:8px 8px 8px 0;background:#fff;border-radius:12px;padding:20px;overflow:auto;color:#222}
+#c button{margin-right:6px}
+pre{background:#f3f3f3;padding:10px;border-radius:8px;font-size:11px;white-space:pre-wrap}
+</style></head><body>
+<iframe id="f" src="sidebar.html?mock"></iframe>
+<div id="c"><h2>Example Domain</h2><p>Fake content area. Mock state:</p>
+<button onclick="go(6)">6 tabs</button><button onclick="go(17)">17 tabs</button><button onclick="go(20)">20 tabs</button>
+<p>Commands received:</p><pre id="log">(none)</pre></div>
+<script>
+function st(n){
+ var tabs=[["Example Domain","https://example.org/"],["Hacker News","https://news.ycombinator.com/"],["GitHub - canbec","https://github.com/canbec"],["10 AI tips that will change your life","https://aislop.example/tips"],["Rust docs","https://doc.rust-lang.org/"],["Wikipedia","https://wikipedia.org/"]];
+ var a=[];for(var i=0;i<n;i++){var t=tabs[i]||["Extra tab "+(i+1),"https://example.com/"+i];a.push({id:i+1,title:t[0],url:t[1],active:i==0,slop:i==3})}
+ return{current:{url:"https://example.org/",title:"Example Domain",slop:false,loading:false,canGoBack:true,canGoForward:false,adsHidden:3},
+ tabs:a,tabLimit:20,
+ archive:[{folder:"GitHub",tabs:[{id:101,title:"Issue #42: fix tabs",url:"https://github.com/x/y/issues/42",idleDays:4},{id:102,title:"Pull request: sidebar",url:"https://github.com/x/y/pull/7",idleDays:6}]},{folder:"Docs",tabs:[{id:103,title:"MDN: details element",url:"https://developer.mozilla.org/",idleDays:3}]}],
+ essentials:[{title:"Mail",url:"https://mail.example/"},{title:"Calendar",url:"https://cal.example/"},{title:"Notes",url:"https://notes.example/"}],
+ workspaces:[{id:"personal",name:"Personal",color:"#ff7a45",active:true},{id:"work",name:"Work",color:"#4a90d9",active:false},{id:"read",name:"Reading",color:"#5bb974",active:false}],
+ feedLock:{locked:true,unlockedUntil:null}}}
+var cur=6,f=document.getElementById("f"),log=[];
+function go(n){cur=n;f.contentWindow.postMessage({canbecState:st(n)},"*")}
+addEventListener("message",function(e){var d=e.data||{};if(d.canbecReady)go(cur);
+ if(d.canbecCmd){log.unshift(d.canbecCmd);document.getElementById("log").textContent=log.slice(0,8).join("\n")}});
+</script></body></html>

@@ -12,6 +12,7 @@ canbec-infrastructure.workspace = true
 serde_json.workspace = true
 wry = "0.57"
 tao = "0.37"
+base64 = "0.23" # already in the tree via wry; icon previews for the settings panel
 
 # Rounded content card + Dock icon on macOS (same objc2 crates wry already uses).
 [target.'cfg(target_os = "macos")'.dependencies]

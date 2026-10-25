@@ -11,7 +11,7 @@ use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::store::JsonFileStore;
-use canbec_infrastructure::icon::{load_icon, AppIcon};
+use canbec_infrastructure::icon::{load_icon, AppIcon, BUILT_IN};
 use canbec_infrastructure::{blocklists, config_dir, CONTENT_SCRIPT};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
@@ -62,6 +62,28 @@ fn theme_script() -> String {
     )
 }
 
+/// Built-in icons for the settings picker, plus which one is active.
+fn icons_script(current: &str) -> String {
+    use base64::Engine as _;
+    let list: Vec<_> = BUILT_IN
+        .iter()
+        .map(|(name, meaning, png)| {
+            serde_json::json!({ "name": name, "meaning": meaning,
+                "src": format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png)) })
+        })
+        .collect();
+    format!("window.__icons={};window.__icon={}", serde_json::Value::from(list), serde_json::Value::from(current))
+}
+
+/// Shows the config folder (theme.css, icon, state) in the OS file manager.
+fn open_config_folder(dir: &std::path::Path) {
+    let _ = std::fs::create_dir_all(dir);
+    let opener = if cfg!(target_os = "macos") { "open" } else if cfg!(windows) { "explorer" } else { "xdg-open" };
+    if let Err(e) = std::process::Command::new(opener).arg(dir).spawn() {
+        eprintln!("canbec: could not open {}: {e}", dir.display());
+    }
+}
+
 fn main() -> wry::Result<()> {
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
@@ -92,7 +114,8 @@ fn main() -> wry::Result<()> {
         WebViewBuilder::new()
             .with_html(SIDEBAR_HTML)
             .with_initialization_script(&theme_script())
-            .with_initialization_script(&format!("window.__platform={:?}", std::env::consts::OS))
+            .with_initialization_script(&format!("window.__platform={:?};window.__version={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION")))
+            .with_initialization_script(&icons_script(&icon.source))
             .with_bounds(bounds(&window, true))
             // The sidebar has the trusted IPC channel, so it may never load anything else.
             .with_navigation_handler(|url| url.starts_with("about:") || url.starts_with("data:"))
@@ -174,7 +197,7 @@ fn main() -> wry::Result<()> {
                 let _ = service.engine().view.set_bounds(bounds(&window, false));
                 false
             }
-            // Window chrome, not browser state: handled here instead of in BrowserService.
+            // Window chrome and app settings, not browser state: handled here instead of in BrowserService.
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"window""#) => {
                 let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
                 match msg["action"].as_str() {
@@ -184,6 +207,26 @@ fn main() -> wry::Result<()> {
                     Some("close") => *flow = ControlFlow::Exit,
                     _ => {}
                 }
+                false
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"setIcon""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                // Only built-in names from the picker; custom PNGs stay a hand-edited file.
+                if let Some(name) = msg["name"].as_str().filter(|n| BUILT_IN.iter().any(|(b, _, _)| b == n)) {
+                    match std::fs::create_dir_all(&dir).and_then(|_| std::fs::write(dir.join("icon"), name)) {
+                        Ok(()) => {
+                            let icon = load_icon(&dir);
+                            window.set_window_icon(Icon::from_rgba(icon.rgba.clone(), icon.width, icon.height).ok());
+                            set_dock_icon(&icon);
+                            let _ = sidebar.evaluate_script(&format!("window.canbec.setIcon({})", serde_json::Value::from(icon.source)));
+                        }
+                        Err(e) => eprintln!("canbec: could not save icon choice: {e}"),
+                    }
+                }
+                false
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"openConfig""#) => {
+                open_config_folder(&dir);
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) => match serde_json::from_str::<UiCommand>(&json) {

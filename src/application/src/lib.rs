@@ -6,4 +6,4 @@ mod browser;
 pub mod ports;
 pub mod ui;
 
-pub use browser::{resolve_input, BrowserService, Snapshot, HOME_URL};
+pub use browser::{resolve_input, BrowserService, Snapshot, HOME_URL, MAX_ESSENTIALS};

@@ -73,6 +73,28 @@ summary svg{width:12px;height:12px;transition:transform .15s}details[open]>summa
 .wd{width:18px;height:18px;padding:0;border-radius:50%;border:2px solid transparent}
 .wd i{width:10px;height:10px;border-radius:50%;display:block}
 .wd.act{border-color:var(--fg)}
+/* Settings panel: replaces the tab list while open. */
+#set{display:none;flex:1;overflow-y:auto;padding:0 12px 12px}
+body.settings #set{display:block}
+body.settings #main,body.settings #ess,body.settings #ws{display:none}
+#gear.on{background:var(--act);box-shadow:var(--sh)}
+#set h2{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:14px 0 6px}
+#set h2:first-child{margin-top:4px}
+#set p{color:var(--mut);font-size:12px;margin:0 0 8px}
+.sec{background:var(--card);border-radius:12px;padding:10px}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn{height:28px;padding:0 10px;background:var(--act);box-shadow:var(--sh);font-size:12px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.warn{color:var(--red)}
+.st{font-weight:600;margin-bottom:6px}
+.pin{display:flex;align-items:center;gap:6px;height:28px}
+.pin span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pin .x{width:22px;height:22px;color:var(--mut)}.pin .x svg{width:12px;height:12px}
+#icons{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ico{flex-direction:column;gap:3px;padding:6px 2px;font-size:10px;color:var(--mut);border:2px solid transparent}
+.ico img{width:36px;height:36px;border-radius:9px}
+.ico.act{border-color:var(--acc);color:var(--fg)}
+.lnk{color:var(--acc);text-decoration:underline;cursor:pointer;padding:0;border-radius:0}.lnk:hover{background:none}
 </style></head><body>
 <div id="top"></div>
 <div id="nav">
@@ -94,10 +116,23 @@ summary svg{width:12px;height:12px;transition:transform .15s}details[open]>summa
  <div id="hint" style="padding:0 8px"></div>
  <details id="arch"><summary><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>Archive</summary><div id="arc"></div></details>
 </div>
+<div id="set" aria-label="Settings">
+ <h2>News feeds</h2>
+ <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div>
+ <h2>Adult content</h2>
+ <div class="sec"><div class="st">Always blocked</div><p style="margin:0">There is no switch for this, on purpose. The list updates every week and works offline too.</p></div>
+ <h2>Pinned sites</h2>
+ <div class="sec"><div id="pins"></div><div class="btns" style="margin-top:6px"><button class="btn" id="pin">Pin this page</button></div></div>
+ <h2>App icon</h2>
+ <div class="sec"><div id="icons"></div><p id="icustom" style="margin:6px 0 0"></p></div>
+ <h2>Look</h2>
+ <div class="sec"><p>Colours come from <b>theme.css</b> in the config folder. Changes show after a restart.</p><div class="btns"><button class="btn" id="cfg">Open config folder</button></div></div>
+ <p style="margin-top:14px;text-align:center" id="ver"></p>
+</div>
 <div id="foot">
  <span id="cnt" role="status"></span>
  <div id="wsd" role="group" aria-label="Workspaces"></div>
- <button class="ib" id="gear" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+ <button class="ib" id="gear" aria-label="Settings" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </div>
 <script>
 (function(){
@@ -135,7 +170,6 @@ $("back").onclick=function(){send({type:"back"})};
 $("fwd").onclick=function(){send({type:"forward"})};
 $("rl").onclick=function(){send({type:"reload"})};
 $("new").onclick=function(){send({type:"newTab"})};
-$("gear").onclick=function(){send({type:"openSettings"})};
 $("shield").onclick=function(){send((S.current||{}).slop?{type:"untagSlop"}:{type:"tagSlop",scope:"domain"})};
 $("bar").onsubmit=function(e){e.preventDefault();var v=$("url").value.trim();if(v){send({type:"navigate",url:v});$("url").blur()}};
 $("url").onfocus=function(){this.select()};
@@ -146,7 +180,31 @@ $("tabs").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;va
  send({type:a=="act"?"activateTab":a=="close"?"closeTab":"archiveTab",id:id})};
 $("tabs").onauxclick=function(e){if(e.button!=1)return;e.preventDefault();var t=e.target.closest(".tab");if(t)send({type:"archiveTab",id:+t.dataset.id})};
 $("tabs").onmousedown=function(e){if(e.button==1)e.preventDefault()};
-window.canbec={render:render};
+// Settings panel. Unlocking feeds needs a short wait first: a weak moment usually passes.
+var WAIT=10,waitLeft=0,waitT=null;
+function fmt(t){var d=new Date(t*1000);return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+function renderSettings(){
+ var s=S||{},f=s.feedLock||{locked:true},b=$("fbt");
+ $("fst").textContent=f.locked?"Locked":"Unlocked until "+fmt(f.unlockedUntil);
+ if(!f.locked){$("fhelp").textContent="Feeds come back by themselves when the time is up.";b.innerHTML='<button class="btn" data-lock="1">Lock now</button>'}
+ else if(waitLeft>0){$("fhelp").textContent="Take a breath. Do you really need the feed right now?";b.innerHTML='<button class="btn" disabled>Wait '+waitLeft+' s</button>'}
+ else{$("fhelp").textContent="Unlock for a while, 6 hours max.";b.innerHTML=[1,3,6].map(function(n){return'<button class="btn warn" data-h="'+n+'">'+n+' h</button>'}).join("")}
+ var e=s.essentials||[];
+ $("pins").innerHTML=e.length?e.map(function(x,i){return'<div class="pin"><span title="'+h(x.url)+'">'+h(x.title)+'</span><button class="x" data-u="'+i+'" aria-label="Unpin '+h(x.title)+'">'+X+'</button></div>'}).join(""):'<p style="margin:0">Nothing pinned yet.</p>';
+ var ic=window.__icons||[],cur=window.__icon||"sprout",custom=!ic.some(function(i){return i.name===cur});
+ $("icons").innerHTML=ic.map(function(i){return'<button class="ico'+(i.name===cur?" act":"")+'" data-ic="'+h(i.name)+'" title="'+h(i.meaning)+'" aria-pressed="'+(i.name===cur)+'"><img src="'+i.src+'" alt=""><span>'+h(i.name)+'</span></button>'}).join("");
+ $("icustom").textContent=custom?"Using your own image: "+cur:"Or put a path to your own PNG into the icon file in the config folder.";
+ $("ver").textContent="canbec "+(window.__version||"")+" · no telemetry, no accounts";
+}
+function startWait(){clearInterval(waitT);waitLeft=WAIT;renderSettings();waitT=setInterval(function(){waitLeft--;if(waitLeft<=0)clearInterval(waitT);if(document.body.classList.contains("settings"))renderSettings()},1000)}
+$("gear").onclick=function(){var on=document.body.classList.toggle("settings");this.classList.toggle("on",on);this.setAttribute("aria-pressed",on);if(on)startWait();else clearInterval(waitT)};
+$("fbt").onclick=function(e){var b=e.target.closest("button");if(!b||b.disabled)return;if(b.dataset.lock)send({type:"relockFeeds"});else if(b.dataset.h)send({type:"unlockFeeds",hours:+b.dataset.h})};
+$("pin").onclick=function(){send({type:"pinPage"})};
+$("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type:"unpinEssential",index:+b.dataset.u})};
+$("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
+$("cfg").onclick=function(){send({type:"openConfig"})};
+var baseRender=render;render=function(s){baseRender(s);if(document.body.classList.contains("settings"))renderSettings()};
+window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()}};
 // Window chrome: macOS draws traffic lights itself; Windows/Linux get our own buttons.
 (function(){var top=$("top"),mac=(window.__platform||"macos")==="macos";
  if(!mac){top.classList.add("winctl");top.innerHTML='<button data-a="minimize" aria-label="Minimize"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button><button data-a="maximize" aria-label="Maximize"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button><button data-a="close" class="x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>';}

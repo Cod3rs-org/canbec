@@ -15,6 +15,9 @@ use crate::ui::*;
 /// New tabs and search go to DuckDuckGo's no-AI mode until our own search exists (docs/research/02).
 pub const HOME_URL: &str = "https://noai.duckduckgo.com/";
 
+/// Essentials grid size (3 columns × 3 rows in the sidebar).
+pub const MAX_ESSENTIALS: usize = 9;
+
 /// Everything persisted between runs.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Snapshot {
@@ -124,12 +127,31 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 }
                 self.push_flags(now);
             }
-            // ponytail: one workspace and no settings page yet; both arrive with the settings UI.
+            // ponytail: one workspace until profiles exist (docs/research/06).
             UiCommand::SwitchWorkspace { .. } => {}
-            UiCommand::OpenSettings => self.notice = Some("Settings are coming soon".into()),
             UiCommand::UnlockFeeds { hours } => {
                 self.snapshot.feed_lock.unlock(hours, now);
                 self.push_flags(now);
+            }
+            UiCommand::RelockFeeds => {
+                self.snapshot.feed_lock.relock();
+                self.push_flags(now);
+            }
+            UiCommand::PinPage => {
+                let ess = &mut self.snapshot.essentials;
+                match tabs.active_tab() {
+                    _ if ess.len() >= MAX_ESSENTIALS => self.notice = Some(format!("{MAX_ESSENTIALS} pinned sites max, unpin one first")),
+                    Some(t) if !ess.iter().any(|e| e.url == t.url) => {
+                        let title = if t.title.is_empty() { host_of(&t.url).unwrap_or_default() } else { t.title.clone() };
+                        ess.push(Essential { title, url: t.url.clone() })
+                    }
+                    _ => {}
+                }
+            }
+            UiCommand::UnpinEssential { index } => {
+                if index < self.snapshot.essentials.len() {
+                    self.snapshot.essentials.remove(index);
+                }
             }
         }
         self.store.save(&self.snapshot);
@@ -159,7 +181,13 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     /// Periodic housekeeping (auto-archive, soft delete, feed re-lock).
     pub fn tick(&mut self, now: Timestamp) -> bool {
-        let changed = self.snapshot.tabs.sweep(&self.policy, now) > 0;
+        let mut changed = self.snapshot.tabs.sweep(&self.policy, now) > 0;
+        // An expired unlock hides the feeds again on the open page, not only on the next load.
+        if self.snapshot.feed_lock.unlocked_until.is_some() && self.snapshot.feed_lock.is_locked(now) {
+            self.snapshot.feed_lock.relock();
+            self.push_flags(now);
+            changed = true;
+        }
         if changed {
             self.store.save(&self.snapshot);
         }

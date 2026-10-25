@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use canbec_application::ports::{Engine, StateStore};
 use canbec_application::ui::UiCommand;
-use canbec_application::{resolve_input, BrowserService, Snapshot, HOME_URL};
+use canbec_application::{resolve_input, BrowserService, Snapshot, HOME_URL, MAX_ESSENTIALS};
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::slop::SlopScope;
 use canbec_domain::{DAY, HOUR};
@@ -147,4 +147,34 @@ fn ui_commands_parse_from_contract_json() {
     assert_eq!(cmd, UiCommand::TagSlop { scope: SlopScope::Page });
     let cmd: UiCommand = serde_json::from_str(r#"{"type":"unlockFeeds","hours":3}"#).unwrap();
     assert_eq!(cmd, UiCommand::UnlockFeeds { hours: 3 });
+}
+
+#[test]
+fn expired_unlock_relocks_the_open_page_on_tick() {
+    let (mut svc, engine, _) = service();
+    svc.handle(UiCommand::UnlockFeeds { hours: 1 }, 0);
+    assert!(engine.log.borrow().last().unwrap().ends_with("feeds_locked=false"));
+    assert!(!svc.tick(HOUR - 1));
+    assert!(svc.tick(HOUR));
+    assert!(engine.log.borrow().last().unwrap().ends_with("feeds_locked=true"));
+    assert!(svc.state(HOUR).feed_lock.unlocked_until.is_none());
+}
+
+#[test]
+fn pin_and_unpin_essentials_with_a_cap() {
+    let (mut svc, _, _) = service();
+    svc.handle(nav("https://example.org/"), 1);
+    svc.handle(UiCommand::PinPage, 1);
+    svc.handle(UiCommand::PinPage, 1); // same page twice: still one pin
+    assert_eq!(svc.state(1).essentials.len(), 1);
+    for i in 1..MAX_ESSENTIALS + 1 {
+        svc.handle(nav(&format!("https://site{i}.example/")), 1);
+        svc.handle(UiCommand::PinPage, 1);
+    }
+    let state = svc.state(1);
+    assert_eq!(state.essentials.len(), MAX_ESSENTIALS);
+    assert!(state.notice.unwrap().contains("unpin"));
+    svc.handle(UiCommand::UnpinEssential { index: 0 }, 1);
+    svc.handle(UiCommand::UnpinEssential { index: 99 }, 1); // out of range is ignored
+    assert_eq!(svc.state(1).essentials.len(), MAX_ESSENTIALS - 1);
 }

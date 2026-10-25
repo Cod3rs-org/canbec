@@ -19,8 +19,12 @@ pub enum UiCommand {
     TagSlop { scope: SlopScope },
     UntagSlop,
     SwitchWorkspace { id: String },
-    OpenSettings,
+    /// From the settings panel only (the UI waits a few seconds before it allows this).
     UnlockFeeds { hours: u64 },
+    RelockFeeds,
+    /// Pins the current page to the essentials grid.
+    PinPage,
+    UnpinEssential { index: usize },
 }
 
 #[derive(Debug, Clone, Serialize)]

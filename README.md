@@ -24,41 +24,46 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 
 ---
 
+## Why I made this
+
+The web got loud. AI-generated pages bury the human ones, feeds are built so they never end, and
+twenty forgotten tabs are nagging you in the background. I wanted a browser where I can live my life
+as a normal human being and not as a parrot, so I built one.
+
+canbec is a quiet browser with hard limits. You set them once, and you can't just turn them off in
+a weak moment.
+
 ## ✨ 5 reasons to switch
 
-The web got loud. AI-generated pages bury human ones, feeds are built to never end, and twenty
-forgotten tabs nag in the background. canbec is a **quiet browser with hard limits you set once and
-can't easily undo in a weak moment.**
-
-1. 🔕 **Hard limits for weak moments.** Infinite feeds are gone, and unlocking them takes a trip to
-   settings and lasts **6 hours at most**. Adult content has **no off switch** at all.
-2. ⚠️ **AI slop: mark it once, warned forever.** One click on the shield, and the site wears an
-   orange frame on every visit. AI images get spoilers, and search marks pages first seen after 2023.
-3. 🗂️ **20 tabs, zero hoarding.** Idle tabs file themselves into folders and fade out after two
+1. 🔕 **Hard limits for weak moments.** Infinite feeds are gone. If you really need them, you have
+   to go to settings and you get **6 hours max**. Adult content has **no off switch** at all.
+2. ⚠️ **Mark AI slop once, get warned forever.** One click on the shield, and the site gets an
+   orange frame on every visit. AI images get a spoiler, and search marks pages first seen after 2023.
+3. 🗂️ **20 tabs, no hoarding.** Idle tabs move to folders by themselves and disappear after two
    months, but nothing is ever really deleted.
-4. 🪶 **Featherweight.** A 4 MB app that opens in 0.3 s and uses about **3× less memory than Safari**
+4. 🪶 **Small and fast.** 4 MB app, opens in 0.3 s and uses about **3× less memory than Safari**
    ([benchmarks](docs/benchmarks/2026-10-25-macos.md)).
-5. 🔒 **Private and yours.** No telemetry, no accounts. Theme and icon are plain files you edit,
-   and AI agents get in only if you invite them, per profile.
+5. 🔒 **Private and yours.** No telemetry, no accounts. Theme and icon are plain files you can edit,
+   and AI agents get in only if you allow it, per profile.
 
 | | |
 |:-:|:-:|
 | <img src="docs/img/real-youtube-feed-locked.png" width="420" alt="YouTube with the recommendation feed removed"> | <img src="docs/img/real-slop-tagged.png" width="420" alt="A page tagged as AI slop, with an orange frame and banner"> |
-| 🔕 **No infinite feeds.** YouTube's home feed is simply gone. Unlocking needs a trip to settings and lasts **6 hours at most**. | ⚠️ **Slop you tagged stays tagged.** One click on the shield, and the site gets an orange frame on every visit. |
+| 🔕 **No infinite feeds.** The YouTube home feed is just gone. Unlocking is only in settings, **6 hours max**. | ⚠️ **What you tag stays tagged.** One click on the shield, and the site has an orange frame on every visit. |
 | <img src="docs/img/canbec-probe.png" width="420" alt="Engine probe page with an ad covered by grey hatching"> | <img src="docs/img/real-hn.png" width="420" alt="Hacker News in canbec"> |
-| 🚫 **Ads become grey hatching.** The layout stays put; the ad doesn't get your attention. | 🧘 **Calm by default.** Vertical tabs, at most 20 open; idle tabs tidy themselves into folders. |
+| 🚫 **Ads become grey hatching.** The layout stays the same, the ad just doesn't get your attention. | 🧘 **Calm by default.** Vertical tabs, max 20 open, idle tabs move to folders by themselves. |
 
-And underneath:
-- 🔞 **Adult content is blocked** at every navigation, works offline, with no off switch (system DNS lock next).
+And under the hood:
+- 🔞 **Adult content is blocked** on every navigation, also offline, no off switch (system DNS lock is next).
 - 🫥 **AI images get a spoiler overlay** (C2PA / IPTC metadata first). *In progress.*
 - 🔎 **Human search**: results first seen after 2023 are marked *obsolete*. For now, search goes
   to [DuckDuckGo NoAI](https://noai.duckduckgo.com).
 
-## 🛤️ Journey so far
+## 🛤️ What is done so far
 
 ```mermaid
 timeline
-    title canbec — built on 2026-10-25
+    title canbec, built on 2026-10-25
     Research : Goals and engine needs
              : Search, inspiration, UI design
     Bake-off : wry ✅ 5/6
@@ -80,7 +85,7 @@ timeline
 | # | Step | Status | Read more |
 |:-:|------|:------:|-----------|
 | 1 | Repo set up | ✅ | |
-| 2 | Kickoff research: what real apps need from an engine | ✅ | [01](docs/research/01-initial-findings.md) |
+| 2 | First research: what real apps need from an engine | ✅ | [01](docs/research/01-initial-findings.md) |
 | 3 | Search without AI: comparison and plan | ✅ | [02](docs/research/02-search.md) |
 | 4 | Open-source inspiration | ✅ | [03](docs/research/03-inspiration.md) |
 | 5 | UI: vertical tabs, 20-tab discipline, slop tagging | ✅ | [04](docs/research/04-ui-and-tabs.md) |
@@ -97,7 +102,7 @@ timeline
 
 ## ⚡ Benchmarks
 
-macOS, same pages, median of 3 runs ([details & caveats](docs/benchmarks/2026-10-25-macos.md)):
+macOS, same pages, median of 3 runs ([details and caveats](docs/benchmarks/2026-10-25-macos.md)):
 
 | Browser | Size | Time to window | Memory (Wikipedia) | Processes |
 |---|--:|--:|--:|--:|
@@ -107,31 +112,31 @@ macOS, same pages, median of 3 runs ([details & caveats](docs/benchmarks/2026-10
 
 ## 🧪 Engine bake-off
 
-The same local Blazor WebAssembly probe ([`test/engine-probe`](test/engine-probe)) in each engine:
+I ran the same local Blazor WebAssembly probe ([`test/engine-probe`](test/engine-probe)) in every engine:
 
 | wry (system webview) | Servo 0.1.4 | Blitz 0.3 |
 |:-:|:-:|:-:|
 | <img src="docs/img/engine-wry-probe.png" width="260"> | <img src="docs/img/engine-servo-probe.png" width="260"> | <img src="docs/img/engine-blitz-probe.png" width="260"> |
 | ✅ **5/6** · 1.5 MB · 47 s build | ✅ 4/6 with shim · 143 MB · 7 m 45 s | ❌ no WASM · 51 MB |
 
-**Decision:** the core talks only to an `Engine` interface. wry is the default; Servo is the
-pure-Rust option; Chromium (CEF) and others can be plugged in later.
+**Decision:** the core talks only to an `Engine` interface. wry is the default, Servo is the
+pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 
 ## 🎯 Features
 
 | Feature | Idea | Progress |
 |---|---|---|
-| 🧱 **Engine** | Real web apps (WASM, WebGL, Canvas) on 3 OSes; pluggable engines | `▓▓▓▓▓▓░░░░` wry works |
+| 🧱 **Engine** | Real web apps (WASM, WebGL, Canvas) on 3 OSes, pluggable engines | `▓▓▓▓▓▓░░░░` wry works |
 | 🗂️ **Tab discipline** | At most 20 open, auto-archive into folders, soft delete after 2 months | `▓▓▓▓▓▓░░░░` core + UI |
-| ⚠️ **Slop tagging** | One click; orange frame on every later visit | `▓▓▓▓▓▓░░░░` works |
-| 🔕 **Feed blocker** | Feeds hidden; unlock only in settings, max 6 h | `▓▓▓▓▓░░░░░` works, no settings UI yet |
+| ⚠️ **Slop tagging** | One click, orange frame on every next visit | `▓▓▓▓▓▓░░░░` works |
+| 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓░░░░░` works, no settings UI yet |
 | 🚫 **No ads** | Ads blurred + grey hatching | `▓▓▓▓░░░░░░` basic selectors (adblock-rust next) |
 | 🔞 **Adult lock** | Every navigation checked + system DNS lock | `▓▓▓▓░░░░░░` browser part done |
-| 👤 **Profiles** | Separate identities; per-profile MCP access | `▓░░░░░░░░░` designed |
+| 👤 **Profiles** | Separate identities, MCP access per profile | `▓░░░░░░░░░` designed |
 | 🔎 **Human search** | "Obsolete" badge for results first seen after 2023 | `▓▓░░░░░░░░` designed |
 | 🫥 **AI spoilers** | AI images behind a click-to-reveal overlay | `▓░░░░░░░░░` researched |
 | 🧩 **Extensions** | Chrome MV3 subset + an AI skill that ports extensions | `▓░░░░░░░░░` designed |
-| 🤖 **MCP** | Opt-in local server; agents browse through the same filters | `▓░░░░░░░░░` designed |
+| 🤖 **MCP** | Opt-in local server, agents browse through the same filters | `▓░░░░░░░░░` designed |
 | 🎨 **Customization** | `theme.css` tokens (works now) + an AI skill to restyle | `▓▓▓░░░░░░░` theme.css |
 
 ## 🚀 Try it
@@ -142,7 +147,7 @@ cargo run --release -p canbec              # Linux also needs WebKitGTK 4.1 (see
 cargo test --workspace                     # 23 tests
 ```
 
-**Make it yours:** put CSS variables in `theme.css` in your config folder, and they override the
+**Make it yours:** put CSS variables into `theme.css` in your config folder, and they override the
 sidebar. The config folder is `~/Library/Application Support/canbec` on macOS, `~/.config/canbec`
 on Linux and `%APPDATA%\canbec` on Windows.
 
@@ -150,8 +155,8 @@ on Linux and `%APPDATA%\canbec` on Windows.
 :root { --acc: #4fae6b; --bg: #fbfaf7; }
 ```
 
-**Pick your icon:** write a built-in name (see [Icons](#-icons)) or a path to your own PNG into a
-file named `icon` in the same folder:
+**Pick your icon:** create a file named `icon` in the same folder and write a built-in name (see
+[Icons](#-icons)) or a path to your own PNG into it:
 
 ```sh
 echo spoiler > ~/Library/Application\ Support/canbec/icon      # macOS
@@ -179,8 +184,8 @@ docs/               research, decisions, screenshots, logos
 
 ## 🎨 Icons
 
-**Default: `sprout`**, a pointer growing a sprout: taking your life online back, one human click
-at a time. All seven ship with the app; choose one in the `icon` file (see [Try it](#-try-it)).
+**Default is `sprout`**, a mouse pointer with a sprout growing out of it, because you are taking your
+life back from the screen. All seven come with the app, you pick one in the `icon` file (see [Try it](#-try-it)).
 
 | <img src="docs/img/logos/05-sprout-cursor.svg" width="72"> | <img src="docs/img/logo.svg" width="72"> | <img src="docs/img/logos/01-fingerprint.svg" width="72"> | <img src="docs/img/logos/02-not-a-parrot.svg" width="72"> | <img src="docs/img/logos/03-broken-link.svg" width="72"> | <img src="docs/img/logos/04-spoiler.svg" width="72"> | <img src="docs/img/logos/06-calm-eye.svg" width="72"> |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|

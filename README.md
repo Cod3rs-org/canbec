@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧠 canbec
+<img src="docs/img/logo.svg" width="128" alt="canbec logo: cut puppet strings above a free human">
+
+# canbec
 
 ### **C**ontrol **A**I, **N**ot **B**e **C**ontrolled
 

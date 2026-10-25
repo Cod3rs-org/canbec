@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="canbec logo: cut puppet strings above a free human">
+  <rect width="256" height="256" rx="56" fill="#1f2328"/>
+  <!-- puppeteer control bar -->
+  <g stroke="#f6f1e7" stroke-linecap="round" fill="none">
+    <path d="M70 60 H186" stroke-width="12"/>
+    <path d="M128 38 V82" stroke-width="12"/>
+    <!-- strings, cut short -->
+    <path d="M84 66 V104 M128 82 V104 M172 66 V104" stroke-width="5"/>
+  </g>
+  <!-- snip marks where the strings were cut -->
+  <g stroke="#ff7a45" stroke-width="5" stroke-linecap="round">
+    <path d="M76 116 L92 108 M120 116 L136 108 M164 116 L180 108"/>
+  </g>
+  <!-- the free human -->
+  <g stroke="#ff7a45" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M128 184 V214"/>
+    <path d="M128 192 L98 166 M128 192 L158 166"/>
+    <path d="M128 214 L108 232 M128 214 L148 232" stroke-width="11"/>
+  </g>
+  <circle cx="128" cy="160" r="15" fill="#ff7a45"/>
+</svg>

@@ -1,0 +1,64 @@
+﻿@page "/"
+@inject IJSRuntime JS
+
+<PageTitle>canbec engine probe</PageTitle>
+
+<main class="probe">
+    <h1>canbec engine probe</h1>
+    <p class="muted">If you can read the table below, <strong>Blazor WebAssembly</strong> booted in this engine.</p>
+
+    <table>
+        <thead><tr><th>Feature</th><th>Result</th><th>Detail</th></tr></thead>
+        <tbody>
+            <tr><td>WebAssembly (Blazor)</td><td>✅</td><td>.NET @Environment.Version</td></tr>
+            @foreach (var r in results)
+            {
+                <tr><td>@r.Name</td><td>@(r.Ok ? "✅" : "❌")</td><td>@r.Detail</td></tr>
+            }
+        </tbody>
+    </table>
+    <p class="score">@results.Count(r => r.Ok) / @results.Count JS probes passed</p>
+
+    <section class="visuals">
+        <figure><canvas id="c2d" width="120" height="84"></canvas><figcaption>Canvas 2D</figcaption></figure>
+        <figure><canvas id="cgl" width="120" height="84"></canvas><figcaption>WebGL</figcaption></figure>
+        <figure>
+            <button @onclick="() => clicks++">Clicked @clicks×</button>
+            <figcaption>Blazor events</figcaption>
+        </figure>
+    </section>
+
+    <h2>Filter fixtures</h2>
+    <p class="muted">Content the browser's filters should catch.</p>
+    <div class="fixtures">
+        <ins class="adsbygoogle ad-fixture">Fake ad slot (class="adsbygoogle")</ins>
+    </div>
+
+    <p class="muted ua">@ua</p>
+</main>
+
+@code {
+    record Result(string Name, bool Ok, string Detail);
+    readonly List<Result> results = new();
+    string ua = "";
+    int clicks;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await Run("Canvas 2D", "probe.canvas2d", "c2d");
+        await Run("WebGL", "probe.webgl", "cgl");
+        await Run("Camera API", "probe.camera");
+        await Run("localStorage", "probe.storage");
+        await Run("fetch()", "probe.fetchSelf");
+        await Run("Service worker", "probe.serviceWorker");
+        ua = await JS.InvokeAsync<string>("probe.userAgent");
+        StateHasChanged();
+    }
+
+    async Task Run(string name, string fn, params object[] args)
+    {
+        try { results.Add(new(name, true, await JS.InvokeAsync<string>(fn, args))); }
+        catch (Exception e) { results.Add(new(name, false, e.Message.Split('\n')[0])); }
+    }
+}

@@ -1,0 +1,14 @@
+[package]
+name = "engine-servo"
+version = "0.1.0"
+edition = "2021"
+description = "Bake-off prototype: render a URL to PNG with the servo crate (LTS line)."
+license = "MPL-2.0"
+
+[dependencies]
+servo = "0.1"
+url = "2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+euclid = "0.22"
+dpi = "0.1"
+anyhow = "1"

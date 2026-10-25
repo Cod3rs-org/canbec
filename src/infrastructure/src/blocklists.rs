@@ -1,20 +1,24 @@
 //! Downloaded lists, each = a small built-in seed (works offline, first run) + a cached copy of
 //! a public list, refreshed weekly:
 //! - adult hosts: StevenBlack porn-only hosts list;
-//! - cosmetic ad rules: EasyList (`##selector` rules only; see domain::cosmetic).
+//! - cosmetic ad rules: EasyList (`##selector` rules only; see domain::cosmetic);
+//! - tracker hosts: EasyPrivacy (`||host^` rules only; see domain::trackers).
 
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::cosmetic::CosmeticRules;
+use canbec_domain::trackers::TrackerList;
 
 pub const ADULT_LIST_URL: &str =
     "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts";
 pub const ADS_LIST_URL: &str = "https://easylist.to/easylist/easylist.txt";
+pub const TRACKERS_LIST_URL: &str = "https://easylist.to/easylist/easyprivacy.txt";
 const MAX_AGE: Duration = Duration::from_secs(7 * 24 * 3600);
 const SEED: &str = include_str!("scripts/adult-seed.txt");
 const ADS_SEED: &str = include_str!("scripts/ads-seed.txt");
+const TRACKERS_SEED: &str = include_str!("scripts/trackers-seed.txt");
 
 /// Seed + cached list (if any). Never fails: blocking must work offline.
 pub fn load_adult(cache: &Path) -> HostBlocklist {
@@ -51,6 +55,17 @@ pub fn load_ads(cache: &Path) -> CosmeticRules {
 /// Downloads EasyList into `cache`. Run off the UI thread. New rules apply from the next start.
 pub fn refresh_ads(cache: &Path) -> Result<(), String> {
     download(ADS_LIST_URL, cache, |text| CosmeticRules::parse(text).len())
+}
+
+/// Seed + cached EasyPrivacy.
+pub fn load_trackers(cache: &Path) -> TrackerList {
+    let cached = std::fs::read_to_string(cache).unwrap_or_default();
+    TrackerList::parse(&format!("{TRACKERS_SEED}\n{cached}"))
+}
+
+/// Downloads EasyPrivacy into `cache`. Run off the UI thread. New rules apply from the next start.
+pub fn refresh_trackers(cache: &Path) -> Result<(), String> {
+    download(TRACKERS_LIST_URL, cache, |text| TrackerList::parse(text).len())
 }
 
 /// Fetches `url` and saves it to `cache` only if it parses into 1,000+ entries.

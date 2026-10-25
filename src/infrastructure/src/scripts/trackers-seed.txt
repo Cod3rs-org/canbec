@@ -1,0 +1,14 @@
+! Built-in tracker hosts (EasyPrivacy syntax). Work offline and on first run; the weekly
+! EasyPrivacy download adds ~47k more. Only third-party loads are blocked.
+||google-analytics.com^
+||googletagmanager.com^
+||doubleclick.net^
+||connect.facebook.net^
+||hotjar.com^
+||segment.io^
+||mixpanel.com^
+||scorecardresearch.com^
+||quantserve.com^
+||clarity.ms^
+||bat.bing.com^
+||analytics.tiktok.com^

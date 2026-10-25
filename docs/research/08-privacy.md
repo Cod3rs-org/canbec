@@ -11,6 +11,7 @@ the user is always a new one.* Plus: suggest privacy tools (throwaway email and 
 | **Logins you want to keep** | "Stay logged in on this site" in settings. Only those sites' cookies are saved (`<config>/logins.json`, mode 0600) and put back on the next start. Every other cookie dies with the session. | `domain::privacy::keeps_cookie`, `infrastructure::cookie_jar` |
 | **Fingerprinting** | Canvas, WebGL and audio readouts get tiny invisible changes, seeded per site and per run: stable within a page (so it doesn't look like noise), different on every other site and after every restart. The WebGL GPU name is generic. Wrapped functions still print `[native code]`. Runs in iframes too. | `scripts/privacy.js` |
 | **Tracking parameters** | `utm_*`, `fbclid`, `gclid`, `msclkid`, `si`, … are removed from typed URLs (core), from links right before you follow them, and from the address of the page you landed on. One list in Rust, injected into the script. | `domain::privacy`, `scripts/privacy.js` |
+| **Tracker requests** (macOS) | EasyPrivacy's ~47k `||host^` rules (weekly, plus a built-in seed) become a WebKit content-blocker list, the same engine Safari blockers use. Only third-party loads are blocked. Compiled once, cached by WebKit. Verified: Google Analytics, Hotjar, Mixpanel, Plausible blocked; jQuery CDN loads. | `domain::trackers`, `block_trackers` in `app` |
 | **Global Privacy Control** | `navigator.globalPrivacyControl = true`: a legal opt-out signal in some places (e.g. California). | `scripts/privacy.js` |
 | **Privacy tools** | Settings lists 10 Minute Mail, Firefox Relay, DuckDuckGo Email, Bitwarden, Have I Been Pwned and EFF's Cover Your Tracks. When a page focuses an email field, the sidebar suggests a throwaway address. | `src/ui/sidebar.html`, `scripts/content.js` |
 
@@ -22,10 +23,10 @@ comes back, landing and link URLs lose `utm_*`/`fbclid`.
 
 - **Within one session**, third-party cookies still work on WebView2 (WebKit's ITP blocks them on
   macOS and Linux). They are gone on restart. Next: tracker *request* blocking.
-- **Tracker requests aren't blocked yet.** Ads are covered cosmetically; trackers still load.
-  Plan: EasyPrivacy `||domain^` rules → Safari content-blocker JSON, which **WKWebView
-  (`WKContentRuleListStore`) and WebKitGTK (`WebKitUserContentFilterStore`) both accept**; WebView2
-  needs `WebResourceRequested` filters. Platform-specific code, behind one function in `app`.
+- **Tracker request blocking is macOS-only so far.** WebKitGTK accepts the same JSON
+  (`WebKitUserContentFilterStore`); WebView2 needs `WebResourceRequested` filters. Both slot into
+  `block_trackers` in `app`. EasyPrivacy path rules (`||host/path`) and site-specific exceptions
+  are skipped.
 - **Kept sites keep only cookies**, not localStorage/IndexedDB. Logins based on localStorage
   tokens need a re-login after restart.
 - `logins.json` is a plain file (0600 on macOS/Linux; default ACLs on Windows). Same trust level as

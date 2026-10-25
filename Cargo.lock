@@ -124,6 +124,7 @@ name = "canbec"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "block2",
  "canbec-application",
  "canbec-domain",
  "canbec-infrastructure",
@@ -131,6 +132,7 @@ dependencies = [
  "objc2-app-kit",
  "objc2-foundation",
  "objc2-quartz-core",
+ "objc2-web-kit",
  "serde_json",
  "tao",
  "wry",
@@ -151,6 +153,7 @@ name = "canbec-domain"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "url",
 ]
 

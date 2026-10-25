@@ -3,7 +3,7 @@
 use canbec_application::ports::StateStore;
 use canbec_application::Snapshot;
 use canbec_domain::slop::SlopScope;
-use canbec_infrastructure::blocklists::{load_adult, load_ads, needs_refresh};
+use canbec_infrastructure::blocklists::{load_adult, load_ads, load_trackers, needs_refresh};
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_infrastructure::{content_script, privacy_script, random_token, CONTENT_SCRIPT};
 
@@ -57,6 +57,13 @@ fn ad_seed_works_offline_and_user_extras_are_added() {
     let rules = load_ads(&cache);
     assert!(rules.generic.iter().any(|s| s == ".my-own-ad"));
     assert_eq!(rules.for_host("news.example").hide, [".promo"]);
+}
+
+#[test]
+fn tracker_seed_works_offline() {
+    let list = load_trackers(&temp_dir("trackers").join("trackers.txt"));
+    assert!(list.len() >= 10);
+    assert!(list.to_content_blocker_json().contains(r"google-analytics\\.com"));
 }
 
 #[test]

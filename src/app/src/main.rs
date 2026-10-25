@@ -188,6 +188,8 @@ fn main() -> wry::Result<()> {
     };
 
     round_corners(&content);
+    let trackers_cache = dir.join("blocklists").join("trackers.txt");
+    block_trackers(&content, &blocklists::load_trackers(&trackers_cache));
 
     let cookie_file = dir.join("logins.json");
     cookie_jar::restore(&content, &cookie_file);
@@ -200,6 +202,13 @@ fn main() -> wry::Result<()> {
     }
 
     // Background: weekly list refreshes and a once-a-minute housekeeping tick.
+    if blocklists::needs_refresh(&trackers_cache) {
+        std::thread::spawn(move || {
+            if let Err(e) = blocklists::refresh_trackers(&trackers_cache) {
+                eprintln!("canbec: tracker list refresh failed (seed + cache still active): {e}");
+            }
+        });
+    }
     if blocklists::needs_refresh(&ads_cache) {
         std::thread::spawn(move || match blocklists::refresh_ads(&ads_cache) {
             Ok(()) => eprintln!("canbec: ad rules updated, active from the next start"),
@@ -437,6 +446,58 @@ fn set_main_menu() {
 
 #[cfg(not(target_os = "macos"))]
 fn set_main_menu() {}
+
+/// Blocks third-party requests to tracker hosts with WebKit's built-in content blocker (the one
+/// Safari blockers use; compiled once, then cached by WebKit under an id that changes with the list).
+/// ponytail: macOS only. WebKitGTK takes the same JSON (UserContentFilterStore); WebView2 needs
+/// WebResourceRequested filters. Both are a function like this one.
+#[cfg(target_os = "macos")]
+fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList) {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    use block2::RcBlock;
+    use objc2::MainThreadMarker;
+    use objc2_foundation::{NSError, NSString};
+    use objc2_web_kit::{WKContentRuleList, WKContentRuleListStore};
+    use wry::WebViewExtMacOS;
+
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let json = list.to_content_blocker_json();
+    let mut hash = DefaultHasher::new();
+    json.hash(&mut hash);
+    let id = NSString::from_str(&format!("canbec-trackers-{:x}", hash.finish()));
+    // SAFETY: main thread; the controller outlives the webview's configuration; blocks run on main.
+    unsafe {
+        let Some(store) = WKContentRuleListStore::defaultStore(mtm) else { return };
+        let controller = view.webview().configuration().userContentController();
+        let add = {
+            let controller = controller.clone();
+            move |list: *mut WKContentRuleList| {
+                if let Some(list) = list.as_ref() {
+                    controller.addContentRuleList(list);
+                }
+            }
+        };
+        let compile = {
+            let (store, add) = (store.clone(), add.clone());
+            let (id, json) = (id.clone(), NSString::from_str(&json));
+            move || {
+                let add = add.clone();
+                let done = RcBlock::new(move |list: *mut WKContentRuleList, err: *mut NSError| match err.as_ref() {
+                    Some(err) => eprintln!("canbec: tracker blocker failed to compile: {err:?}"),
+                    None => add(list),
+                });
+                store.compileContentRuleListForIdentifier_encodedContentRuleList_completionHandler(Some(&id), Some(&json), Some(&done));
+            }
+        };
+        let found = RcBlock::new(move |list: *mut WKContentRuleList, _: *mut NSError| {
+            if list.is_null() { compile() } else { add(list) }
+        });
+        store.lookUpContentRuleListForIdentifier_completionHandler(Some(&id), Some(&found));
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn block_trackers(_view: &wry::WebView, _list: &canbec_domain::trackers::TrackerList) {}
 
 #[cfg(target_os = "macos")]
 fn round_corners(view: &wry::WebView) {

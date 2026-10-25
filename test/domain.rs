@@ -5,6 +5,7 @@ use canbec_domain::cosmetic::{CosmeticRules, SiteCosmetics};
 use canbec_domain::feed_lock::FeedLock;
 use canbec_domain::privacy::{keeps_cookie, strip_tracking};
 use canbec_domain::slop::{SlopList, SlopScope};
+use canbec_domain::trackers::TrackerList;
 use canbec_domain::tabs::{folder_for, TabPolicy, TabState, Tabs};
 use canbec_domain::{host_of, DAY, HOUR};
 
@@ -131,4 +132,20 @@ fn only_stay_logged_in_sites_keep_cookies() {
     assert!(!keeps_cookie(".tracker.example", &kept));
     assert!(!keeps_cookie("", &kept));
     assert!(!keeps_cookie(".example.com", &[]));
+}
+
+#[test]
+fn tracker_rules_become_third_party_content_blocker_json() {
+    let list = TrackerList::parse(
+        "! EasyPrivacy\n||stats.example^\n||pixel.example^$third-party\n||path.example/track.js\n\
+         ||img.example^$image\n@@||stats.example^$script\n||bad host^\n\
+         ||mx.example^$third-party\n@@||mx.example^$script,domain=shop.example\n",
+    );
+    assert_eq!(list.len(), 3);
+    let json: serde_json::Value = serde_json::from_str(&list.to_content_blocker_json()).unwrap();
+    let rules = json.as_array().unwrap();
+    assert_eq!(rules.len(), 4); // mx.example stays blocked: its exception is for one site only
+    assert_eq!(rules[1]["trigger"]["url-filter"], r"^[^:]+://+([^:/]+\.)?pixel\.example[:/]");
+    assert_eq!(rules[0]["trigger"]["load-type"][0], "third-party");
+    assert_eq!(rules[3]["action"]["type"], "ignore-previous-rules");
 }

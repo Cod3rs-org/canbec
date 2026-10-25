@@ -7,6 +7,7 @@ pub mod feed_lock;
 pub mod privacy;
 pub mod slop;
 pub mod tabs;
+pub mod trackers;
 
 /// Unix time in seconds. Passed in by callers so rules stay testable.
 pub type Timestamp = u64;

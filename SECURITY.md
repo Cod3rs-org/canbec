@@ -18,7 +18,7 @@ canbec is early alpha. Please report vulnerabilities privately through GitHub's
 | **Supply chain** | `cargo audit` (RustSec) runs in CI on every push. | ✅ |
 
 | **Tracking across runs** | Websites run in an incognito (in-memory) profile; cookies, storage and cache are gone after quitting. Only "stay logged in" sites' cookies are kept, in `<config>/logins.json` (mode 0600 on macOS/Linux, not encrypted). Fingerprint readouts are randomized per site and run. See docs/research/08-privacy.md. | ✅ |
-| **Tracker requests within a session** | Not blocked yet (ads are covered, trackers still load). | ⚠️ planned |
+| **Tracker requests within a session** | macOS: third-party requests to ~47k EasyPrivacy tracker hosts are blocked by WebKit's content blocker. Windows/Linux: not yet. | ✅ macOS / ⚠️ others |
 
 ## What canbec never does
 

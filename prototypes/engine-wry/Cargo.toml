@@ -1,0 +1,9 @@
+[package]
+name = "engine-wry"
+version = "0.1.0"
+edition = "2021"
+description = "Bake-off prototype: minimal browser window using the OS webview via wry."
+
+[dependencies]
+wry = "0.57"
+tao = "0.37"

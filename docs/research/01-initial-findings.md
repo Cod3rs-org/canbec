@@ -65,3 +65,9 @@ Sources: [Simon Willison on the servo crate](https://simonwillison.net/2026/Apr/
 [Vice: DuckDuckGo no-AI mode](https://www.vice.com/en/article/duckduckgo-no-ai-mode),
 [Slashdot: DDG hides AI images](https://tech.slashdot.org/story/25/07/18/2046207/duckduckgo-now-lets-you-hide-ai-generated-images-in-search-results),
 [Brave API pricing change](https://www.implicator.ai/brave-drops-free-search-api-tier-puts-all-developers-on-metered-billing.md).
+
+## Feature requests added during kickoff
+
+- **Cross-platform:** Windows, Linux and macOS are all first-class targets.
+- **"Tag as AI slop" button:** one click marks the current site. On later visits the page gets a
+  warning border and a banner. Tags are stored locally; sharing them might come later.

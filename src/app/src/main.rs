@@ -34,6 +34,8 @@ enum AppEvent {
     Popup(String),
     Title(String),
     Blocked,
+    /// Download started (file name) or finished (`None` name, success flag).
+    Download(Option<String>, bool),
     SidebarReady,
     AdultList(HostBlocklist),
     Tick,
@@ -155,6 +157,19 @@ fn main() -> wry::Result<()> {
                     wry::NewWindowResponse::Deny
                 }
             })
+            // Downloads land in the OS Downloads folder (wry fills in a free file name there).
+            .with_download_started_handler({
+                let p = proxy.clone();
+                move |_, path| {
+                    let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                    send(&p, AppEvent::Download(Some(name), true));
+                    true
+                }
+            })
+            .with_download_completed_handler({
+                let p = proxy.clone();
+                move |_, _, ok| send(&p, AppEvent::Download(None, ok))
+            })
             .with_ipc_handler(move |req| send(&p2, AppEvent::Content(req.into_body())))
             .with_on_page_load_handler(move |e, url| {
                 send(&p3, AppEvent::PageLoad { url, finished: matches!(e, PageLoadEvent::Finished) })
@@ -189,6 +204,7 @@ fn main() -> wry::Result<()> {
     }
 
     let mut last_url = String::new();
+    let mut downloading = String::new();
     event_loop.run(move |event, _, flow| {
         *flow = ControlFlow::Wait;
         let render = match event {
@@ -299,6 +315,16 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Popup(url)) => {
                 service.handle(UiCommand::Navigate { url }, now());
+                true
+            }
+            Event::UserEvent(AppEvent::Download(Some(name), _)) => {
+                service.notify(format!("Downloading {name}…"));
+                downloading = name;
+                true
+            }
+            Event::UserEvent(AppEvent::Download(None, ok)) => {
+                let name = std::mem::take(&mut downloading);
+                service.notify(if ok { format!("Downloaded {name} to Downloads") } else { format!("Download failed: {name}") });
                 true
             }
             Event::UserEvent(AppEvent::Blocked) => {

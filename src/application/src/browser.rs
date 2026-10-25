@@ -174,6 +174,11 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         self.ads_hidden = count;
     }
 
+    /// A one-line message for the user from outside the service (downloads, …).
+    pub fn notify(&mut self, message: impl Into<String>) {
+        self.notice = Some(message.into());
+    }
+
     /// Navigation was refused by the adult blocklist (checked in the engine's navigation hook).
     pub fn on_blocked(&mut self) {
         self.notice = Some("Blocked: adult content".into());

@@ -28,6 +28,7 @@ enum AppEvent {
     Ui(String),
     Content(String),
     PageLoad { url: String, finished: bool },
+    Popup(String),
     Title(String),
     Blocked,
     SidebarReady,
@@ -89,6 +90,9 @@ fn main() -> wry::Result<()> {
             .with_initialization_script(&theme_script())
             .with_initialization_script(&format!("window.__platform={:?}", std::env::consts::OS))
             .with_bounds(bounds(&window, true))
+            // The sidebar has the trusted IPC channel, so it may never load anything else.
+            .with_navigation_handler(|url| url.starts_with("about:") || url.starts_with("data:"))
+            .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
             .with_ipc_handler(move |req| send(&p1, AppEvent::Ui(req.into_body())))
             .with_on_page_load_handler(move |e, _| {
                 if matches!(e, PageLoadEvent::Finished) {
@@ -111,6 +115,14 @@ fn main() -> wry::Result<()> {
                     send(&p1, AppEvent::Blocked);
                 }
                 !blocked
+            })
+            // Popups would be unfiltered native windows; open them in this tab (and its checks) instead.
+            .with_new_window_req_handler({
+                let p = proxy.clone();
+                move |url, _| {
+                    send(&p, AppEvent::Popup(url));
+                    wry::NewWindowResponse::Deny
+                }
             })
             .with_ipc_handler(move |req| send(&p2, AppEvent::Content(req.into_body())))
             .with_on_page_load_handler(move |e, url| {
@@ -198,6 +210,10 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Title(title)) => {
                 service.on_page(&last_url, Some(&title), false, now());
+                true
+            }
+            Event::UserEvent(AppEvent::Popup(url)) => {
+                service.handle(UiCommand::Navigate { url }, now());
                 true
             }
             Event::UserEvent(AppEvent::Blocked) => {

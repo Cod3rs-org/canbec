@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>popup fixture</title>
+<p>Security fixture: tries to open a popup to <code id="t"></code>. canbec must load it in the
+same (filtered) tab, never in an unfiltered native window.</p>
+<a id="a" target="_blank"></a>
+<script>
+  const target = new URLSearchParams(location.search).get("to") || "https://example.com/";
+  t.textContent = target; a.href = target;
+  setTimeout(() => { a.click(); window.open(target); }, 300);
+</script>

@@ -23,3 +23,12 @@ jobs:
           path: |
             target/release/canbec
             target/release/canbec.exe
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+      - run: cargo audit

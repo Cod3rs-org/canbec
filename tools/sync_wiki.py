@@ -19,12 +19,14 @@ PAGES = {
     "docs/research/07-roadmap-notes.md": "07-Roadmap-Notes",
     "docs/research/08-privacy.md": "08-No-Tracking",
     "docs/architecture/ui-contract.md": "UI-Contract",
+    "docs/ROADMAP.md": "Roadmap",
     "docs/benchmarks/2026-10-25-macos.md": "Benchmarks",
     "CLAUDE.md": "Development-Guide",
 }
 SIDEBAR = """**[canbec](https://github.com/Cod3rs-org/canbec)** — Control AI, Not Be Controlled
 
 * [Home](Home)
+* [Roadmap](Roadmap)
 * [Development guide](Development-Guide)
 * [UI contract](UI-Contract)
 * [Benchmarks](Benchmarks)

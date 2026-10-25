@@ -16,9 +16,9 @@ canbec is early alpha. Please report vulnerabilities privately through GitHub's
 | **Removing the slop frame / feed lock on its own page** | The content script lives in the page, so a site *can* remove its own overlay. This is cosmetic only (not a security boundary). Hardening idea: isolated-world scripts. | ⚠️ known |
 | **Engine bugs** | We rely on the OS engine's patches: Safari/WebKit updates with macOS, WebView2 auto-updates; **WebKitGTK depends on your Linux distro**, so keep it updated. Servo (optional build) is younger and less hardened. | ⚠️ inherent |
 | **Supply chain** | `cargo audit` (RustSec) runs in CI on every push. | ✅ |
-
 | **Tracking across runs** | Websites run in an incognito (in-memory) profile; cookies, storage and cache are gone after quitting. Only "stay logged in" sites' cookies are kept, in `<config>/logins.json` (mode 0600 on macOS/Linux, not encrypted). Fingerprint readouts are randomized per site and run. See docs/research/08-privacy.md. | ✅ |
 | **Tracker requests within a session** | macOS: third-party requests to ~47k EasyPrivacy tracker hosts are blocked by WebKit's content blocker. Windows/Linux: not yet. | ✅ macOS / ⚠️ others |
+| **Camera, microphone, location** | Never granted silently: the engine asks you per site (WebKit / WebView2 prompt). Notifications, motion sensors, local-font lists and MIDI are always refused (nagging or fingerprinting). Linux: camera/mic are refused until canbec draws its own prompt. | ✅ |
 
 ## What canbec never does
 

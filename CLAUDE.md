@@ -66,6 +66,8 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
 ## Known gotchas
 
 - Servo 0.1.x breaks `WebAssembly.compileStreaming`; the probe's `?nostream` shim works around it.
-- WKWebView camera needs `NSCameraUsageDescription` + a permission handler (not wired yet).
+- Camera/mic: the permission handler (`permission` in `app`) lets WebKit/WebView2 ask per site.
+  Run from the `.app` bundle (`tools/bundle-macos.sh`) to test it: plain `cargo run` has no
+  `NSCameraUsageDescription`, and macOS kills the process when a site opens the camera.
 - `python -m http.server` drops Blazor's parallel downloads (backlog 5). Use `tools/serve.py`.
 - `with_proxy_config` (planned for the domain-level filter proxy) needs macOS 14+.

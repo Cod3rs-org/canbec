@@ -20,7 +20,7 @@ use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 use tao::window::{Icon, Window, WindowBuilder};
-use wry::{dpi, PageLoadEvent, Rect, WebViewBuilder};
+use wry::{dpi, PageLoadEvent, PermissionKind, PermissionResponse, Rect, WebViewBuilder};
 
 const SIDEBAR_HTML: &str = include_str!("../../ui/sidebar.html");
 const SIDEBAR_WIDTH: f64 = 300.0;
@@ -80,6 +80,21 @@ fn icons_script(current: &str) -> String {
         })
         .collect();
     format!("window.__icons={};window.__icon={}", serde_json::Value::from(list), serde_json::Value::from(current))
+}
+
+/// Site permissions. Without a handler wry grants camera/mic silently; `Default` makes the engine
+/// ask the user with its own per-site prompt instead. Things that only help tracking or nagging
+/// (notifications, sensors, local fonts for fingerprinting) are refused outright.
+/// ponytail: Linux treats `Default` as deny, so camera/mic stay off there until we draw a prompt.
+fn permission(kind: PermissionKind) -> PermissionResponse {
+    match kind {
+        PermissionKind::Notifications
+        | PermissionKind::Sensors
+        | PermissionKind::LocalFonts
+        | PermissionKind::Midi
+        | PermissionKind::WindowManagement => PermissionResponse::Deny,
+        _ => PermissionResponse::Default,
+    }
 }
 
 /// Shows the config folder (theme.css, icon, state) in the OS file manager.
@@ -150,6 +165,7 @@ fn main() -> wry::Result<()> {
             .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
             .with_initialization_script(&content_script(&key_token, &ads.generic))
             .with_bounds(bounds(&window, false))
+            .with_permission_handler(permission)
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
             .with_navigation_handler(move |url| {
                 let blocked = host_of(&url).is_some_and(|h| adult.read().map(|l| l.is_blocked(&h)).unwrap_or(true));

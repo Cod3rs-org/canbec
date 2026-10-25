@@ -67,6 +67,18 @@
     e.stopImmediatePropagation();
     send({ type: "key", key, token: KEY_TOKEN });
   }, true);
+  // Cmd/Ctrl+click and middle click on a link: new background tab (same checks as typing the URL).
+  function openInTab(e) {
+    const mod = mac ? e.metaKey : e.ctrlKey;
+    if (!e.isTrusted || !(e.button === 1 || (e.button === 0 && mod))) return;
+    const a = e.target.closest && e.target.closest("a[href]");
+    if (!a || !/^https?:/.test(a.href)) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    send({ type: "openTab", url: a.href, token: KEY_TOKEN });
+  }
+  addEventListener("click", openInTab, true);
+  addEventListener("auxclick", openInTab, true);
   // One stylesheet for all ad rules. Selectors go in chunks; a chunk with a selector this
   // engine doesn't understand is retried one by one, so one bad rule can't disable the rest.
   const adSheet = document.createElement("style");

@@ -35,7 +35,7 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
 - The sidebar ↔ core protocol is `docs/architecture/ui-contract.md`. Change the contract, Rust
   types (`application/src/ui.rs`) and `src/ui/sidebar.html` together.
 - Websites can call `window.ipc` too. Content IPC accepts only harmless messages (`adsHidden`,
-  and `key` shortcuts with the per-run token). Never act on content messages for anything
+  `emailField`, and `key` / `openTab` with the per-run token). Never act on content messages for anything
   security-relevant.
 - macOS needs a main menu for Cmd+C/V/Q (`set_main_menu` in `app`). Browser shortcuts are JS
   key handlers in `content.js` and `sidebar.html` (keep the two maps in sync).

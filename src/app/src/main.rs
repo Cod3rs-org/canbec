@@ -336,6 +336,11 @@ fn main() -> wry::Result<()> {
                         service.notify("Tip: a throwaway email keeps this site out of your inbox (Settings → Privacy tools)");
                         true
                     }
+                    (Some("openTab"), _) if msg["token"].as_str() == Some(&key_token) => {
+                        let url = msg["url"].as_str().unwrap_or_default().to_owned();
+                        service.handle(UiCommand::OpenTab { url }, now());
+                        true
+                    }
                     (Some("key"), _) if msg["token"].as_str() == Some(&key_token) => {
                         send(&proxy, AppEvent::Key(msg["key"].as_str().unwrap_or_default().to_owned()));
                         false

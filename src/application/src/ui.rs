@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum UiCommand {
     Navigate { url: String },
+    /// Opens `url` in a new background tab (Cmd/Ctrl+click, middle click). Same checks as navigate.
+    OpenTab { url: String },
     Back,
     Forward,
     Reload,

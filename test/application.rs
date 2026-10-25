@@ -264,3 +264,18 @@ fn zoom_is_remembered_per_site_and_reapplied_on_load() {
     svc.handle(UiCommand::Zoom { step: 0 }, 0);
     assert!(store.saved.borrow().as_ref().unwrap().zoom.is_empty());
 }
+
+#[test]
+fn open_tab_adds_a_background_tab_with_the_usual_checks() {
+    let (mut svc, engine, _) = service();
+    let loads = engine.log.borrow().len();
+    svc.handle(UiCommand::OpenTab { url: "https://a.example/?utm_source=x".into() }, 0);
+    let state = svc.state(0);
+    assert_eq!(state.tabs.len(), 2);
+    assert_eq!(state.tabs[1].url, "https://a.example/");
+    assert!(state.tabs[0].active, "the current tab stays in front");
+    assert_eq!(engine.log.borrow().len(), loads, "nothing loads until the tab is opened");
+    svc.handle(UiCommand::OpenTab { url: "https://adult.example/".into() }, 0);
+    assert_eq!(svc.state(0).tabs.len(), 2);
+    assert_eq!(svc.state(0).notice.as_deref(), Some("Blocked: adult content"));
+}

@@ -86,12 +86,8 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         let tabs = &mut self.snapshot.tabs;
         match cmd {
             UiCommand::Navigate { url } => {
-                let url = resolve_input(&url);
-                let url = strip_tracking(&url).unwrap_or(url);
-                if host_of(&url).is_some_and(|h| self.adult.is_blocked(&h)) {
-                    self.notice = Some("Blocked: adult content".into());
-                    return;
-                }
+                let Some(url) = self.checked(&url) else { return };
+                let tabs = &mut self.snapshot.tabs;
                 match tabs.active {
                     Some(id) => tabs.update(id, &url, None, now),
                     None => {
@@ -101,6 +97,16 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                     }
                 }
                 self.load_active();
+            }
+            UiCommand::OpenTab { url } => {
+                let Some(url) = self.checked(&url) else { return };
+                let tabs = &mut self.snapshot.tabs;
+                let current = tabs.active;
+                match tabs.open(&url, &self.policy, now) {
+                    // Loads when the user switches to it: one engine view, so background = not loaded yet.
+                    Ok(_) => tabs.active = current,
+                    Err(e) => self.notice = Some(e.to_string()),
+                }
             }
             UiCommand::Back | UiCommand::Forward => {
                 let delta = if cmd == UiCommand::Back { -1 } else { 1 };
@@ -311,6 +317,17 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             stay_logged_in: self.snapshot.stay_logged_in.clone(),
             notice: self.notice.clone(),
         }
+    }
+
+    /// Address-bar text → clean URL, or `None` (with a notice) when the adult list blocks it.
+    fn checked(&mut self, input: &str) -> Option<String> {
+        let url = resolve_input(input);
+        let url = strip_tracking(&url).unwrap_or(url);
+        if host_of(&url).is_some_and(|h| self.adult.is_blocked(&h)) {
+            self.notice = Some("Blocked: adult content".into());
+            return None;
+        }
+        Some(url)
     }
 
     fn zoom_for(&self, host: &str) -> f64 {

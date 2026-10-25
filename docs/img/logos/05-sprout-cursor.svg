@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec: a mouse pointer with a green sprout growing from its tip">
+<rect width="256" height="256" rx="56" fill="#1f2328"/>
+<path d="M82 60 L82 196 L118 164 L142 214 L168 202 L144 154 L192 150 Z" fill="#f6f1e7" stroke="#f6f1e7" stroke-width="10" stroke-linejoin="round"/>
+<path d="M82 60 C82 40 82 34 86 28" stroke="#4fae6b" stroke-width="10" stroke-linecap="round" fill="none"/>
+<path d="M86 30 C108 8 138 14 142 38 C116 46 96 42 86 30Z" fill="#4fae6b"/>
+<path d="M84 44 C62 22 38 30 36 52 C58 60 76 56 84 44Z" fill="#ff7a45"/>
+</svg>

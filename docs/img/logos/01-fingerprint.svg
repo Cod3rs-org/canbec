@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a fingerprint whose ridges form the letter C">
+<rect width="256" height="256" rx="56" fill="#1f2328"/>
+<g fill="none" stroke-linecap="round" stroke-width="15">
+<path d="M170 86A60 60 0 1 0 170 170" stroke="#f6f1e7"/>
+<path d="M155 100A38 38 0 1 0 155 156" stroke="#f6f1e7"/>
+<path d="M141 114A17 17 0 1 0 141 142" stroke="#ff7a45"/>
+</g>
+</svg>

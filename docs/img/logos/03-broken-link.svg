@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a chain link breaking open, with a cursor arrow in the gap">
+<rect width="256" height="256" rx="56" fill="#1f2328"/>
+<g fill="none" stroke="#f6f1e7" stroke-width="20" stroke-linecap="round">
+<path d="M84 92H68a36 36 0 0 0 0 72H84"/>
+<path d="M172 92H188a36 36 0 0 1 0 72H172"/>
+</g>
+<path d="M112 76L112 172L134 150L152 190L170 182L152 142L184 140Z" fill="#ff7a45" transform="translate(-10 -4)"/>
+</svg>

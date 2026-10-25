@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec: a calm half-closed eye whose eyelid is a shield">
+<defs><clipPath id="e"><path d="M22 150 Q128 70 234 150 Q128 214 22 150Z"/></clipPath></defs>
+<rect width="256" height="256" rx="56" fill="#1f2328"/>
+<path d="M22 150 Q128 70 234 150 Q128 214 22 150Z" fill="#f6f1e7"/>
+<g clip-path="url(#e)"><circle cx="128" cy="160" r="42" fill="#ff7a45"/><circle cx="128" cy="164" r="17" fill="#1f2328"/></g>
+<path d="M128 36 L190 54 V96 C190 118 160 134 128 142 C96 134 66 118 66 96 V54Z" fill="#f6f1e7" stroke="#1f2328" stroke-width="8" stroke-linejoin="round"/>
+<path d="M100 92 Q128 108 156 92" stroke="#1f2328" stroke-width="9" stroke-linecap="round" fill="none"/>
+</svg>

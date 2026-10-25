@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a friendly parrot with a slash through it, meaning browse as a human, not a parrot">
+<rect width="256" height="256" rx="56" fill="#f6f1e7"/>
+<path d="M96 120C80 160 90 200 104 226H156C176 190 180 150 172 120Z" fill="#1f2328"/>
+<path d="M104 226C96 196 100 170 112 150C132 170 138 200 128 226Z" fill="#ff7a45"/>
+<circle cx="134" cy="92" r="46" fill="#1f2328"/>
+<path d="M170 76C206 70 216 102 192 124C194 108 184 100 168 100Z" fill="#ff7a45"/>
+<path d="M112 52C106 36 118 26 132 30C124 36 124 44 128 50Z" fill="#ff7a45"/>
+<circle cx="140" cy="84" r="11" fill="#f6f1e7"/><circle cx="142" cy="85" r="5" fill="#1f2328"/>
+<path d="M44 44L212 212" stroke="#f6f1e7" stroke-width="32" stroke-linecap="round"/>
+<path d="M44 44L212 212" stroke="#ff7a45" stroke-width="16" stroke-linecap="round"/>
+</svg>

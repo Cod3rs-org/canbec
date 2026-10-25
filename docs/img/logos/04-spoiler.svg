@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec: a browser window with AI content hidden under a hatched spoiler strip, one human dot left visible">
+<defs><pattern id="h" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="14" height="14" fill="#3a4048"/><rect width="6" height="14" fill="#8a8f96"/></pattern>
+<clipPath id="w"><rect x="36" y="48" width="184" height="160" rx="22"/></clipPath></defs>
+<rect width="256" height="256" rx="56" fill="#1f2328"/>
+<rect x="36" y="48" width="184" height="160" rx="22" fill="#f6f1e7"/>
+<g clip-path="url(#w)"><rect x="36" y="48" width="184" height="36" fill="#ff7a45"/></g>
+<circle cx="56" cy="66" r="7" fill="#f6f1e7"/>
+<rect x="56" y="100" width="144" height="22" rx="11" fill="#1f2328"/>
+<rect x="56" y="134" width="144" height="26" rx="13" fill="url(#h)"/>
+<rect x="56" y="134" width="144" height="26" rx="13" fill="none" stroke="#1f2328" stroke-width="4"/>
+<circle cx="70" cy="187" r="10" fill="#ff7a45"/>
+<rect x="90" y="181" width="70" height="12" rx="6" fill="#1f2328"/>
+</svg>

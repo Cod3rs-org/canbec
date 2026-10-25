@@ -1,0 +1,53 @@
+{
+  "canbec": {
+    "size_mb": 4.0,
+    "pages": {
+      "probe": {
+        "window_s": 0.279,
+        "rss_mb": 407.8,
+        "procs": 5,
+        "runs": 3
+      },
+      "wikipedia": {
+        "window_s": 0.329,
+        "rss_mb": 323.1,
+        "procs": 5,
+        "runs": 3
+      }
+    }
+  },
+  "Safari": {
+    "size_mb": 34.6,
+    "pages": {
+      "probe": {
+        "window_s": 1.112,
+        "rss_mb": 1056.2,
+        "procs": 10,
+        "runs": 3
+      },
+      "wikipedia": {
+        "window_s": 1.082,
+        "rss_mb": 975.9,
+        "procs": 11,
+        "runs": 3
+      }
+    }
+  },
+  "Edge": {
+    "size_mb": 1111.2,
+    "pages": {
+      "probe": {
+        "window_s": 0.645,
+        "rss_mb": 1480.6,
+        "procs": 13,
+        "runs": 3
+      },
+      "wikipedia": {
+        "window_s": 0.635,
+        "rss_mb": 1962.8,
+        "procs": 15,
+        "runs": 3
+      }
+    }
+  }
+}

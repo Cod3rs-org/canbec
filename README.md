@@ -60,6 +60,8 @@ timeline
              : Ad hatching, slop frame, feed lock
              : Integrated title bar, rounded card
              : 20 tests + 3-OS CI
+    Measure  : ~3x less memory than Safari
+             : 4-6x less than Edge
 ```
 
 | # | Step | Status | Read more |
@@ -74,9 +76,20 @@ timeline
 | 8 | Sidebar UI (vanilla HTML/CSS/JS, ~16 KB) | ✅ | [ui-contract](docs/architecture/ui-contract.md) |
 | 9 | **First working browser** (domain / application / infrastructure / app) | ✅ | [src/](src/) |
 | 10 | Integrated title bar (macOS) + own window buttons (Windows / Linux), rounded card | ✅ | |
-| 11 | Roadmap: customization, benchmarks, local model, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
+| 11 | Benchmarks vs Safari and Edge: about 3× less memory | ✅ | [benchmarks](docs/benchmarks/2026-10-25-macos.md) |
+| 12 | Roadmap: customization, local model, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md)
+
+## ⚡ Benchmarks
+
+macOS, same pages, median of 3 runs ([details & caveats](docs/benchmarks/2026-10-25-macos.md)):
+
+| Browser | Size | Time to window | Memory (Wikipedia) | Processes |
+|---|--:|--:|--:|--:|
+| **canbec** | **4 MB** | **0.33 s** | **323 MB** | **5** |
+| Safari | 35 MB | 1.08 s | 976 MB | 11 |
+| Microsoft Edge | 1,111 MB | 0.64 s | 1,963 MB | 15 |
 
 ## 🧪 Engine bake-off
 

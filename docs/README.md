@@ -23,6 +23,10 @@ docs in the repo means they're versioned with the code and reviewed in PRs.)
 | 06 | [Extensibility](research/06-extensibility.md) | Any-engine harness, MV3 subset + porting skill, feed lock, MCP, profiles |
 | 07 | [Roadmap notes](research/07-roadmap-notes.md) | Simplicity rule, UI customization, benchmarks, Hacker News launch |
 
+## Benchmarks
+
+[2026-10-25 macOS](benchmarks/2026-10-25-macos.md): canbec vs Safari vs Edge (size, time to window, memory). Reproduce with `tools/bench.py`.
+
 ## Screenshots
 
 | | |

@@ -64,3 +64,24 @@ logged in the sidebar. The user can see and kill agent tabs.
 
 Implementation: the official Rust MCP SDK (`rmcp`) in the infrastructure layer as a *driving
 adapter*. It calls the same application use cases the UI calls.
+
+## 5. Profiles (and per-profile MCP access)
+
+A **profile** is a fully separate browser identity: its own cookies and storage (a separate webview
+data directory), tabs, slop tags, essentials, theme and filter settings. Workspaces live *inside*
+a profile.
+
+| Profile setting | Example |
+|---|---|
+| Name, colour, icon | "Personal" 🟠, "Work" 🔵, "Agent" 🤖 |
+| Filters | Adult lock is always on in every profile and can't be removed. Feed lock and ad overlay are per profile |
+| **MCP access** | `off` (default) · `read-only` (search + read) · `full` (open, read, tag) |
+| MCP scope | Allowed domains list, max open agent tabs, rate limit |
+
+Rules:
+- The MCP server only ever exposes profiles whose MCP access is not `off`. Agents choose a profile
+  by name, and the default is a dedicated, empty "Agent" profile, so agents **never** see your
+  personal cookies or logins unless you grant it explicitly.
+- Every agent action is logged per profile and shown in the sidebar with a kill switch.
+- Implementation: `profile_id` on the `Snapshot` store path (`<config>/profiles/<id>/`). wry's
+  `WebContext::new(Some(data_dir))` isolates cookies per profile.

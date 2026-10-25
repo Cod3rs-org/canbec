@@ -1,0 +1,35 @@
+# canbec docs
+
+Everything we've learned and decided, in reading order. (A GitHub Wiki can mirror this later. Keeping
+docs in the repo means they're versioned with the code and reviewed in PRs.)
+
+## Start here
+
+| Doc | What's inside |
+|---|---|
+| [../README.md](../README.md) | What canbec is, screenshots, the journey so far |
+| [../CLAUDE.md](../CLAUDE.md) | Commands, architecture rules, product rules, gotchas (for humans and AI) |
+| [architecture/ui-contract.md](architecture/ui-contract.md) | The sidebar ↔ core protocol (state + commands) |
+
+## Research & decisions
+
+| # | Doc | Decision / outcome |
+|---|---|---|
+| 01 | [Initial findings](research/01-initial-findings.md) | Goals; real apps need WASM + WebGL + Canvas, so "basic JS" isn't enough |
+| 02 | [Search without AI](research/02-search.md) | NoAI DuckDuckGo now → own meta-search with Wayback "first seen" dating → own index (stretch) |
+| 03 | [Open-source inspiration](research/03-inspiration.md) | Servo, Zen, adblock-rust, uBlacklist, HUGE AI Blocklist, Marginalia, Stract … |
+| 04 | [UI, tabs & slop tagging](research/04-ui-and-tabs.md) | Zen-style sidebar; 20-tab cap; auto-archive; never hard-delete |
+| 05 | [Engine bake-off](research/05-engine-bakeoff.md) | wry default (5/6), Servo optional (4/6 + shim), Blitz dropped |
+| 06 | [Extensibility](research/06-extensibility.md) | Any-engine harness, MV3 subset + porting skill, feed lock, MCP, profiles |
+| 07 | [Roadmap notes](research/07-roadmap-notes.md) | Simplicity rule, UI customization, benchmarks, Hacker News launch |
+
+## Screenshots
+
+| | |
+|:-:|:-:|
+| ![Wikipedia](img/real-wikipedia.png) Reading Wikipedia | ![YouTube](img/real-youtube-feed-locked.png) YouTube with the feed locked |
+| ![Slop](img/real-slop-tagged.png) A site you tagged as AI slop | ![Probe](img/canbec-probe.png) Engine probe: Blazor WASM + ad hatching |
+
+## Brand
+
+[Logo candidates](img/logos/contact-sheet.svg): the current logo plus 6 concepts.

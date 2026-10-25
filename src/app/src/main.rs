@@ -20,6 +20,9 @@ use wry::{dpi, PageLoadEvent, Rect, WebViewBuilder};
 
 const SIDEBAR_HTML: &str = include_str!("../../ui/sidebar.html");
 const SIDEBAR_WIDTH: f64 = 300.0;
+const CARD_GAP: f64 = 8.0;
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+const CARD_RADIUS: f64 = 12.0;
 
 enum AppEvent {
     Ui(String),
@@ -36,10 +39,16 @@ fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
+/// The sidebar webview fills the window (its background is the frame); the website floats
+/// on top as an inset card. ponytail: square corners; rounding needs a native layer per OS.
 fn bounds(window: &Window, sidebar: bool) -> Rect {
     let size = window.inner_size().to_logical::<f64>(window.scale_factor());
-    let (x, w) = if sidebar { (0.0, SIDEBAR_WIDTH) } else { (SIDEBAR_WIDTH, (size.width - SIDEBAR_WIDTH).max(0.0)) };
-    Rect { position: dpi::LogicalPosition::new(x, 0.0).into(), size: dpi::LogicalSize::new(w, size.height).into() }
+    let (x, y, w, h) = if sidebar {
+        (0.0, 0.0, size.width, size.height)
+    } else {
+        (SIDEBAR_WIDTH, CARD_GAP, size.width - SIDEBAR_WIDTH - CARD_GAP, size.height - 2.0 * CARD_GAP)
+    };
+    Rect { position: dpi::LogicalPosition::new(x, y).into(), size: dpi::LogicalSize::new(w.max(0.0), h.max(0.0)).into() }
 }
 
 /// User theme: `<config>/theme.css` overrides the sidebar's CSS variables (see docs/research/07).
@@ -54,12 +63,20 @@ fn theme_script() -> String {
 fn main() -> wry::Result<()> {
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
-    let window = WindowBuilder::new()
+    let builder = WindowBuilder::new()
         .with_title("canbec")
         .with_inner_size(LogicalSize::new(1280.0, 820.0))
-        .with_position(LogicalPosition::new(80.0, 80.0))
-        .build(&event_loop)
-        .expect("window");
+        .with_position(LogicalPosition::new(80.0, 80.0));
+    // macOS: no title bar strip; the traffic lights sit in the sidebar's top spacer.
+    // Windows/Linux: no native title bar; the sidebar draws minimize/maximize/close.
+    #[cfg(target_os = "macos")]
+    let builder = {
+        use tao::platform::macos::WindowBuilderExtMacOS;
+        builder.with_titlebar_transparent(true).with_title_hidden(true).with_fullsize_content_view(true)
+    };
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.with_decorations(false);
+    let window = builder.build(&event_loop).expect("window");
 
     let dir = config_dir();
     let adult_cache = dir.join("blocklists").join("adult.txt");
@@ -70,6 +87,7 @@ fn main() -> wry::Result<()> {
         WebViewBuilder::new()
             .with_html(SIDEBAR_HTML)
             .with_initialization_script(&theme_script())
+            .with_initialization_script(&format!("window.__platform={:?}", std::env::consts::OS))
             .with_bounds(bounds(&window, true))
             .with_ipc_handler(move |req| send(&p1, AppEvent::Ui(req.into_body())))
             .with_on_page_load_handler(move |e, _| {
@@ -101,6 +119,8 @@ fn main() -> wry::Result<()> {
             .with_document_title_changed_handler(move |title| send(&p4, AppEvent::Title(title)))
             .build_as_child(&window)?
     };
+
+    round_corners(&content);
 
     let snapshot_list = adult.read().map(|l| l.clone()).unwrap_or_default();
     let store = JsonFileStore::new(dir.join("state.json"));
@@ -136,6 +156,18 @@ fn main() -> wry::Result<()> {
             Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {
                 let _ = sidebar.set_bounds(bounds(&window, true));
                 let _ = service.engine().view.set_bounds(bounds(&window, false));
+                false
+            }
+            // Window chrome, not browser state: handled here instead of in BrowserService.
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"window""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                match msg["action"].as_str() {
+                    Some("drag") => drop(window.drag_window()),
+                    Some("minimize") => window.set_minimized(true),
+                    Some("maximize") => window.set_maximized(!window.is_maximized()),
+                    Some("close") => *flow = ControlFlow::Exit,
+                    _ => {}
+                }
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) => match serde_json::from_str::<UiCommand>(&json) {
@@ -189,6 +221,21 @@ fn main() -> wry::Result<()> {
         }
     });
 }
+
+/// Rounds the website card. ponytail: macOS only; WebView2 / WebKitGTK need their own region APIs.
+#[cfg(target_os = "macos")]
+fn round_corners(view: &wry::WebView) {
+    use wry::WebViewExtMacOS;
+    let native = view.webview();
+    native.setWantsLayer(true);
+    if let Some(layer) = native.layer() {
+        layer.setCornerRadius(CARD_RADIUS);
+        layer.setMasksToBounds(true);
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn round_corners(_view: &wry::WebView) {}
 
 fn send(proxy: &EventLoopProxy<AppEvent>, event: AppEvent) {
     let _ = proxy.send_event(event);

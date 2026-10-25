@@ -34,8 +34,7 @@
       background: repeating-linear-gradient(45deg, rgba(220,220,220,.92) 0 6px, rgba(180,180,180,.92) 6px 12px); }
     html.canbec-feeds-locked :is(${feedSelectors.join(",") || "#canbec-none"}) { display: none !important; }
     #canbec-slop { position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
-      border: 6px solid transparent;
-      border-image: repeating-linear-gradient(45deg, #ff7a45 0 12px, #1f2328 12px 24px) 6; }
+      box-shadow: inset 0 0 0 6px #ff7a45, inset 0 0 0 8px #1f2328, inset 0 0 40px rgba(255,122,69,.35); }
     #canbec-slop-banner { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
       background: #1f2328; color: #f6f1e7; font: 600 13px system-ui, sans-serif; padding: 6px 12px; border-radius: 999px;
       box-shadow: 0 2px 10px rgba(0,0,0,.25); cursor: pointer; }`;

@@ -6,6 +6,9 @@
 @media (prefers-color-scheme:dark){:root{--bg:#1f2328;--fg:#f6f1e7;--mut:#9a9ca0;--card:rgba(246,241,231,.07);--hov:rgba(246,241,231,.11);--act:#2e343b;--line:rgba(246,241,231,.14);--amber:#f5b73b;--red:#ff6b5e;--sh:0 1px 3px rgba(0,0,0,.4)}}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
+html{background:var(--bg)}
+/* The sidebar webview spans the window; the site floats over the rest as a card. */
+body{width:300px}
 body{background:var(--bg);color:var(--fg);font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;overflow:hidden}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;border-radius:10px;display:inline-flex;align-items:center;justify-content:center}
 button:hover{background:var(--hov)}
@@ -14,6 +17,11 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .ib{width:30px;height:30px}.ib:disabled{opacity:.3;cursor:default;background:none}
 .ib.spin svg{animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 #top{height:28px;flex:none;-webkit-app-region:drag}
+#top.winctl{display:flex;justify-content:flex-end;gap:2px;padding:4px 6px 0}
+#top.winctl button{width:28px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--mut);display:grid;place-items:center;cursor:pointer}
+#top.winctl button:hover{background:var(--hov);color:var(--fg)}
+#top.winctl button.x:hover{background:var(--red);color:#fff}
+#top.winctl svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 #nav{display:flex;gap:2px;padding:0 10px 8px 12px;margin-top:6px}
 #nav .sp{flex:1}
 #bar{display:flex;align-items:center;gap:4px;margin:0 10px 8px;padding:0 3px 0 12px;background:var(--card);border-radius:12px;height:36px}
@@ -139,6 +147,12 @@ $("tabs").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;va
 $("tabs").onauxclick=function(e){if(e.button!=1)return;e.preventDefault();var t=e.target.closest(".tab");if(t)send({type:"archiveTab",id:+t.dataset.id})};
 $("tabs").onmousedown=function(e){if(e.button==1)e.preventDefault()};
 window.canbec={render:render};
+// Window chrome: macOS draws traffic lights itself; Windows/Linux get our own buttons.
+(function(){var top=$("top"),mac=(window.__platform||"macos")==="macos";
+ if(!mac){top.classList.add("winctl");top.innerHTML='<button data-a="minimize" aria-label="Minimize"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button><button data-a="maximize" aria-label="Maximize"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button><button data-a="close" class="x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>';}
+ top.addEventListener("mousedown",function(e){if(e.button===0&&!e.target.closest("button"))send({type:"window",action:"drag"})});
+ top.addEventListener("dblclick",function(e){if(!e.target.closest("button"))send({type:"window",action:"maximize"})});
+ top.addEventListener("click",function(e){var b=e.target.closest("button[data-a]");if(b)send({type:"window",action:b.dataset.a})});})();
 render({});
 })();
 </script></body></html>

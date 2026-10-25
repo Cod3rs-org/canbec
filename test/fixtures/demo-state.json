@@ -1,0 +1,10 @@
+{
+  "tabs": { "items": [], "active": null, "next_id": 0 },
+  "slop": { "tags": [ { "pattern": "example.com", "scope": "domain", "created_at": 1761386400 } ] },
+  "feed_lock": { "unlocked_until": null },
+  "essentials": [
+    { "title": "Wikipedia", "url": "https://en.wikipedia.org/" },
+    { "title": "Hacker News", "url": "https://news.ycombinator.com/" },
+    { "title": "Rust", "url": "https://doc.rust-lang.org/" }
+  ]
+}

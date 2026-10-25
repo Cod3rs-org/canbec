@@ -46,3 +46,17 @@ Compared against: Safari, Chrome, Firefox, Zen, Brave (if installed). Results go
 - **Expect questions about:** "isn't this just uBlock + uBlacklist?" (answer: hard locks, slop
   tagging, tab discipline, feed lock, all in one place); privacy (no telemetry); Wayback API load
   (results are cached).
+
+## Optional local model: Cactus Needle
+
+[Needle](https://cactuscompute.com/needle) ([repo](https://github.com/cactus-compute/needle)) is an 8–29 MB, 29–121M-parameter
+on-device model. It does tool calling, structured extraction / classification and text embeddings.
+Engines are under 1 MB for macOS, Windows, Linux and WASM. On a Raspberry Pi 5: 400–4k tok/s decode.
+Licence not stated on the page; check it before bundling.
+
+Where it could fit (always **opt-in**, runs locally, never sends data anywhere):
+- **Text slop score:** a "suspected AI text" hint on pages, shown as a hint and never as a hard
+  verdict (detectors have high false-positive rates).
+- **Embeddings for archived tabs:** "that article about borrow checking from last month",
+  searched locally.
+- Not for images: AI-image detection stays metadata-first (C2PA / IPTC).

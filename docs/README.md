@@ -36,4 +36,5 @@ Everything we've learned and decided, in reading order. These files are the sour
 
 ## Brand
 
-[Logo candidates](img/logos/contact-sheet.svg): the current logo plus 6 concepts.
+Default icon: **sprout** (`img/logos/05-sprout-cursor.svg`). All 7 designs ship with the app and are
+selectable. See the README's Icons section and [contact sheet](img/logos/contact-sheet.svg).

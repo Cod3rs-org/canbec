@@ -11,11 +11,12 @@ use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::store::JsonFileStore;
+use canbec_infrastructure::icon::{load_icon, AppIcon};
 use canbec_infrastructure::{blocklists, config_dir, CONTENT_SCRIPT};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
-use tao::window::{Window, WindowBuilder};
+use tao::window::{Icon, Window, WindowBuilder};
 use wry::{dpi, PageLoadEvent, Rect, WebViewBuilder};
 
 const SIDEBAR_HTML: &str = include_str!("../../ui/sidebar.html");
@@ -64,7 +65,10 @@ fn theme_script() -> String {
 fn main() -> wry::Result<()> {
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
+    let dir = config_dir();
+    let icon = load_icon(&dir);
     let builder = WindowBuilder::new()
+        .with_window_icon(Icon::from_rgba(icon.rgba.clone(), icon.width, icon.height).ok())
         .with_title("canbec")
         .with_inner_size(LogicalSize::new(1280.0, 820.0))
         .with_position(LogicalPosition::new(80.0, 80.0));
@@ -78,8 +82,8 @@ fn main() -> wry::Result<()> {
     #[cfg(not(target_os = "macos"))]
     let builder = builder.with_decorations(false);
     let window = builder.build(&event_loop).expect("window");
+    set_dock_icon(&icon);
 
-    let dir = config_dir();
     let adult_cache = dir.join("blocklists").join("adult.txt");
     let adult = Arc::new(RwLock::new(blocklists::load_adult(&adult_cache)));
 
@@ -239,6 +243,24 @@ fn main() -> wry::Result<()> {
 }
 
 /// Rounds the website card. ponytail: macOS only; WebView2 / WebKitGTK need their own region APIs.
+/// macOS ignores window icons; the Dock icon is set on the application instead.
+/// ponytail: Finder/.app bundle icon needs packaging (icns) — comes with release builds.
+#[cfg(target_os = "macos")]
+fn set_dock_icon(icon: &AppIcon) {
+    use objc2::{AllocAnyThread, MainThreadMarker};
+    use objc2_app_kit::{NSApplication, NSImage};
+    use objc2_foundation::NSData;
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let data = NSData::with_bytes(&icon.png);
+    if let Some(image) = NSImage::initWithData(NSImage::alloc(), &data) {
+        // SAFETY: called on the main thread with a valid image.
+        unsafe { NSApplication::sharedApplication(mtm).setApplicationIconImage(Some(&image)) };
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn set_dock_icon(_icon: &AppIcon) {}
+
 #[cfg(target_os = "macos")]
 fn round_corners(view: &wry::WebView) {
     use wry::WebViewExtMacOS;

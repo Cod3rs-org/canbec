@@ -46,6 +46,8 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
   **Never hard-delete** (no `remove` on tabs).
 - Feed lock: on by default; unlock only via settings, clamped to at most 6 hours (domain-enforced).
 - New tab / search → `https://noai.duckduckgo.com/` until our own search exists.
+- App icon: default `sprout`; `<config>/icon` holds a built-in name or a PNG path
+  (`infrastructure/src/icon.rs`, PNGs in `infrastructure/src/icons/`, sources in `docs/img/logos/`).
 
 ## Working conventions
 

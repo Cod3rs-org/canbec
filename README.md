@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/img/logo.svg" width="128" alt="canbec logo: cut puppet strings above a free human">
+<img src="docs/img/logos/05-sprout-cursor.svg" width="128" alt="canbec logo: a mouse pointer with a green sprout growing from its tip">
 
 # canbec
 
@@ -14,7 +14,7 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 ![status](https://img.shields.io/badge/status-early%20alpha-orange)
 ![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
 ![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-20%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-23%20passing-brightgreen)
 ![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
 ![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
 
@@ -24,11 +24,22 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 
 ---
 
-## 💭 Why
+## ✨ 5 reasons to switch
 
-The web got loud. AI-generated pages bury human ones, feeds are built to never end, ads follow you
-around, and twenty forgotten tabs nag in the background. canbec is a **quiet browser with hard
-limits you set once and can't easily undo in a weak moment.**
+The web got loud. AI-generated pages bury human ones, feeds are built to never end, and twenty
+forgotten tabs nag in the background. canbec is a **quiet browser with hard limits you set once and
+can't easily undo in a weak moment.**
+
+1. 🔕 **Hard limits for weak moments.** Infinite feeds are gone, and unlocking them takes a trip to
+   settings and lasts **6 hours at most**. Adult content has **no off switch** at all.
+2. ⚠️ **AI slop: mark it once, warned forever.** One click on the shield, and the site wears an
+   orange frame on every visit. AI images get spoilers, and search marks pages first seen after 2023.
+3. 🗂️ **20 tabs, zero hoarding.** Idle tabs file themselves into folders and fade out after two
+   months, but nothing is ever really deleted.
+4. 🪶 **Featherweight.** A 4 MB app that opens in 0.3 s and uses about **3× less memory than Safari**
+   ([benchmarks](docs/benchmarks/2026-10-25-macos.md)).
+5. 🔒 **Private and yours.** No telemetry, no accounts. Theme and icon are plain files you edit,
+   and AI agents get in only if you invite them, per profile.
 
 | | |
 |:-:|:-:|
@@ -62,6 +73,8 @@ timeline
              : 20 tests + 3-OS CI
     Measure  : ~3x less memory than Safari
              : 4-6x less than Edge
+    Polish   : 5 selling points
+             : Sprout icon, customizable
 ```
 
 | # | Step | Status | Read more |
@@ -77,7 +90,8 @@ timeline
 | 9 | **First working browser** (domain / application / infrastructure / app) | ✅ | [src/](src/) |
 | 10 | Integrated title bar (macOS) + own window buttons (Windows / Linux), rounded card | ✅ | |
 | 11 | Benchmarks vs Safari and Edge: about 3× less memory | ✅ | [benchmarks](docs/benchmarks/2026-10-25-macos.md) |
-| 12 | Roadmap: customization, local model, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
+| 12 | 5 selling points, sprout as the default icon, customizable app icon | ✅ | [icons](#-icons) |
+| 13 | Roadmap: customization, local model, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md)
 
@@ -125,7 +139,7 @@ pure-Rust option; Chromium (CEF) and others can be plugged in later.
 ```sh
 git clone https://github.com/Cod3rs-org/canbec && cd canbec
 cargo run --release -p canbec              # Linux also needs WebKitGTK 4.1 (see CI workflow)
-cargo test --workspace                     # 20 tests
+cargo test --workspace                     # 23 tests
 ```
 
 **Make it yours:** put CSS variables in `theme.css` in your config folder, and they override the
@@ -134,6 +148,14 @@ on Linux and `%APPDATA%\canbec` on Windows.
 
 ```css
 :root { --acc: #4fae6b; --bg: #fbfaf7; }
+```
+
+**Pick your icon:** write a built-in name (see [Icons](#-icons)) or a path to your own PNG into a
+file named `icon` in the same folder:
+
+```sh
+echo spoiler > ~/Library/Application\ Support/canbec/icon      # macOS
+echo ~/Pictures/my-icon.png > ~/.config/canbec/icon            # Linux, custom PNG (max 1024 px)
 ```
 
 ## 🏗️ How it's built
@@ -155,6 +177,12 @@ test/               Rust tests, Blazor WASM engine probe, fixtures
 docs/               research, decisions, screenshots, logos
 ```
 
-## 🎨 Logo candidates
+## 🎨 Icons
 
-<img src="docs/img/logos/contact-sheet.svg" width="860" alt="Seven logo concepts: cut puppet strings, fingerprint C, not-a-parrot, broken link with cursor, spoiler window, sprout cursor, calm shield eye">
+**Default: `sprout`**, a pointer growing a sprout: taking your life online back, one human click
+at a time. All seven ship with the app; choose one in the `icon` file (see [Try it](#-try-it)).
+
+| <img src="docs/img/logos/05-sprout-cursor.svg" width="72"> | <img src="docs/img/logo.svg" width="72"> | <img src="docs/img/logos/01-fingerprint.svg" width="72"> | <img src="docs/img/logos/02-not-a-parrot.svg" width="72"> | <img src="docs/img/logos/03-broken-link.svg" width="72"> | <img src="docs/img/logos/04-spoiler.svg" width="72"> | <img src="docs/img/logos/06-calm-eye.svg" width="72"> |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **`sprout`** ⭐ | `strings` | `fingerprint` | `parrot` | `broken-link` | `spoiler` | `calm-eye` |
+| growing back online | cut puppet strings | human uniqueness | not a parrot | break the scroll | AI hidden | calm, protected |

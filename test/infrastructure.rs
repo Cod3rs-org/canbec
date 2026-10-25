@@ -54,3 +54,41 @@ fn content_script_exposes_the_hooks_the_engine_calls() {
         assert!(CONTENT_SCRIPT.contains(hook), "content script lost `{hook}`");
     }
 }
+
+mod icon {
+    use super::temp_dir;
+    use canbec_infrastructure::icon::{load_icon, BUILT_IN, DEFAULT_ICON};
+
+    #[test]
+    fn default_is_sprout_and_all_built_ins_decode() {
+        let icon = load_icon(&temp_dir("icon-default"));
+        assert_eq!((icon.source.as_str(), icon.width, icon.height), (DEFAULT_ICON, 256, 256));
+        assert_eq!(icon.rgba.len(), 256 * 256 * 4);
+        for (name, _, _) in BUILT_IN {
+            let dir = temp_dir(&format!("icon-{name}"));
+            std::fs::write(dir.join("icon"), format!("{name}\n")).unwrap();
+            assert_eq!(load_icon(&dir).source, *name);
+        }
+    }
+
+    #[test]
+    fn custom_png_path_relative_to_config_dir() {
+        let dir = temp_dir("icon-custom");
+        let (_, _, png) = BUILT_IN.iter().find(|(n, _, _)| *n == "spoiler").unwrap();
+        std::fs::write(dir.join("mine.png"), png).unwrap();
+        std::fs::write(dir.join("icon"), "mine.png").unwrap();
+        let icon = load_icon(&dir);
+        assert!(icon.source.ends_with("mine.png"));
+        assert_eq!(icon.png, *png);
+    }
+
+    #[test]
+    fn unknown_name_or_broken_png_falls_back_to_default() {
+        let dir = temp_dir("icon-bad");
+        std::fs::write(dir.join("icon"), "no-such-icon").unwrap();
+        assert_eq!(load_icon(&dir).source, DEFAULT_ICON);
+        std::fs::write(dir.join("broken.png"), b"not a png").unwrap();
+        std::fs::write(dir.join("icon"), "broken.png").unwrap();
+        assert_eq!(load_icon(&dir).source, DEFAULT_ICON);
+    }
+}

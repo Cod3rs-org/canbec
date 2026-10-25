@@ -12,6 +12,7 @@ serde_json.workspace = true
 wry = "0.57"
 dirs = "7"
 ureq = "3"
+png = "0.18"
 
 [[test]]
 name = "infrastructure"

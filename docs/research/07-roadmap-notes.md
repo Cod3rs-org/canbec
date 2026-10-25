@@ -13,6 +13,8 @@
 
 - **Theme tokens:** `~/.config/canbec/theme.css` overrides the sidebar's CSS custom properties
   (`--bg`, `--fg`, `--accent`, radii, density). It's loaded after the built-in styles.
+- **App icon (done):** `<config>/icon` = one of the 7 built-in names (default `sprout`) or a path to
+  a PNG. Window/taskbar icon on Windows and Linux, Dock icon on macOS.
 - **Layout switches:** sidebar left or right, compact mode, essentials on or off (in settings).
 - **`user.css` / `user.js`:** advanced, loaded into the sidebar only (never into websites).
 - **AI skill `customize-canbec-ui`:** "make it look like Gruvbox / bigger tabs / no essentials" →

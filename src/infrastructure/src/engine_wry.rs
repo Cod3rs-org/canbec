@@ -30,4 +30,14 @@ impl Engine for WryEngine {
         let json = |list: &[String]| serde_json::to_string(list).unwrap_or_else(|_| "[]".into());
         self.js(&format!("window.__canbec && window.__canbec.ads({}, {})", json(hide), json(allow)));
     }
+    fn find(&self, text: &str, backwards: bool) {
+        // window.find is non-standard but built into WebKit and Chromium; it wraps around.
+        let text = serde_json::to_string(text).unwrap_or_else(|_| "''".into());
+        self.js(&format!("window.find({text}, false, {backwards}, true)"));
+    }
+    fn zoom(&self, level: f64) {
+        if let Err(e) = self.view.zoom(level) {
+            eprintln!("canbec: zoom failed: {e}");
+        }
+    }
 }

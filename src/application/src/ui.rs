@@ -29,6 +29,10 @@ pub enum UiCommand {
     StayLoggedIn,
     /// Forget a site's login at the next start.
     ForgetLogin { domain: String },
+    /// Find `text` in the page; again with the same text jumps to the next match.
+    Find { text: String, #[serde(default)] backwards: bool },
+    /// `1` zoom in, `-1` zoom out, `0` reset. Remembered per site.
+    Zoom { step: i8 },
 }
 
 #[derive(Debug, Clone, Serialize)]

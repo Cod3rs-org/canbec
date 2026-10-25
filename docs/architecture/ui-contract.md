@@ -44,6 +44,8 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
 | `unpinEssential` | `index` | Remove a pinned site |
 | `stayLoggedIn` | | Keep the current site's cookies across restarts (everything else starts fresh) |
 | `forgetLogin` | `domain` | Stop keeping that site's cookies (gone at the next start) |
+| `find` | `text`, `backwards?` | Select the next/previous match in the page (wraps around) |
+| `zoom` | `step` (1, -1, 0) | Zoom in/out/reset; remembered per site |
 
 App-level messages, handled in `src/app` (not browser state):
 

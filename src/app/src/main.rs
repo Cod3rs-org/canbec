@@ -288,10 +288,13 @@ fn main() -> wry::Result<()> {
                     "back" => Some(UiCommand::Back),
                     "forward" => Some(UiCommand::Forward),
                     "pinPage" => Some(UiCommand::PinPage),
+                    "zoomIn" => Some(UiCommand::Zoom { step: 1 }),
+                    "zoomOut" => Some(UiCommand::Zoom { step: -1 }),
+                    "zoomReset" => Some(UiCommand::Zoom { step: 0 }),
                     "closeTab" => service.state(now()).tabs.iter().find(|t| t.active).map(|t| UiCommand::CloseTab { id: t.id }),
-                    "focusAddress" | "settings" => {
+                    "focusAddress" | "settings" | "find" => {
                         let _ = sidebar.focus();
-                        let call = if key == "settings" { "toggleSettings" } else { "focusUrl" };
+                        let call = match key.as_str() { "settings" => "toggleSettings", "find" => "find", _ => "focusUrl" };
                         let _ = sidebar.evaluate_script(&format!("window.canbec.{call}()"));
                         None
                     }

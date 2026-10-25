@@ -58,7 +58,7 @@ a weak moment.
 | 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Settings in the sidebar.** Feeds unlock only after a 10 s wait, privacy tools like 10 Minute Mail, pinned sites, app icon. |
 
 And under the hood:
-- ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), `[` `]`, copy/paste, downloads
+- ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), F (find), +/-/0 (zoom, kept per site), `[` `]` (back/forward per tab), copy/paste, downloads
   to your Downloads folder.
 - 🔞 **Adult content is blocked** on every navigation, also offline, no off switch (system DNS lock is next).
 - 🫥 **AI images get a spoiler overlay** (C2PA / IPTC metadata first). *In progress.*

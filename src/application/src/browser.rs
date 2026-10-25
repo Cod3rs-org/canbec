@@ -8,6 +8,7 @@ use canbec_domain::feed_lock::FeedLock;
 use canbec_domain::privacy::{keeps_cookie, strip_tracking};
 use canbec_domain::slop::SlopList;
 use canbec_domain::tabs::{TabPolicy, TabState, Tabs};
+use canbec_domain::zoom;
 use canbec_domain::{host_of, Timestamp, DAY};
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +31,9 @@ pub struct Snapshot {
     /// Domains whose cookies survive a restart (see domain::privacy::keeps_cookie).
     #[serde(default)]
     pub stay_logged_in: Vec<String>,
+    /// Zoom per host, only for sites the user zoomed (100 % isn't stored).
+    #[serde(default)]
+    pub zoom: BTreeMap<String, f64>,
 }
 
 pub struct BrowserService<E: Engine, S: StateStore> {
@@ -172,6 +176,19 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 }
             }
             UiCommand::ForgetLogin { domain } => self.snapshot.stay_logged_in.retain(|d| *d != domain),
+            UiCommand::Find { text, backwards } => self.engine.find(&text, backwards),
+            UiCommand::Zoom { step } => {
+                if let Some(host) = tabs.active_tab().and_then(|t| host_of(&t.url)) {
+                    let level = zoom::step(self.zoom_for(&host), step);
+                    if level == 1.0 {
+                        self.snapshot.zoom.remove(&host);
+                    } else {
+                        self.snapshot.zoom.insert(host, level);
+                    }
+                    self.engine.zoom(level);
+                    self.notice = Some(format!("Zoom {:.0} %", level * 100.0));
+                }
+            }
             UiCommand::UnpinEssential { index } => {
                 if index < self.snapshot.essentials.len() {
                     self.snapshot.essentials.remove(index);
@@ -187,6 +204,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         if loading {
             self.ads_hidden = 0;
             if let Some(host) = host_of(url) {
+                self.engine.zoom(self.zoom_for(&host)); // the engine's zoom sticks across sites otherwise
                 let site = self.ads.for_host(&host);
                 if !site.hide.is_empty() || !site.allow.is_empty() {
                     self.engine.page_ads(&site.hide, &site.allow);
@@ -293,6 +311,10 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             stay_logged_in: self.snapshot.stay_logged_in.clone(),
             notice: self.notice.clone(),
         }
+    }
+
+    fn zoom_for(&self, host: &str) -> f64 {
+        self.snapshot.zoom.get(host).copied().unwrap_or(1.0)
     }
 
     fn load_active(&mut self) {

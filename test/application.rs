@@ -29,6 +29,12 @@ impl Engine for FakeEngine {
     fn page_ads(&self, hide: &[String], allow: &[String]) {
         self.log.borrow_mut().push(format!("ads hide={hide:?} allow={allow:?}"));
     }
+    fn find(&self, text: &str, backwards: bool) {
+        self.log.borrow_mut().push(format!("find {text} back={backwards}"));
+    }
+    fn zoom(&self, level: f64) {
+        self.log.borrow_mut().push(format!("zoom {level}"));
+    }
 }
 
 #[derive(Clone, Default)]
@@ -183,9 +189,8 @@ fn site_ad_rules_are_sent_when_a_page_starts_loading() {
     svc.set_ad_rules(CosmeticRules::parse("news.example##.promo\nnews.example#@#.ad"));
     svc.on_page("https://news.example/today", None, true, 1);
     assert_eq!(engine.log.borrow().last().unwrap(), r#"ads hide=[".promo"] allow=[".ad"]"#);
-    let before = engine.log.borrow().len();
     svc.on_page("https://other.example/", None, true, 2); // no rules for this site: nothing sent
-    assert_eq!(engine.log.borrow().len(), before);
+    assert!(!engine.log.borrow().last().unwrap().starts_with("ads"));
 }
 
 #[test]
@@ -242,4 +247,20 @@ fn back_and_forward_walk_each_tabs_own_history() {
     svc.handle(nav("https://c.example/"), 0);
     finish(&mut svc, "https://c.example/");
     assert!(!svc.state(0).current.can_go_forward);
+}
+
+#[test]
+fn zoom_is_remembered_per_site_and_reapplied_on_load() {
+    let (mut svc, engine, store) = service();
+    svc.handle(nav("https://a.example/"), 0);
+    svc.handle(UiCommand::Zoom { step: 1 }, 0);
+    svc.handle(UiCommand::Zoom { step: 1 }, 0);
+    assert_eq!(engine.log.borrow().last().unwrap(), "zoom 1.25");
+    assert_eq!(svc.state(0).notice.as_deref(), Some("Zoom 125 %"));
+    svc.on_page("https://b.example/", None, true, 0);
+    assert!(engine.log.borrow().contains(&"zoom 1".to_string()));
+    svc.on_page("https://a.example/x", None, true, 0);
+    assert_eq!(engine.log.borrow().iter().rev().find(|l| l.starts_with("zoom")).unwrap(), "zoom 1.25");
+    svc.handle(UiCommand::Zoom { step: 0 }, 0);
+    assert!(store.saved.borrow().as_ref().unwrap().zoom.is_empty());
 }

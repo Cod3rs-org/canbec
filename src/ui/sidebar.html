@@ -29,6 +29,9 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 #url{flex:1;min-width:0;background:none;border:0;outline:0;color:inherit;font:inherit;user-select:text;-webkit-user-select:text}
 #shield{width:28px;height:28px;color:var(--mut)}
 #shield.on{color:#fff;background:var(--acc)}
+#findbar{display:flex;align-items:center;gap:2px;margin:0 10px 8px;padding:0 3px 0 12px;background:var(--act);box-shadow:0 0 0 2px var(--acc);border-radius:12px;height:36px}
+#findbar[hidden]{display:none}
+#fq{flex:1;min-width:0;background:none;border:0;outline:0;color:inherit;font:inherit;user-select:text;-webkit-user-select:text}
 #chips{display:flex;gap:6px;padding:0 12px;flex-wrap:wrap}
 #chips:not(:empty){margin-bottom:8px}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;background:var(--card);border-radius:20px;color:var(--mut)}
@@ -106,6 +109,12 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
 <form id="bar" autocomplete="off">
  <input id="url" type="text" spellcheck="false" placeholder="Search or enter address" aria-label="Address or search">
  <button type="button" class="ib" id="shield" aria-label="Tag this site as AI slop" aria-pressed="false" title="Tag this site as AI slop"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/></svg></button>
+</form>
+<form id="findbar" autocomplete="off" hidden>
+ <input id="fq" type="search" spellcheck="false" placeholder="Find in page" aria-label="Find in page">
+ <button type="button" class="ib" id="fprev" aria-label="Previous match"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+ <button type="button" class="ib" id="fnext" aria-label="Next match"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+ <button type="button" class="ib" id="fx" aria-label="Close find"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </form>
 <div id="chips"></div>
 <div id="ess"></div>
@@ -225,15 +234,22 @@ $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({ty
 $("cfg").onclick=function(){send({type:"openConfig"})};
 var baseRender=render;render=function(s){baseRender(s);if(document.body.classList.contains("settings"))renderSettings()};
 function toggleSettings(){$("gear").click()}
-window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},toggleSettings:toggleSettings,
+// Find in page: Enter = next, Shift+Enter = previous, Esc closes.
+function openFind(){$("findbar").hidden=false;$("fq").focus();$("fq").select()}
+function find(back){var t=$("fq").value;if(t)send({type:"find",text:t,backwards:!!back})}
+$("findbar").onsubmit=function(e){e.preventDefault()};
+$("fq").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();find(e.shiftKey)}else if(e.key==="Escape"){$("findbar").hidden=true}};
+$("fnext").onclick=function(){find(false)};$("fprev").onclick=function(){find(true)};
+$("fx").onclick=function(){$("findbar").hidden=true};
+window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},toggleSettings:toggleSettings,find:openFind,
  focusUrl:function(){$("url").focus();$("url").select()}};
 // Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,
  k=e.key.length===1?e.key.toLowerCase():e.key,a;
  if(k==="F5")a="reload";else if(e.altKey&&!mod)a={ArrowLeft:"back",ArrowRight:"forward"}[k];
- else if(mod&&!e.altKey)a={t:"newTab",w:"closeTab",l:"focusAddress",r:"reload","[":"back","]":"forward",",":"settings",d:"pinPage"}[k];
+ else if(mod&&!e.altKey)a={t:"newTab",w:"closeTab",l:"focusAddress",r:"reload","[":"back","]":"forward",",":"settings",d:"pinPage",f:"find","=":"zoomIn","+":"zoomIn","-":"zoomOut","0":"zoomReset"}[k];
  if(!a)return;e.preventDefault();
- if(a==="focusAddress")window.canbec.focusUrl();else if(a==="settings")toggleSettings();else send({type:"key",key:a})},true);
+ if(a==="focusAddress")window.canbec.focusUrl();else if(a==="find")openFind();else if(a==="settings")toggleSettings();else send({type:"key",key:a})},true);
 // Window chrome: macOS draws traffic lights itself; Windows/Linux get our own buttons.
 (function(){var top=$("top"),mac=(window.__platform||"macos")==="macos";
  if(!mac){top.classList.add("winctl");top.innerHTML='<button data-a="minimize" aria-label="Minimize"><svg viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button><button data-a="maximize" aria-label="Maximize"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button><button data-a="close" class="x" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>';}

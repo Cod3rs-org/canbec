@@ -149,3 +149,15 @@ fn tracker_rules_become_third_party_content_blocker_json() {
     assert_eq!(rules[0]["trigger"]["load-type"][0], "third-party");
     assert_eq!(rules[3]["action"]["type"], "ignore-previous-rules");
 }
+
+#[test]
+fn zoom_steps_stop_at_the_ends_and_reset() {
+    use canbec_domain::zoom::{step, LEVELS};
+    assert_eq!(step(1.0, 1), 1.1);
+    assert_eq!(step(1.0, -1), 0.9);
+    assert_eq!(step(3.0, 1), 3.0);
+    assert_eq!(step(0.5, -1), 0.5);
+    assert_eq!(step(1.75, 0), 1.0);
+    assert_eq!(step(1.2, 1), 1.5); // an odd value snaps to the next level up first
+    assert!(LEVELS.contains(&1.0));
+}

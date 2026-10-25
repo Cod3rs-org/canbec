@@ -11,6 +11,10 @@ pub trait Engine {
     fn page_flags(&self, slop: bool, feeds_locked: bool);
     /// Site-specific ad selectors to cover, and generic ones this site is exempt from.
     fn page_ads(&self, hide: &[String], allow: &[String]);
+    /// Selects the next (or previous) match of `text` in the page and scrolls to it.
+    fn find(&self, text: &str, backwards: bool);
+    /// Page zoom, 1.0 = 100 %.
+    fn zoom(&self, level: f64);
 }
 
 /// Persistence for everything the user would hate to lose.

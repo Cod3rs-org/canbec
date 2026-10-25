@@ -3,7 +3,7 @@
 use canbec_application::ports::StateStore;
 use canbec_application::Snapshot;
 use canbec_domain::slop::SlopScope;
-use canbec_infrastructure::blocklists::{load_adult, needs_refresh};
+use canbec_infrastructure::blocklists::{load_adult, load_ads, needs_refresh};
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_infrastructure::{content_script, random_token, CONTENT_SCRIPT};
 
@@ -49,8 +49,19 @@ fn adult_seed_blocks_offline_and_cache_extends_it() {
 }
 
 #[test]
+fn ad_seed_works_offline_and_user_extras_are_added() {
+    let dir = temp_dir("ads");
+    let cache = dir.join("ads.txt");
+    assert!(load_ads(&cache).generic.iter().any(|s| s == "ins.adsbygoogle"));
+    std::fs::write(dir.join("ads-extra.txt"), "##.my-own-ad\nnews.example##.promo\n").unwrap();
+    let rules = load_ads(&cache);
+    assert!(rules.generic.iter().any(|s| s == ".my-own-ad"));
+    assert_eq!(rules.for_host("news.example").hide, [".promo"]);
+}
+
+#[test]
 fn content_script_exposes_the_hooks_the_engine_calls() {
-    for hook in ["window.__canbec", "flags(slop, feedsLocked)", "adsHidden", "canbec-feeds-locked"] {
+    for hook in ["window.__canbec", "flags(slop, feedsLocked)", "ads(hide, allow)", "adsHidden", "canbec-feeds-locked"] {
         assert!(CONTENT_SCRIPT.contains(hook), "content script lost `{hook}`");
     }
 }
@@ -60,8 +71,9 @@ fn shortcut_token_is_random_and_filled_in() {
     let (a, b) = (random_token(), random_token());
     assert_ne!(a, b);
     assert_eq!(a.len(), 32);
-    let script = content_script(&a);
+    let script = content_script(&a, &[".ad-banner".into()]);
     assert!(script.contains(&a) && !script.contains("__CANBEC_KEY_TOKEN__"));
+    assert!(script.contains(r#"const GENERIC_ADS = [".ad-banner"];"#));
 }
 
 mod icon {

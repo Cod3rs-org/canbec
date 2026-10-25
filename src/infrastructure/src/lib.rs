@@ -8,9 +8,10 @@ pub mod store;
 /// Injected into every website at document start (ads, slop border, feed blocker, shortcuts).
 pub const CONTENT_SCRIPT: &str = include_str!("scripts/content.js");
 
-/// The content script with this run's shortcut token filled in (see `scripts/content.js`).
-pub fn content_script(key_token: &str) -> String {
-    CONTENT_SCRIPT.replace("__CANBEC_KEY_TOKEN__", key_token)
+/// The content script with this run's shortcut token and the generic ad selectors filled in.
+pub fn content_script(key_token: &str, generic_ads: &[String]) -> String {
+    let ads = serde_json::to_string(generic_ads).unwrap_or_else(|_| "[]".into());
+    CONTENT_SCRIPT.replace("__CANBEC_KEY_TOKEN__", key_token).replace("\"__CANBEC_GENERIC_ADS__\"", &ads)
 }
 
 /// A random per-run secret (128 bits from the std hasher's random keys; no extra crate).

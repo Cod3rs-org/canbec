@@ -1,0 +1,14 @@
+! Built-in ad rules (EasyList syntax). Work offline and on first run; the weekly EasyList
+! download adds ~24k more. Add your own lines here or in <config>/blocklists/ads-extra.txt.
+##ins.adsbygoogle
+##[id^="google_ads"]
+##[id^="div-gpt-ad"]
+##iframe[src*="doubleclick.net"]
+##iframe[src*="googlesyndication"]
+##[data-ad]
+##[data-ad-slot]
+##[aria-label="Advertisement"]
+##.ad-banner
+##.advertisement
+##.sponsored
+##[data-testid="placementTracking"]

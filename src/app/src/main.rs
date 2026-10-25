@@ -117,6 +117,8 @@ fn main() -> wry::Result<()> {
 
     let adult_cache = dir.join("blocklists").join("adult.txt");
     let adult = Arc::new(RwLock::new(blocklists::load_adult(&adult_cache)));
+    let ads_cache = dir.join("blocklists").join("ads.txt");
+    let ads = blocklists::load_ads(&ads_cache);
 
     let sidebar = {
         let (p1, p2) = (proxy.clone(), proxy.clone());
@@ -142,7 +144,7 @@ fn main() -> wry::Result<()> {
         let (p1, p2, p3, p4) = (proxy.clone(), proxy.clone(), proxy.clone(), proxy.clone());
         let adult = adult.clone();
         WebViewBuilder::new()
-            .with_initialization_script(&content_script(&key_token))
+            .with_initialization_script(&content_script(&key_token, &ads.generic))
             .with_bounds(bounds(&window, false))
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
             .with_navigation_handler(move |url| {
@@ -186,11 +188,18 @@ fn main() -> wry::Result<()> {
     let snapshot_list = adult.read().map(|l| l.clone()).unwrap_or_default();
     let store = JsonFileStore::new(dir.join("state.json"));
     let mut service = BrowserService::start(WryEngine { view: content }, store, snapshot_list, now());
+    service.set_ad_rules(ads);
     if let Some(url) = std::env::args().nth(1) {
         service.handle(UiCommand::Navigate { url }, now());
     }
 
-    // Background: weekly adult-list refresh and a once-a-minute housekeeping tick.
+    // Background: weekly list refreshes and a once-a-minute housekeeping tick.
+    if blocklists::needs_refresh(&ads_cache) {
+        std::thread::spawn(move || match blocklists::refresh_ads(&ads_cache) {
+            Ok(()) => eprintln!("canbec: ad rules updated, active from the next start"),
+            Err(e) => eprintln!("canbec: ad list refresh failed (seed + cache still active): {e}"),
+        });
+    }
     if blocklists::needs_refresh(&adult_cache) {
         let p = proxy.clone();
         std::thread::spawn(move || match blocklists::refresh_adult(&adult_cache) {

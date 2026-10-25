@@ -7,6 +7,7 @@ use canbec_application::ports::{Engine, StateStore};
 use canbec_application::ui::UiCommand;
 use canbec_application::{resolve_input, BrowserService, Snapshot, HOME_URL, MAX_ESSENTIALS};
 use canbec_domain::blocklist::HostBlocklist;
+use canbec_domain::cosmetic::CosmeticRules;
 use canbec_domain::slop::SlopScope;
 use canbec_domain::{DAY, HOUR};
 
@@ -30,6 +31,9 @@ impl Engine for FakeEngine {
     }
     fn page_flags(&self, slop: bool, feeds_locked: bool) {
         self.log.borrow_mut().push(format!("flags slop={slop} feeds_locked={feeds_locked}"));
+    }
+    fn page_ads(&self, hide: &[String], allow: &[String]) {
+        self.log.borrow_mut().push(format!("ads hide={hide:?} allow={allow:?}"));
     }
 }
 
@@ -177,4 +181,15 @@ fn pin_and_unpin_essentials_with_a_cap() {
     svc.handle(UiCommand::UnpinEssential { index: 0 }, 1);
     svc.handle(UiCommand::UnpinEssential { index: 99 }, 1); // out of range is ignored
     assert_eq!(svc.state(1).essentials.len(), MAX_ESSENTIALS - 1);
+}
+
+#[test]
+fn site_ad_rules_are_sent_when_a_page_starts_loading() {
+    let (mut svc, engine, _) = service();
+    svc.set_ad_rules(CosmeticRules::parse("news.example##.promo\nnews.example#@#.ad"));
+    svc.on_page("https://news.example/today", None, true, 1);
+    assert_eq!(engine.log.borrow().last().unwrap(), r#"ads hide=[".promo"] allow=[".ad"]"#);
+    let before = engine.log.borrow().len();
+    svc.on_page("https://other.example/", None, true, 2); // no rules for this site: nothing sent
+    assert_eq!(engine.log.borrow().len(), before);
 }

@@ -9,7 +9,7 @@ Per browser x page: time to first window, RSS of all processes it spawned (after
 process count. Each run uses a throwaway profile where the browser allows it. Never touches
 already-running browser processes: only processes that appear during the run are measured/stopped.
 """
-import json, os, statistics, subprocess, sys, tempfile, time
+import shutil, json, os, statistics, subprocess, sys, tempfile, time
 
 RUNS = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 ONLY = set(sys.argv[2:])  # optional browser names; results merge into latest.json
@@ -33,11 +33,20 @@ def window_pids(owner):
     return [] if out.startswith("timeout") else [out.split()[1]]
 
 
+def canbec(url, prof):
+    # Real users have the weekly EasyList; measure with it (fetch once into target/easylist.txt).
+    if not os.path.exists("target/easylist.txt"):
+        subprocess.run(["curl", "-sL", "-o", "target/easylist.txt", "https://easylist.to/easylist/easylist.txt"])
+    os.makedirs(f"{prof}/blocklists", exist_ok=True)
+    shutil.copy("target/easylist.txt", f"{prof}/blocklists/ads.txt")
+    return subprocess.Popen(["./target/release/canbec", url], env={**os.environ, "CANBEC_CONFIG_DIR": prof}, stderr=subprocess.DEVNULL)
+
+
 BROWSERS = {
     "canbec": {
         "owner": "canbec", "match": ("canbec", "com.apple.WebKit"),
         "size": "target/release/canbec",
-        "launch": lambda url, prof: subprocess.Popen(["./target/release/canbec", url], env={**os.environ, "CANBEC_CONFIG_DIR": prof}, stderr=subprocess.DEVNULL),
+        "launch": lambda url, prof: canbec(url, prof),
     },
     "Safari": {
         "owner": "Safari", "match": ("Safari", "com.apple.WebKit"),

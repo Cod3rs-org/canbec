@@ -2,6 +2,7 @@
 //! Everything here is deterministic: time is passed in as unix seconds.
 
 pub mod blocklist;
+pub mod cosmetic;
 pub mod feed_lock;
 pub mod slop;
 pub mod tabs;

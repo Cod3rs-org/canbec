@@ -41,7 +41,7 @@ a weak moment.
    orange frame on every visit. AI images get a spoiler, and search marks pages first seen after 2023.
 3. 🗂️ **20 tabs, no hoarding.** Idle tabs move to folders by themselves and disappear after two
    months, but nothing is ever really deleted.
-4. 🪶 **Small and fast.** 4 MB app, opens in 0.3 s and uses about **3× less memory than Safari**
+4. 🪶 **Small and fast.** 4 MB app, opens in 0.3 s and uses about **2.7× less memory than Safari**
    ([benchmarks](docs/benchmarks/2026-10-25-macos.md)).
 5. 🔒 **Private and yours.** No telemetry, no accounts. Theme and icon are plain files you can edit,
    and AI agents get in only if you allow it, per profile.
@@ -76,8 +76,8 @@ timeline
              : Ad hatching, slop frame, feed lock
              : Integrated title bar, rounded card
              : 20 tests + 3-OS CI
-    Measure  : ~3x less memory than Safari
-             : 4-6x less than Edge
+    Measure  : ~2.7x less memory than Safari
+             : 3-5x less than Edge
     Polish   : 5 selling points
              : Sprout icon, customizable
 ```
@@ -94,7 +94,7 @@ timeline
 | 8 | Sidebar UI (vanilla HTML/CSS/JS, ~16 KB) | ✅ | [ui-contract](docs/architecture/ui-contract.md) |
 | 9 | **First working browser** (domain / application / infrastructure / app) | ✅ | [src/](src/) |
 | 10 | Integrated title bar (macOS) + own window buttons (Windows / Linux), rounded card | ✅ | |
-| 11 | Benchmarks vs Safari and Edge: about 3× less memory | ✅ | [benchmarks](docs/benchmarks/2026-10-25-macos.md) |
+| 11 | Benchmarks vs Safari and Edge: about 2.7× less memory | ✅ | [benchmarks](docs/benchmarks/2026-10-25-macos.md) |
 | 12 | 5 selling points, sprout as the default icon, customizable app icon | ✅ | [icons](#-icons) |
 | 13 | Roadmap: customization, local model, HN launch | 📝 | [07](docs/research/07-roadmap-notes.md) |
 
@@ -106,7 +106,7 @@ macOS, same pages, median of 3 runs ([details and caveats](docs/benchmarks/2026-
 
 | Browser | Size | Time to window | Memory (Wikipedia) | Processes |
 |---|--:|--:|--:|--:|
-| **canbec** | **4 MB** | **0.33 s** | **323 MB** | **5** |
+| **canbec** | **4 MB** | **0.33 s** | **358 MB** | **5** |
 | Safari | 35 MB | 1.08 s | 976 MB | 11 |
 | Microsoft Edge | 1,111 MB | 0.64 s | 1,963 MB | 15 |
 
@@ -130,7 +130,7 @@ pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 | 🗂️ **Tab discipline** | At most 20 open, auto-archive into folders, soft delete after 2 months | `▓▓▓▓▓▓░░░░` core + UI |
 | ⚠️ **Slop tagging** | One click, orange frame on every next visit | `▓▓▓▓▓▓░░░░` works |
 | 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓░░░░░` works, no settings UI yet |
-| 🚫 **No ads** | Ads blurred + grey hatching | `▓▓▓▓░░░░░░` basic selectors (adblock-rust next) |
+| 🚫 **No ads** | Ads blurred + grey hatching | `▓▓▓▓▓▓▓░░░` EasyList cosmetic rules, updated weekly |
 | 🔞 **Adult lock** | Every navigation checked + system DNS lock | `▓▓▓▓░░░░░░` browser part done |
 | 👤 **Profiles** | Separate identities, MCP access per profile | `▓░░░░░░░░░` designed |
 | 🔎 **Human search** | "Obsolete" badge for results first seen after 2023 | `▓▓░░░░░░░░` designed |

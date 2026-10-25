@@ -1,6 +1,7 @@
 //! Domain rule tests: `cargo test -p canbec-domain`.
 
 use canbec_domain::blocklist::HostBlocklist;
+use canbec_domain::cosmetic::{CosmeticRules, SiteCosmetics};
 use canbec_domain::feed_lock::FeedLock;
 use canbec_domain::slop::{SlopList, SlopScope};
 use canbec_domain::tabs::{folder_for, TabPolicy, TabState, Tabs};
@@ -94,4 +95,19 @@ fn folders_use_rules_then_host() {
     assert_eq!(folder_for("https://en.wikipedia.org/wiki/Rust"), "Reading");
     assert_eq!(folder_for("https://www.indie.blog/post"), "indie.blog");
     assert_eq!(folder_for("data:text/plain,hi"), "Other");
+}
+
+#[test]
+fn cosmetic_rules_parse_generic_specific_and_exceptions() {
+    let rules = CosmeticRules::parse(
+        "! comment\n[Adblock Plus 2.0]\n##.ad-banner\n###sponsor\nnews.example,blog.example##.promo\n\
+         shop.example#@#.ad-banner\n#@##sponsor\nsite.example##+js(noop)\nsite.example#?#div:-abp-has(.x)\n\
+         ~skip.example##.neg\nexample.org##div:has(> .ad)\n",
+    );
+    assert_eq!(rules.generic, [".ad-banner"]); // ##sponsor removed by the generic exception
+    assert_eq!(rules.len(), 3);
+    assert_eq!(rules.for_host("m.news.example"), SiteCosmetics { hide: vec![".promo".into()], allow: vec![] });
+    assert_eq!(rules.for_host("shop.example").allow, [".ad-banner"]);
+    assert_eq!(rules.for_host("example.org").hide, ["div:has(> .ad)"]);
+    assert_eq!(rules.for_host("other.example"), SiteCosmetics::default());
 }

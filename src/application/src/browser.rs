@@ -3,6 +3,7 @@
 use std::collections::BTreeMap;
 
 use canbec_domain::blocklist::HostBlocklist;
+use canbec_domain::cosmetic::CosmeticRules;
 use canbec_domain::feed_lock::FeedLock;
 use canbec_domain::slop::SlopList;
 use canbec_domain::tabs::{TabPolicy, TabState, Tabs};
@@ -33,6 +34,7 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     snapshot: Snapshot,
     policy: TabPolicy,
     adult: HostBlocklist,
+    ads: CosmeticRules,
     notice: Option<String>,
     loading: bool,
     ads_hidden: u32,
@@ -43,7 +45,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, notice: None, loading: false, ads_hidden: 0 };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0 };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
@@ -59,6 +61,11 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     pub fn set_adult_blocklist(&mut self, list: HostBlocklist) {
         self.adult = list;
+    }
+
+    /// Ad rules; the generic part is injected by the engine adapter, site rules go per page.
+    pub fn set_ad_rules(&mut self, rules: CosmeticRules) {
+        self.ads = rules;
     }
 
     /// Adult content can't be switched off: every navigation goes through this check.
@@ -159,6 +166,16 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     /// Called by the engine adapter when a page finished loading (or changed URL/title).
     pub fn on_page(&mut self, url: &str, title: Option<&str>, loading: bool, now: Timestamp) {
+        // A new document (also link clicks inside the page): fresh ad count, site ad rules.
+        if loading {
+            self.ads_hidden = 0;
+            if let Some(host) = host_of(url) {
+                let site = self.ads.for_host(&host);
+                if !site.hide.is_empty() || !site.allow.is_empty() {
+                    self.engine.page_ads(&site.hide, &site.allow);
+                }
+            }
+        }
         self.loading = loading;
         if let Some(id) = self.snapshot.tabs.active {
             self.snapshot.tabs.update(id, url, title, now);

@@ -1,16 +1,16 @@
 {
   "canbec": {
-    "size_mb": 4.0,
+    "size_mb": 4.4,
     "pages": {
       "probe": {
-        "window_s": 0.279,
-        "rss_mb": 407.8,
+        "window_s": 0.31,
+        "rss_mb": 433.6,
         "procs": 5,
         "runs": 3
       },
       "wikipedia": {
-        "window_s": 0.329,
-        "rss_mb": 323.1,
+        "window_s": 0.332,
+        "rss_mb": 357.6,
         "procs": 5,
         "runs": 3
       }

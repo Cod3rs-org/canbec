@@ -11,6 +11,8 @@ pub trait Engine {
     /// Tells the injected content script whether the current page is tagged as slop
     /// and whether feeds are locked.
     fn page_flags(&self, slop: bool, feeds_locked: bool);
+    /// Site-specific ad selectors to cover, and generic ones this site is exempt from.
+    fn page_ads(&self, hide: &[String], allow: &[String]);
 }
 
 /// Persistence for everything the user would hate to lose.

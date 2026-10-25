@@ -32,4 +32,8 @@ impl Engine for WryEngine {
     fn page_flags(&self, slop: bool, feeds_locked: bool) {
         self.js(&format!("window.__canbec && window.__canbec.flags({slop}, {feeds_locked})"));
     }
+    fn page_ads(&self, hide: &[String], allow: &[String]) {
+        let json = |list: &[String]| serde_json::to_string(list).unwrap_or_else(|_| "[]".into());
+        self.js(&format!("window.__canbec && window.__canbec.ads({}, {})", json(hide), json(allow)));
+    }
 }

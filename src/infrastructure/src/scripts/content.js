@@ -5,12 +5,17 @@
 (() => {
   if (window.__canbec) return;
 
-  // ponytail: a short cosmetic list; adblock-rust (EasyList cosmetic rules) replaces it later.
-  const AD_SELECTORS = [
-    "ins.adsbygoogle", "[id^='google_ads']", "[id^='div-gpt-ad']", "iframe[src*='doubleclick.net']",
-    "iframe[src*='googlesyndication']", "[data-ad]", "[data-ad-slot]", "[aria-label='Advertisement']",
-    ".ad-banner", ".advertisement", ".sponsored", "[data-testid='placementTracking']",
-  ];
+  // Ad rules: generic EasyList selectors, filled in by the browser (seed + weekly download).
+  // Site-specific rules arrive per page through __canbec.ads(). Edit lists in the config folder.
+  const GENERIC_ADS = "__CANBEC_GENERIC_ADS__";
+  // Ads keep their space (no layout jump) but become blurred grey stripes you can't click.
+  // The 1 ms animation is only a cheap "an ad appeared" signal for the counter.
+  const AD_STYLE = "filter:blur(10px) grayscale(1)!important;pointer-events:none!important;" +
+    "-webkit-mask-image:repeating-linear-gradient(45deg,#000 0 6px,rgba(0,0,0,.3) 6px 12px)!important;" +
+    "mask-image:repeating-linear-gradient(45deg,#000 0 6px,rgba(0,0,0,.3) 6px 12px)!important;" +
+    "animation:canbec-ad-seen 1ms!important;";
+  const AD_UNDO = "filter:none!important;pointer-events:auto!important;-webkit-mask-image:none!important;" +
+    "mask-image:none!important;animation:none!important;";
 
   // Per-site feed containers. Hidden while the feed lock is on (unlock only via settings, max 6 h).
   const FEEDS = {
@@ -30,9 +35,7 @@
     .flatMap(([, sel]) => sel);
 
   const css = `
-    .canbec-ad { position: relative !important; filter: blur(14px) grayscale(1) !important; pointer-events: none !important; }
-    .canbec-ad-cover { position: absolute; z-index: 2147483646; pointer-events: none; border-radius: 6px;
-      background: repeating-linear-gradient(45deg, rgba(220,220,220,.92) 0 6px, rgba(180,180,180,.92) 6px 12px); }
+    @keyframes canbec-ad-seen { from { outline-color: transparent } to { outline-color: transparent } }
     html.canbec-feeds-locked :is(${feedSelectors.join(",") || "#canbec-none"}) { display: none !important; }
     #canbec-slop { position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
       box-shadow: inset 0 0 0 6px #ff7a45, inset 0 0 0 8px #1f2328, inset 0 0 40px rgba(255,122,69,.35); }
@@ -63,24 +66,29 @@
     e.stopImmediatePropagation();
     send({ type: "key", key, token: KEY_TOKEN });
   }, true);
-  let adCount = -1;
-
-  function coverAds() {
-    const ads = document.querySelectorAll(AD_SELECTORS.join(","));
-    ads.forEach((el) => {
-      if (el.classList.contains("canbec-ad")) return;
-      el.classList.add("canbec-ad");
-      // Keep the ad's space (no layout jump) and draw hatching on top of it.
-      const r = el.getBoundingClientRect();
-      if (r.width && r.height) {
-        const cover = document.createElement("div");
-        cover.className = "canbec-ad-cover";
-        Object.assign(cover.style, { left: r.left + scrollX + "px", top: r.top + scrollY + "px", width: r.width + "px", height: r.height + "px" });
-        document.body.appendChild(cover);
+  // One stylesheet for all ad rules. Selectors go in chunks; a chunk with a selector this
+  // engine doesn't understand is retried one by one, so one bad rule can't disable the rest.
+  const adSheet = document.createElement("style");
+  function addRules(selectors, body) {
+    const sheet = adSheet.sheet;
+    if (!sheet) return;
+    for (let i = 0; i < selectors.length; i += 300) {
+      const chunk = selectors.slice(i, i + 300);
+      try {
+        sheet.insertRule(chunk.join(",") + "{" + body + "}", sheet.cssRules.length);
+      } catch {
+        for (const sel of chunk) try { sheet.insertRule(sel + "{" + body + "}", sheet.cssRules.length); } catch {}
       }
-    });
-    if (ads.length !== adCount) send({ type: "adsHidden", count: (adCount = ads.length) });
+    }
   }
+
+  let adCount = 0, adTimer = 0;
+  addEventListener("animationstart", (e) => {
+    if (e.animationName !== "canbec-ad-seen") return;
+    adCount++;
+    clearTimeout(adTimer);
+    adTimer = setTimeout(() => send({ type: "adsHidden", count: adCount }), 300);
+  }, true);
 
   function setSlop(on) {
     document.getElementById("canbec-slop")?.remove();
@@ -104,17 +112,18 @@
       document.documentElement.classList.toggle("canbec-feeds-locked", feedsLocked);
       setSlop(slop);
     },
+    // Site rules for this page: more ads to cover, and generic rules this site is exempt from.
+    ads(hide, allow) {
+      addRules(hide, AD_STYLE);
+      addRules(allow, AD_UNDO);
+    },
   };
 
   document.documentElement.classList.add("canbec-feeds-locked"); // locked until told otherwise
   const style = document.createElement("style");
   style.textContent = css;
-  document.documentElement.appendChild(style);
+  document.documentElement.append(style, adSheet);
+  addRules(GENERIC_ADS, AD_STYLE);
 
-  addEventListener("DOMContentLoaded", () => {
-    coverAds();
-    setSlop(flags.slop);
-    // ponytail: periodic rescan for lazily inserted ads; a MutationObserver if it ever costs too much.
-    setInterval(coverAds, 1500);
-  });
+  addEventListener("DOMContentLoaded", () => setSlop(flags.slop));
 })();

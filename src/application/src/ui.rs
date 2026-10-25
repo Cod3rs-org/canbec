@@ -25,6 +25,10 @@ pub enum UiCommand {
     /// Pins the current page to the essentials grid.
     PinPage,
     UnpinEssential { index: usize },
+    /// Keep cookies of the current site across restarts (every other site starts fresh).
+    StayLoggedIn,
+    /// Forget a site's login at the next start.
+    ForgetLogin { domain: String },
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -37,6 +41,8 @@ pub struct UiState {
     pub essentials: Vec<Essential>,
     pub workspaces: Vec<Workspace>,
     pub feed_lock: FeedLockView,
+    /// Sites whose cookies survive a restart. Everything else starts fresh on every launch.
+    pub stay_logged_in: Vec<String>,
     /// One-line message for the user (e.g. "20 tabs open — close or archive one first").
     pub notice: Option<String>,
 }
@@ -51,6 +57,8 @@ pub struct Current {
     pub can_go_back: bool,
     pub can_go_forward: bool,
     pub ads_hidden: u32,
+    /// The current site keeps its cookies across restarts.
+    pub stay_logged_in: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

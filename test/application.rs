@@ -193,3 +193,24 @@ fn site_ad_rules_are_sent_when_a_page_starts_loading() {
     svc.on_page("https://other.example/", None, true, 2); // no rules for this site: nothing sent
     assert_eq!(engine.log.borrow().len(), before);
 }
+
+#[test]
+fn typed_urls_lose_tracking_params() {
+    let (mut svc, engine, _) = service();
+    svc.handle(nav("https://shop.example/item?id=3&utm_source=mail&fbclid=x"), 1);
+    assert_eq!(engine.log.borrow().last().unwrap(), "nav https://shop.example/item?id=3");
+}
+
+#[test]
+fn stay_logged_in_is_per_site_and_can_be_forgotten() {
+    let (mut svc, _, _) = service();
+    svc.handle(nav("https://www.app.example/inbox"), 1);
+    assert!(!svc.keeps_cookie(".app.example"));
+    svc.handle(UiCommand::StayLoggedIn, 1);
+    let state = svc.state(1);
+    assert!(state.current.stay_logged_in);
+    assert_eq!(state.stay_logged_in, ["app.example"]);
+    assert!(svc.keeps_cookie(".app.example") && !svc.keeps_cookie(".tracker.example"));
+    svc.handle(UiCommand::ForgetLogin { domain: "app.example".into() }, 1);
+    assert!(!svc.keeps_cookie(".app.example"));
+}

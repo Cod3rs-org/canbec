@@ -3,6 +3,7 @@
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::cosmetic::{CosmeticRules, SiteCosmetics};
 use canbec_domain::feed_lock::FeedLock;
+use canbec_domain::privacy::{keeps_cookie, strip_tracking};
 use canbec_domain::slop::{SlopList, SlopScope};
 use canbec_domain::tabs::{folder_for, TabPolicy, TabState, Tabs};
 use canbec_domain::{host_of, DAY, HOUR};
@@ -110,4 +111,24 @@ fn cosmetic_rules_parse_generic_specific_and_exceptions() {
     assert_eq!(rules.for_host("shop.example").allow, [".ad-banner"]);
     assert_eq!(rules.for_host("example.org").hide, ["div:has(> .ad)"]);
     assert_eq!(rules.for_host("other.example"), SiteCosmetics::default());
+}
+
+#[test]
+fn tracking_params_are_stripped_and_real_ones_kept() {
+    assert_eq!(strip_tracking("https://a.example/p?id=7&utm_source=x&fbclid=y").as_deref(), Some("https://a.example/p?id=7"));
+    assert_eq!(strip_tracking("https://a.example/?gclid=1").as_deref(), Some("https://a.example/"));
+    assert_eq!(strip_tracking("https://youtu.be/abc?si=share&t=42").as_deref(), Some("https://youtu.be/abc?t=42"));
+    assert_eq!(strip_tracking("https://a.example/?q=rust"), None);
+    assert_eq!(strip_tracking("about:blank"), None);
+}
+
+#[test]
+fn only_stay_logged_in_sites_keep_cookies() {
+    let kept = vec!["app.example.com".to_string()];
+    assert!(keeps_cookie(".example.com", &kept)); // parent-domain login cookie
+    assert!(keeps_cookie("app.example.com", &kept));
+    assert!(keeps_cookie("eu.app.example.com", &kept));
+    assert!(!keeps_cookie(".tracker.example", &kept));
+    assert!(!keeps_cookie("", &kept));
+    assert!(!keeps_cookie(".example.com", &[]));
 }

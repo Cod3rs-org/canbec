@@ -48,6 +48,9 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
 - Tabs: soft cap 20 open; idle 3 days → archived into a folder; archived 60 days → Deleted.
   **Never hard-delete** (no `remove` on tabs).
 - Feed lock: on by default; unlock only via settings, clamped to at most 6 hours (domain-enforced).
+- No tracking across runs: the content webview is incognito; only `stay_logged_in` sites' cookies
+  are saved (`cookie_jar`). Fingerprint noise + tracking-param removal live in
+  `scripts/privacy.js` (all frames). Don't add anything that persists site data otherwise.
 - New tab / search → `https://noai.duckduckgo.com/` until our own search exists.
 - App icon: default `sprout`; `<config>/icon` holds a built-in name or a PNG path
   (`infrastructure/src/icon.rs`, PNGs in `infrastructure/src/icons/`, sources in `docs/img/logos/`).

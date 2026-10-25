@@ -21,6 +21,7 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
   "essentials":[ { "title": "Mail", "url": "https://mail.example/" } ],
   "workspaces":[ { "id": "personal", "name": "Personal", "color": "#ff7a45", "active": true } ],
   "feedLock":  { "locked": true, "unlockedUntil": null },  // News-feed blocker; unlock max 6 h, settings only
+  "stayLoggedIn": ["mail.example"],     // sites whose cookies survive a restart; current.stayLoggedIn for this page
   "notice":    null                     // one-line message, e.g. "Blocked: adult content"
 }
 ```
@@ -41,6 +42,8 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
 | `relockFeeds` | | Lock feeds again now |
 | `pinPage` | | Pin the current page to essentials (max 9) |
 | `unpinEssential` | `index` | Remove a pinned site |
+| `stayLoggedIn` | | Keep the current site's cookies across restarts (everything else starts fresh) |
+| `forgetLogin` | `domain` | Stop keeping that site's cookies (gone at the next start) |
 
 App-level messages, handled in `src/app` (not browser state):
 

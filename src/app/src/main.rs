@@ -15,7 +15,7 @@ use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_infrastructure::icon::{load_icon, AppIcon, BUILT_IN};
-use canbec_infrastructure::{blocklists, config_dir, content_script, random_token};
+use canbec_infrastructure::{blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -144,6 +144,10 @@ fn main() -> wry::Result<()> {
         let (p1, p2, p3, p4) = (proxy.clone(), proxy.clone(), proxy.clone(), proxy.clone());
         let adult = adult.clone();
         WebViewBuilder::new()
+            // No tracking across runs: a fresh, in-memory browser profile on every start.
+            // Logins the user wants to keep are put back by cookie_jar.
+            .with_incognito(true)
+            .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
             .with_initialization_script(&content_script(&key_token, &ads.generic))
             .with_bounds(bounds(&window, false))
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
@@ -185,6 +189,8 @@ fn main() -> wry::Result<()> {
 
     round_corners(&content);
 
+    let cookie_file = dir.join("logins.json");
+    cookie_jar::restore(&content, &cookie_file);
     let snapshot_list = adult.read().map(|l| l.clone()).unwrap_or_default();
     let store = JsonFileStore::new(dir.join("state.json"));
     let mut service = BrowserService::start(WryEngine { view: content }, store, snapshot_list, now());
@@ -222,6 +228,10 @@ fn main() -> wry::Result<()> {
         let render = match event {
             Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
                 *flow = ControlFlow::Exit;
+                false
+            }
+            Event::LoopDestroyed => {
+                save_logins(&service, &cookie_file);
                 false
             }
             Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {
@@ -309,6 +319,11 @@ fn main() -> wry::Result<()> {
                         service.on_ads_hidden(n.min(10_000) as u32);
                         true
                     }
+                    // Worst case a page shows this tip when it shouldn't.
+                    (Some("emailField"), _) => {
+                        service.notify("Tip: a throwaway email keeps this site out of your inbox (Settings → Privacy tools)");
+                        true
+                    }
                     (Some("key"), _) if msg["token"].as_str() == Some(&key_token) => {
                         send(&proxy, AppEvent::Key(msg["key"].as_str().unwrap_or_default().to_owned()));
                         false
@@ -319,6 +334,9 @@ fn main() -> wry::Result<()> {
             Event::UserEvent(AppEvent::PageLoad { url, finished }) => {
                 last_url = url.clone();
                 service.on_page(&url, None, !finished, now());
+                if finished && !service.state(now()).stay_logged_in.is_empty() {
+                    save_logins(&service, &cookie_file); // a login just happened? keep it even after a crash
+                }
                 true
             }
             Event::UserEvent(AppEvent::Title(title)) => {
@@ -350,7 +368,10 @@ fn main() -> wry::Result<()> {
                 service.set_adult_blocklist(list);
                 false
             }
-            Event::UserEvent(AppEvent::Tick) => service.tick(now()),
+            Event::UserEvent(AppEvent::Tick) => {
+                save_logins(&service, &cookie_file); // also every minute, in case of a crash
+                service.tick(now())
+            }
             Event::UserEvent(AppEvent::SidebarReady) => true,
             _ => false,
         };
@@ -430,6 +451,13 @@ fn round_corners(view: &wry::WebView) {
 
 #[cfg(not(target_os = "macos"))]
 fn round_corners(_view: &wry::WebView) {}
+
+/// Keeps cookies only for "stay logged in" sites; every other site starts fresh next time.
+fn save_logins<S: canbec_application::ports::StateStore>(service: &BrowserService<WryEngine, S>, file: &std::path::Path) {
+    if let Err(e) = cookie_jar::save(&service.engine().view, file, |domain| service.keeps_cookie(domain)) {
+        eprintln!("canbec: could not save logins: {e}");
+    }
+}
 
 fn send(proxy: &EventLoopProxy<AppEvent>, event: AppEvent) {
     let _ = proxy.send_event(event);

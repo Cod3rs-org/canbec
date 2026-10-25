@@ -119,6 +119,11 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
 <div id="set" aria-label="Settings">
  <h2>News feeds</h2>
  <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div>
+ <h2>Privacy</h2>
+ <div class="sec"><div class="st">Fresh browser on every start</div><p>Cookies, storage and cache are forgotten when you quit, and every site sees a slightly different fingerprint. Trackers can't recognise you next time.</p>
+  <div id="kept"></div><div class="btns" style="margin-top:6px"><button class="btn" id="keep"></button></div></div>
+ <h2>Privacy tools</h2>
+ <div class="sec" id="tools"></div>
  <h2>Adult content</h2>
  <div class="sec"><div class="st">Always blocked</div><p style="margin:0">There is no switch for this, on purpose. The list updates every week and works offline too.</p></div>
  <h2>Pinned sites</h2>
@@ -180,6 +185,14 @@ $("tabs").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;va
  send({type:a=="act"?"activateTab":a=="close"?"closeTab":"archiveTab",id:id})};
 $("tabs").onauxclick=function(e){if(e.button!=1)return;e.preventDefault();var t=e.target.closest(".tab");if(t)send({type:"archiveTab",id:+t.dataset.id})};
 $("tabs").onmousedown=function(e){if(e.button==1)e.preventDefault()};
+// Hand-picked privacy helpers (settings → Privacy tools). Opened in the current tab.
+var TOOLS=[
+ ["10 Minute Mail","https://10minutemail.com/","Throwaway email for one sign-up"],
+ ["Firefox Relay","https://relay.firefox.com/","Email masks that forward to you"],
+ ["DuckDuckGo Email","https://duckduckgo.com/email/","Strips trackers from your email"],
+ ["Bitwarden","https://bitwarden.com/","Open-source password manager"],
+ ["Have I Been Pwned","https://haveibeenpwned.com/","Check if your email leaked"],
+ ["Cover Your Tracks","https://coveryourtracks.eff.org/","Test how trackable you are"]];
 // Settings panel. Unlocking feeds needs a short wait first: a weak moment usually passes.
 var WAIT=10,waitLeft=0,waitT=null;
 function fmt(t){var d=new Date(t*1000);return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
@@ -189,6 +202,10 @@ function renderSettings(){
  if(!f.locked){$("fhelp").textContent="Feeds come back by themselves when the time is up.";b.innerHTML='<button class="btn" data-lock="1">Lock now</button>'}
  else if(waitLeft>0){$("fhelp").textContent="Take a breath. Do you really need the feed right now?";b.innerHTML='<button class="btn" disabled>Wait '+waitLeft+' s</button>'}
  else{$("fhelp").textContent="Unlock for a while, 6 hours max.";b.innerHTML=[1,3,6].map(function(n){return'<button class="btn warn" data-h="'+n+'">'+n+' h</button>'}).join("")}
+ var c=s.current||{},kept=s.stayLoggedIn||[],host=(c.url||"").replace(/^[a-z]+:\/\/(www\.)?/,"").split(/[\/:?#]/)[0];
+ $("kept").innerHTML=kept.length?'<p style="margin:0 0 4px">Staying logged in on:</p>'+kept.map(function(d){return'<div class="pin"><span>'+h(d)+'</span><button class="x" data-f="'+h(d)+'" aria-label="Forget login on '+h(d)+'" title="Forget at next start">'+X+'</button></div>'}).join(""):"";
+ var kb=$("keep");kb.style.display=host&&!c.stayLoggedIn?"":"none";kb.textContent="Stay logged in on "+host;
+ $("tools").innerHTML=TOOLS.map(function(t,i){return'<div style="padding:3px 0"><button class="lnk" data-t="'+i+'">'+t[0]+'</button><div style="color:var(--mut);font-size:11px">'+t[2]+'</div></div>'}).join("");
  var e=s.essentials||[];
  $("pins").innerHTML=e.length?e.map(function(x,i){return'<div class="pin"><span title="'+h(x.url)+'">'+h(x.title)+'</span><button class="x" data-u="'+i+'" aria-label="Unpin '+h(x.title)+'">'+X+'</button></div>'}).join(""):'<p style="margin:0">Nothing pinned yet.</p>';
  var ic=window.__icons||[],cur=window.__icon||"sprout",custom=!ic.some(function(i){return i.name===cur});
@@ -200,6 +217,9 @@ function startWait(){clearInterval(waitT);waitLeft=WAIT;renderSettings();waitT=s
 $("gear").onclick=function(){var on=document.body.classList.toggle("settings");this.classList.toggle("on",on);this.setAttribute("aria-pressed",on);if(on)startWait();else clearInterval(waitT)};
 $("fbt").onclick=function(e){var b=e.target.closest("button");if(!b||b.disabled)return;if(b.dataset.lock)send({type:"relockFeeds"});else if(b.dataset.h)send({type:"unlockFeeds",hours:+b.dataset.h})};
 $("pin").onclick=function(){send({type:"pinPage"})};
+$("keep").onclick=function(){send({type:"stayLoggedIn"})};
+$("kept").onclick=function(e){var b=e.target.closest("[data-f]");if(b)send({type:"forgetLogin",domain:b.dataset.f})};
+$("tools").onclick=function(e){var b=e.target.closest("[data-t]");if(b)send({type:"navigate",url:TOOLS[+b.dataset.t][1]})};
 $("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type:"unpinEssential",index:+b.dataset.u})};
 $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
 $("cfg").onclick=function(){send({type:"openConfig"})};

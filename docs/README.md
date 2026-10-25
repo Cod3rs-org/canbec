@@ -22,6 +22,7 @@ Everything we've learned and decided, in reading order. These files are the sour
 | 05 | [Engine bake-off](research/05-engine-bakeoff.md) | wry default (5/6), Servo optional (4/6 + shim), Blitz dropped |
 | 06 | [Extensibility](research/06-extensibility.md) | Any-engine harness, MV3 subset + porting skill, feed lock, MCP, profiles |
 | 07 | [Roadmap notes](research/07-roadmap-notes.md) | Simplicity rule, UI customization, benchmarks, Hacker News launch |
+| 08 | [No tracking](research/08-privacy.md) | Fresh browser every start, stay-logged-in sites, fingerprint noise, tracking params, privacy tools |
 
 ## Benchmarks
 

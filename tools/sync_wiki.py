@@ -17,6 +17,7 @@ PAGES = {
     "docs/research/05-engine-bakeoff.md": "05-Engine-Bake-off",
     "docs/research/06-extensibility.md": "06-Extensibility-MCP-Profiles",
     "docs/research/07-roadmap-notes.md": "07-Roadmap-Notes",
+    "docs/research/08-privacy.md": "08-No-Tracking",
     "docs/architecture/ui-contract.md": "UI-Contract",
     "docs/benchmarks/2026-10-25-macos.md": "Benchmarks",
     "CLAUDE.md": "Development-Guide",
@@ -36,6 +37,7 @@ SIDEBAR = """**[canbec](https://github.com/Cod3rs-org/canbec)** — Control AI, 
 * [05 Engine bake-off](05-Engine-Bake-off)
 * [06 Extensibility, MCP, profiles](06-Extensibility-MCP-Profiles)
 * [07 Roadmap notes](07-Roadmap-Notes)
+* [08 No tracking](08-No-Tracking)
 """
 FOOTER = "\n\n---\n*Generated from [`{src}`](" + f"https://github.com/{REPO}/blob/main/" + "{src}). Edit it there, not here.*\n"
 

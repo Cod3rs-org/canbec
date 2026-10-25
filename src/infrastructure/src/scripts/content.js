@@ -126,4 +126,15 @@
   addRules(GENERIC_ADS, AD_STYLE);
 
   addEventListener("DOMContentLoaded", () => setSlop(flags.slop));
+
+  // A page asks for your email: the sidebar suggests a throwaway one (once per page).
+  let emailTip = false;
+  addEventListener("focusin", (e) => {
+    const el = e.target;
+    if (emailTip || !e.isTrusted || el.tagName !== "INPUT") return;
+    if (el.type === "email" || /email/i.test(el.autocomplete + " " + el.name + " " + el.id)) {
+      emailTip = true;
+      send({ type: "emailField" });
+    }
+  }, true);
 })();

@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::cosmetic::CosmeticRules;
 use canbec_domain::feed_lock::FeedLock;
+use canbec_domain::privacy::{keeps_cookie, strip_tracking};
 use canbec_domain::slop::SlopList;
 use canbec_domain::tabs::{TabPolicy, TabState, Tabs};
 use canbec_domain::{host_of, Timestamp, DAY};
@@ -26,6 +27,9 @@ pub struct Snapshot {
     pub slop: SlopList,
     pub feed_lock: FeedLock,
     pub essentials: Vec<Essential>,
+    /// Domains whose cookies survive a restart (see domain::privacy::keeps_cookie).
+    #[serde(default)]
+    pub stay_logged_in: Vec<String>,
 }
 
 pub struct BrowserService<E: Engine, S: StateStore> {
@@ -79,6 +83,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         match cmd {
             UiCommand::Navigate { url } => {
                 let url = resolve_input(&url);
+                let url = strip_tracking(&url).unwrap_or(url);
                 if host_of(&url).is_some_and(|h| self.adult.is_blocked(&h)) {
                     self.notice = Some("Blocked: adult content".into());
                     return;
@@ -155,6 +160,14 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                     _ => {}
                 }
             }
+            UiCommand::StayLoggedIn => {
+                if let Some(host) = tabs.active_tab().and_then(|t| host_of(&t.url)) {
+                    if !self.snapshot.stay_logged_in.contains(&host) {
+                        self.snapshot.stay_logged_in.push(host);
+                    }
+                }
+            }
+            UiCommand::ForgetLogin { domain } => self.snapshot.stay_logged_in.retain(|d| *d != domain),
             UiCommand::UnpinEssential { index } => {
                 if index < self.snapshot.essentials.len() {
                     self.snapshot.essentials.remove(index);
@@ -189,6 +202,11 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     /// The content script reports how many ads it covered on the current page.
     pub fn on_ads_hidden(&mut self, count: u32) {
         self.ads_hidden = count;
+    }
+
+    /// Whether a cookie for `domain` may be restored after a restart.
+    pub fn keeps_cookie(&self, domain: &str) -> bool {
+        keeps_cookie(domain, &self.snapshot.stay_logged_in)
     }
 
     /// A one-line message for the user from outside the service (downloads, …).
@@ -239,6 +257,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 can_go_back: true,
                 can_go_forward: true,
                 ads_hidden: self.ads_hidden,
+                stay_logged_in: active.and_then(|t| host_of(&t.url)).is_some_and(|h| self.snapshot.stay_logged_in.contains(&h)),
             },
             tabs: tabs
                 .items
@@ -265,6 +284,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 locked: self.snapshot.feed_lock.is_locked(now),
                 unlocked_until: self.snapshot.feed_lock.unlocked_until.filter(|&u| u > now),
             },
+            stay_logged_in: self.snapshot.stay_logged_in.clone(),
             notice: self.notice.clone(),
         }
     }

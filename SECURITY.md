@@ -17,6 +17,9 @@ canbec is early alpha. Please report vulnerabilities privately through GitHub's
 | **Engine bugs** | We rely on the OS engine's patches: Safari/WebKit updates with macOS, WebView2 auto-updates; **WebKitGTK depends on your Linux distro**, so keep it updated. Servo (optional build) is younger and less hardened. | ⚠️ inherent |
 | **Supply chain** | `cargo audit` (RustSec) runs in CI on every push. | ✅ |
 
+| **Tracking across runs** | Websites run in an incognito (in-memory) profile; cookies, storage and cache are gone after quitting. Only "stay logged in" sites' cookies are kept, in `<config>/logins.json` (mode 0600 on macOS/Linux, not encrypted). Fingerprint readouts are randomized per site and run. See docs/research/08-privacy.md. | ✅ |
+| **Tracker requests within a session** | Not blocked yet (ads are covered, trackers still load). | ⚠️ planned |
+
 ## What canbec never does
 
 - No telemetry, no accounts, no remote config.

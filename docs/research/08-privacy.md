@@ -1,0 +1,35 @@
+# 08 — No tracking: a fresh browser on every start
+
+Goal from the owner: *no tracking whatsoever. Never persist a cookie that can track the browser;
+the user is always a new one.* Plus: suggest privacy tools (throwaway email and similar).
+
+## What canbec does now
+
+| Layer | How | Where |
+|---|---|---|
+| **Cookies, storage, cache** | The content webview runs in incognito mode (`with_incognito(true)`: `WKWebsiteDataStore.nonPersistent` on macOS, InPrivate on WebView2, ephemeral WebKitGTK). Everything a site stored is gone after quitting. | `src/app` |
+| **Logins you want to keep** | "Stay logged in on this site" in settings. Only those sites' cookies are saved (`<config>/logins.json`, mode 0600) and put back on the next start. Every other cookie dies with the session. | `domain::privacy::keeps_cookie`, `infrastructure::cookie_jar` |
+| **Fingerprinting** | Canvas, WebGL and audio readouts get tiny invisible changes, seeded per site and per run: stable within a page (so it doesn't look like noise), different on every other site and after every restart. The WebGL GPU name is generic. Wrapped functions still print `[native code]`. Runs in iframes too. | `scripts/privacy.js` |
+| **Tracking parameters** | `utm_*`, `fbclid`, `gclid`, `msclkid`, `si`, … are removed from typed URLs (core), from links right before you follow them, and from the address of the page you landed on. One list in Rust, injected into the script. | `domain::privacy`, `scripts/privacy.js` |
+| **Global Privacy Control** | `navigator.globalPrivacyControl = true`: a legal opt-out signal in some places (e.g. California). | `scripts/privacy.js` |
+| **Privacy tools** | Settings lists 10 Minute Mail, Firefox Relay, DuckDuckGo Email, Bitwarden, Have I Been Pwned and EFF's Cover Your Tracks. When a page focuses an email field, the sidebar suggests a throwaway address. | `src/ui/sidebar.html`, `scripts/content.js` |
+
+Verified on macOS with a local test page: canvas hash changes per run and per site, a cookie
+and a localStorage value set in one run are gone in the next, a stay-logged-in site's cookie
+comes back, landing and link URLs lose `utm_*`/`fbclid`.
+
+## Limits (honest list)
+
+- **Within one session**, third-party cookies still work on WebView2 (WebKit's ITP blocks them on
+  macOS and Linux). They are gone on restart. Next: tracker *request* blocking.
+- **Tracker requests aren't blocked yet.** Ads are covered cosmetically; trackers still load.
+  Plan: EasyPrivacy `||domain^` rules → Safari content-blocker JSON, which **WKWebView
+  (`WKContentRuleListStore`) and WebKitGTK (`WebKitUserContentFilterStore`) both accept**; WebView2
+  needs `WebResourceRequested` filters. Platform-specific code, behind one function in `app`.
+- **Kept sites keep only cookies**, not localStorage/IndexedDB. Logins based on localStorage
+  tokens need a re-login after restart.
+- `logins.json` is a plain file (0600 on macOS/Linux; default ACLs on Windows). Same trust level as
+  other browsers' cookie databases, but not encrypted. Upgrade: OS keychain.
+- The fingerprint noise lives in the page's JavaScript world, so a determined script can detect
+  that something is wrapped. It still breaks cross-site and cross-session matching, which is the
+  point. Fonts, screen size and timezone are not randomized (randomizing them breaks sites).

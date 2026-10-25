@@ -5,7 +5,7 @@ use canbec_application::Snapshot;
 use canbec_domain::slop::SlopScope;
 use canbec_infrastructure::blocklists::{load_adult, load_ads, needs_refresh};
 use canbec_infrastructure::store::JsonFileStore;
-use canbec_infrastructure::{content_script, random_token, CONTENT_SCRIPT};
+use canbec_infrastructure::{content_script, privacy_script, random_token, CONTENT_SCRIPT};
 
 fn temp_dir(name: &str) -> std::path::PathBuf {
     let dir = std::env::temp_dir().join(format!("canbec-test-{name}-{}", std::process::id()));
@@ -74,6 +74,13 @@ fn shortcut_token_is_random_and_filled_in() {
     let script = content_script(&a, &[".ad-banner".into()]);
     assert!(script.contains(&a) && !script.contains("__CANBEC_KEY_TOKEN__"));
     assert!(script.contains(r#"const GENERIC_ADS = [".ad-banner"];"#));
+}
+
+#[test]
+fn privacy_script_gets_seed_and_shared_tracking_list() {
+    let script = privacy_script("seed123");
+    assert!(script.contains(r#"const FP_SEED = "seed123";"#));
+    assert!(script.contains(r#""fbclid""#) && !script.contains("__CANBEC_"));
 }
 
 mod icon {

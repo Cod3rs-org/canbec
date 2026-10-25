@@ -5,8 +5,6 @@ use crate::Snapshot;
 /// A page engine (wry, Servo, CEF, ...). Deliberately tiny so new engines are cheap to add.
 pub trait Engine {
     fn navigate(&self, url: &str);
-    fn back(&self);
-    fn forward(&self);
     fn reload(&self);
     /// Tells the injected content script whether the current page is tagged as slop
     /// and whether feeds are locked.

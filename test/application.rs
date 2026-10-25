@@ -20,12 +20,6 @@ impl Engine for FakeEngine {
     fn navigate(&self, url: &str) {
         self.log.borrow_mut().push(format!("nav {url}"));
     }
-    fn back(&self) {
-        self.log.borrow_mut().push("back".into());
-    }
-    fn forward(&self) {
-        self.log.borrow_mut().push("forward".into());
-    }
     fn reload(&self) {
         self.log.borrow_mut().push("reload".into());
     }
@@ -213,4 +207,39 @@ fn stay_logged_in_is_per_site_and_can_be_forgotten() {
     assert!(svc.keeps_cookie(".app.example") && !svc.keeps_cookie(".tracker.example"));
     svc.handle(UiCommand::ForgetLogin { domain: "app.example".into() }, 1);
     assert!(!svc.keeps_cookie(".app.example"));
+}
+
+#[test]
+fn back_and_forward_walk_each_tabs_own_history() {
+    let (mut svc, engine, _) = service();
+    let finish = |svc: &mut BrowserService<FakeEngine, MemStore>, url: &str| svc.on_page(url, None, false, 0);
+    finish(&mut svc, HOME_URL);
+    assert!(!svc.state(0).current.can_go_back);
+    svc.handle(nav("https://a.example/"), 0);
+    finish(&mut svc, "https://a.example/");
+    svc.handle(nav("https://b.example/"), 0);
+    finish(&mut svc, "https://b.example/");
+    assert!(svc.state(0).current.can_go_back && !svc.state(0).current.can_go_forward);
+
+    svc.handle(UiCommand::Back, 0);
+    assert_eq!(engine.log.borrow().last().unwrap(), "nav https://a.example/");
+    finish(&mut svc, "https://a.example/");
+    assert!(svc.state(0).current.can_go_forward);
+
+    // A second tab has its own (empty) history; the first keeps its place.
+    svc.handle(UiCommand::NewTab, 0);
+    finish(&mut svc, HOME_URL);
+    assert!(!svc.state(0).current.can_go_back);
+    let first = svc.state(0).tabs[0].id;
+    svc.handle(UiCommand::ActivateTab { id: first }, 0);
+    finish(&mut svc, "https://a.example/");
+    svc.handle(UiCommand::Forward, 0);
+    assert_eq!(engine.log.borrow().last().unwrap(), "nav https://b.example/");
+
+    // Navigating from the middle drops the forward entries.
+    svc.handle(UiCommand::Back, 0);
+    finish(&mut svc, "https://a.example/");
+    svc.handle(nav("https://c.example/"), 0);
+    finish(&mut svc, "https://c.example/");
+    assert!(!svc.state(0).current.can_go_forward);
 }

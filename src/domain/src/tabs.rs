@@ -24,6 +24,25 @@ pub struct Tab {
     /// Set when archived; derived from the URL by [`folder_for`].
     pub folder: Option<String>,
     pub last_active: Timestamp,
+    /// Pages finished in this tab, oldest first; `pos` is the current one. Back/forward walk it.
+    /// ponytail: SPA pushState changes aren't reported by the engine, so they don't add entries.
+    #[serde(default)]
+    pub history: Vec<String>,
+    #[serde(default)]
+    pub pos: usize,
+}
+
+/// Back/forward entries kept per tab.
+pub const HISTORY_LIMIT: usize = 50;
+
+impl Tab {
+    pub fn can_go_back(&self) -> bool {
+        self.pos > 0 && !self.history.is_empty()
+    }
+
+    pub fn can_go_forward(&self) -> bool {
+        self.pos + 1 < self.history.len()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,6 +107,8 @@ impl Tabs {
             state: TabState::Open,
             folder: None,
             last_active: now,
+            history: Vec::new(),
+            pos: 0,
         });
         self.active = Some(id);
         Ok(id)
@@ -109,6 +130,32 @@ impl Tabs {
             }
             tab.last_active = now;
         }
+    }
+
+    /// A page finished loading in the tab: a new history entry unless it's the current one
+    /// (reloads, tab switches, back/forward landing where expected).
+    pub fn commit(&mut self, id: TabId, url: &str) {
+        let Some(tab) = self.get_mut(id) else { return };
+        if tab.history.get(tab.pos).is_some_and(|u| u == url) {
+            return;
+        }
+        if !tab.history.is_empty() {
+            tab.history.truncate(tab.pos + 1);
+        }
+        tab.history.push(url.to_owned());
+        if tab.history.len() > HISTORY_LIMIT {
+            tab.history.remove(0);
+        }
+        tab.pos = tab.history.len() - 1;
+    }
+
+    /// Moves the tab one step back (`-1`) or forward (`1`) in its history; returns the URL to load.
+    pub fn step(&mut self, id: TabId, delta: isize) -> Option<String> {
+        let tab = self.get_mut(id)?;
+        let pos = tab.pos.checked_add_signed(delta).filter(|&p| p < tab.history.len())?;
+        tab.pos = pos;
+        tab.url = tab.history[pos].clone();
+        Some(tab.url.clone())
     }
 
     /// Closing keeps history: the tab becomes Deleted (hidden, searchable later).

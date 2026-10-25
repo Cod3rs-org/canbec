@@ -20,12 +20,6 @@ impl Engine for WryEngine {
             eprintln!("canbec: navigation to {url} failed: {e}");
         }
     }
-    fn back(&self) {
-        self.js("history.back()");
-    }
-    fn forward(&self) {
-        self.js("history.forward()");
-    }
     fn reload(&self) {
         self.js("location.reload()");
     }

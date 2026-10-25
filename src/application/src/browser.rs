@@ -98,8 +98,12 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 }
                 self.load_active();
             }
-            UiCommand::Back => self.engine.back(),
-            UiCommand::Forward => self.engine.forward(),
+            UiCommand::Back | UiCommand::Forward => {
+                let delta = if cmd == UiCommand::Back { -1 } else { 1 };
+                if tabs.active.and_then(|id| tabs.step(id, delta)).is_some() {
+                    self.load_active();
+                }
+            }
             UiCommand::Reload => self.engine.reload(),
             UiCommand::NewTab => match tabs.open(HOME_URL, &self.policy, now) {
                 Ok(_) => self.load_active(),
@@ -192,6 +196,9 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         self.loading = loading;
         if let Some(id) = self.snapshot.tabs.active {
             self.snapshot.tabs.update(id, url, title, now);
+            if !loading {
+                self.snapshot.tabs.commit(id, url);
+            }
         }
         if !loading {
             self.push_flags(now);
@@ -253,9 +260,8 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 title: active.map(|t| t.title.clone()).unwrap_or_default(),
                 slop: active.is_some_and(|t| slop(&t.url)),
                 loading: self.loading,
-                // ponytail: the engine port doesn't report history yet; buttons stay enabled.
-                can_go_back: true,
-                can_go_forward: true,
+                can_go_back: active.is_some_and(|t| t.can_go_back()),
+                can_go_forward: active.is_some_and(|t| t.can_go_forward()),
                 ads_hidden: self.ads_hidden,
                 stay_logged_in: active.and_then(|t| host_of(&t.url)).is_some_and(|h| self.snapshot.stay_logged_in.contains(&h)),
             },

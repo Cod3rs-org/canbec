@@ -1,7 +1,7 @@
 # canbec docs
 
-Everything we've learned and decided, in reading order. (A GitHub Wiki can mirror this later. Keeping
-docs in the repo means they're versioned with the code and reviewed in PRs.)
+Everything we've learned and decided, in reading order. These files are the source of truth; the
+[GitHub Wiki](https://github.com/Cod3rs-org/canbec/wiki) is a generated mirror (`python3 tools/sync_wiki.py`).
 
 ## Start here
 

@@ -35,7 +35,7 @@ timeline
 |:-:|------|:------:|-----------|
 | 1 | Repo set up: `src/`, `test/`, `docs/` | ✅ | |
 | 2 | Kickoff research: what my apps need from an engine | ✅ | [01-initial-findings](docs/research/01-initial-findings.md) |
-| 3 | Engine bake-off: wry vs Servo vs Blitz | 🔄 | [prototypes/](prototypes/) · [05-engine-bakeoff](docs/research/05-engine-bakeoff.md) |
+| 3 | Engine bake-off: wry vs Servo vs Blitz | 🔄 | [src/prototypes/](src/prototypes/) · [05-engine-bakeoff](docs/research/05-engine-bakeoff.md) |
 | 4 | Search without AI: comparison and plan | ✅ | [02-search](docs/research/02-search.md) |
 | 5 | Open-source inspiration | ✅ | [03-inspiration](docs/research/03-inspiration.md) |
 | 6 | UI: vertical tabs, 20-tab discipline, slop tagging | ✅ design | [04-ui-and-tabs](docs/research/04-ui-and-tabs.md) |
@@ -68,6 +68,6 @@ that uses MapLibre (WebGL), Chart.js (canvas) and a QR scanner (camera).
 src/          the browser (coming next)
 test/         tests
 docs/         research notes, decisions, screenshots
-prototypes/   throwaway engine experiments (one crate each)
+src/prototypes/throwaway engine experiments (one crate each)
 tools/        small helper scripts (e.g. window screenshots)
 ```

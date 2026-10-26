@@ -549,6 +549,11 @@ fn main() -> wry::Result<()> {
                 true
             }
             Event::UserEvent(AppEvent::Title(title)) => {
+                // Single-page apps change the URL with pushState and no page load, but mostly the
+                // title too: ask the engine (not the page) where the tab is now.
+                if let Ok(url) = service.engine().view.url() {
+                    last_url = url;
+                }
                 service.on_page(&last_url, Some(&title), false, now());
                 true
             }

@@ -25,7 +25,8 @@ pub struct Tab {
     pub folder: Option<String>,
     pub last_active: Timestamp,
     /// Pages finished in this tab, oldest first; `pos` is the current one. Back/forward walk it.
-    /// ponytail: SPA pushState changes aren't reported by the engine, so they don't add entries.
+    /// ponytail: SPA pushState changes are picked up when the title changes too (most apps do);
+    /// a URL-only change waits for the next title or load.
     #[serde(default)]
     pub history: Vec<String>,
     #[serde(default)]

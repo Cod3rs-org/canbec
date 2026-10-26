@@ -279,3 +279,17 @@ fn open_tab_adds_a_background_tab_with_the_usual_checks() {
     assert_eq!(svc.state(0).tabs.len(), 2);
     assert_eq!(svc.state(0).notice.as_deref(), Some("Blocked: adult content"));
 }
+
+#[test]
+fn a_crashed_page_reloads_once_then_waits_for_the_user() {
+    let (mut svc, engine, _) = service();
+    let loads = || engine.log.borrow().iter().filter(|l| l.starts_with("nav")).count();
+    let before = loads();
+    svc.on_crashed(100);
+    assert_eq!(loads(), before + 1);
+    svc.on_crashed(130);
+    assert_eq!(loads(), before + 1, "no reload loop");
+    assert!(svc.state(130).notice.unwrap().contains("again"));
+    svc.on_crashed(500);
+    assert_eq!(loads(), before + 2);
+}

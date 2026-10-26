@@ -46,6 +46,7 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     notice: Option<String>,
     loading: bool,
     ads_hidden: u32,
+    last_crash: Option<Timestamp>,
 }
 
 impl<E: Engine, S: StateStore> BrowserService<E, S> {
@@ -53,7 +54,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0 };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, last_crash: None };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
@@ -243,6 +244,18 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     /// A one-line message for the user from outside the service (downloads, …).
     pub fn notify(&mut self, message: impl Into<String>) {
         self.notice = Some(message.into());
+    }
+
+    /// The engine's page process died (white page). Reload once; a second crash within a minute
+    /// waits for the user, so a page that always crashes can't loop.
+    pub fn on_crashed(&mut self, now: Timestamp) {
+        if self.last_crash.is_some_and(|t| now.saturating_sub(t) < 60) {
+            self.notice = Some("This page crashed again. Press reload to try once more".into());
+            return;
+        }
+        self.last_crash = Some(now);
+        self.notice = Some("This page crashed and was reloaded".into());
+        self.load_active();
     }
 
     /// Navigation was refused by the adult blocklist (checked in the engine's navigation hook).

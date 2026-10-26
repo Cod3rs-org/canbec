@@ -37,6 +37,8 @@ enum AppEvent {
     Popup(String),
     Title(String),
     Blocked,
+    /// The page's web process died.
+    Crashed,
     /// Download started (file name) or finished (`None` name, success flag).
     Download(Option<String>, bool),
     SidebarReady,
@@ -158,7 +160,7 @@ fn main() -> wry::Result<()> {
     let content = {
         let (p1, p2, p3, p4) = (proxy.clone(), proxy.clone(), proxy.clone(), proxy.clone());
         let adult = adult.clone();
-        WebViewBuilder::new()
+        on_crash(WebViewBuilder::new(), proxy.clone())
             // No tracking across runs: a fresh, in-memory browser profile on every start.
             // Logins the user wants to keep are put back by cookie_jar.
             .with_incognito(true)
@@ -390,6 +392,10 @@ fn main() -> wry::Result<()> {
                 service.notify(if ok { format!("Downloaded {name} to Downloads") } else { format!("Download failed: {name}") });
                 true
             }
+            Event::UserEvent(AppEvent::Crashed) => {
+                service.on_crashed(now());
+                true
+            }
             Event::UserEvent(AppEvent::Blocked) => {
                 service.on_blocked();
                 true
@@ -522,6 +528,19 @@ fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerLi
 
 #[cfg(not(target_os = "macos"))]
 fn block_trackers(_view: &wry::WebView, _list: &canbec_domain::trackers::TrackerList) {}
+
+/// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's
+/// web-process-terminated yet, so there a crashed page stays white until reload.
+#[cfg(target_os = "macos")]
+fn on_crash(builder: WebViewBuilder<'_>, proxy: EventLoopProxy<AppEvent>) -> WebViewBuilder<'_> {
+    use wry::WebViewBuilderExtDarwin;
+    builder.with_on_web_content_process_terminate_handler(move || send(&proxy, AppEvent::Crashed))
+}
+
+#[cfg(not(target_os = "macos"))]
+fn on_crash(builder: WebViewBuilder<'_>, _proxy: EventLoopProxy<AppEvent>) -> WebViewBuilder<'_> {
+    builder
+}
 
 #[cfg(target_os = "macos")]
 fn round_corners(view: &wry::WebView) {

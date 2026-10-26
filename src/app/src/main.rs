@@ -165,7 +165,7 @@ fn main() -> wry::Result<()> {
             // Logins the user wants to keep are put back by cookie_jar.
             .with_incognito(true)
             .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
-            .with_initialization_script(&content_script(&key_token, &ads.generic))
+            .with_initialization_script(&content_script(&key_token, &ads.generic, &std::fs::read_to_string(dir.join("feeds.txt")).unwrap_or_default()))
             .with_bounds(bounds(&window, false))
             .with_permission_handler(permission)
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.

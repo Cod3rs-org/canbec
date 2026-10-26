@@ -78,9 +78,20 @@ fn shortcut_token_is_random_and_filled_in() {
     let (a, b) = (random_token(), random_token());
     assert_ne!(a, b);
     assert_eq!(a.len(), 32);
-    let script = content_script(&a, &[".ad-banner".into()]);
+    let script = content_script(&a, &[".ad-banner".into()], "");
     assert!(script.contains(&a) && !script.contains("__CANBEC_KEY_TOKEN__"));
     assert!(script.contains(r#"const GENERIC_ADS = [".ad-banner"];"#));
+}
+
+#[test]
+fn user_feed_rules_are_parsed_and_filled_in() {
+    let text = "! my feeds\nexample.com,www.news.example##.stream\nbad.example##x { color: red }\nnot a rule";
+    let rules = canbec_infrastructure::feed_rules(text);
+    assert_eq!(rules.len(), 2);
+    assert_eq!(rules["news.example"], vec![".stream"]);
+    let script = content_script("t", &[], text);
+    assert!(script.contains(r#"Object.entries({"example.com":[".stream"],"news.example":[".stream"]})"#));
+    assert!(!script.contains("__CANBEC_"));
 }
 
 #[test]

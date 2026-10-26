@@ -9,10 +9,31 @@ pub mod store;
 /// Injected into every website at document start (ads, slop border, feed blocker, shortcuts).
 pub const CONTENT_SCRIPT: &str = include_str!("scripts/content.js");
 
-/// The content script with this run's shortcut token and the generic ad selectors filled in.
-pub fn content_script(key_token: &str, generic_ads: &[String]) -> String {
+/// The content script with this run's shortcut token, the generic ad selectors and the user's
+/// extra feed rules filled in.
+pub fn content_script(key_token: &str, generic_ads: &[String], user_feeds: &str) -> String {
     let ads = serde_json::to_string(generic_ads).unwrap_or_else(|_| "[]".into());
-    CONTENT_SCRIPT.replace("__CANBEC_KEY_TOKEN__", key_token).replace("\"__CANBEC_GENERIC_ADS__\"", &ads)
+    let feeds = serde_json::to_string(&feed_rules(user_feeds)).unwrap_or_else(|_| "{}".into());
+    CONTENT_SCRIPT
+        .replace("__CANBEC_KEY_TOKEN__", key_token)
+        .replace("\"__CANBEC_GENERIC_ADS__\"", &ads)
+        .replace("\"__CANBEC_USER_FEEDS__\"", &feeds)
+}
+
+/// `<config>/feeds.txt`: one `domain##selector` per line (EasyList style), `!` starts a comment.
+/// Selectors with braces are dropped so a line can't break out of the feed stylesheet.
+pub fn feed_rules(text: &str) -> std::collections::BTreeMap<String, Vec<String>> {
+    let mut rules = std::collections::BTreeMap::<String, Vec<String>>::new();
+    for line in text.lines().map(str::trim).filter(|l| !l.starts_with('!')) {
+        let Some((domains, selector)) = line.split_once("##") else { continue };
+        if selector.is_empty() || selector.contains(['{', '}']) {
+            continue;
+        }
+        for domain in domains.split(',').map(|d| d.trim().trim_start_matches("www.").to_ascii_lowercase()).filter(|d| !d.is_empty()) {
+            rules.entry(domain).or_default().push(selector.to_owned());
+        }
+    }
+    rules
 }
 
 /// Injected into every page *and iframe*: fingerprint noise, tracking-parameter removal, GPC.

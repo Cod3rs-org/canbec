@@ -27,7 +27,14 @@
     "linkedin.com": [".scaffold-finite-scroll"],
     "instagram.com": ["main article"],
     "tiktok.com": ["[data-e2e='recommend-list-item-container']"],
+    "bsky.app": ["[data-testid$='-feed-flatlist']"],
+    "mastodon.social": ["[role='feed']"],
+    "tumblr.com": ["[data-timeline-id]"],
+    "pinterest.com": ["[data-test-id='masonry-container']"],
+    "9gag.com": ["#list-view-2"], // from public filter lists; 9gag blocks headless checks
   };
+  // The user's own rules from <config>/feeds.txt.
+  for (const [domain, sel] of Object.entries("__CANBEC_USER_FEEDS__")) FEEDS[domain] = (FEEDS[domain] || []).concat(sel);
 
   const host = location.hostname.replace(/^www\./, "");
   const feedSelectors = Object.entries(FEEDS)

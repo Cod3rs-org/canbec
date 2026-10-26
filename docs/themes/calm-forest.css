@@ -1,0 +1,13 @@
+/* canbec theme: calm forest. Soft greens, warm paper, moss accent. */
+:root {
+  --bg: #eef2ea; --fg: #1d2a22; --mut: #5f6f63;
+  --card: rgba(29,42,34,.06); --hov: rgba(29,42,34,.10); --act: #fbfcf8; --line: rgba(29,42,34,.12);
+  --acc: #3f8f5a; --amber: #b88a1b; --red: #c2413b; --sh: 0 1px 3px rgba(29,42,34,.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18211b; --fg: #e4ece2; --mut: #93a597;
+    --card: rgba(228,236,226,.07); --hov: rgba(228,236,226,.11); --act: #243028; --line: rgba(228,236,226,.13);
+    --acc: #6cc488; --amber: #e2b84f; --red: #f0776f; --sh: 0 1px 3px rgba(0,0,0,.45);
+  }
+}

@@ -1,0 +1,6 @@
+/* canbec theme: night owl. Always dark, deep blue, amber accent that is easy on the eyes at night. */
+:root {
+  --bg: #0f1724; --fg: #dbe3f0; --mut: #8592a8;
+  --card: rgba(219,227,240,.06); --hov: rgba(219,227,240,.10); --act: #1b2638; --line: rgba(219,227,240,.12);
+  --acc: #f2a65a; --amber: #f5c26b; --red: #ff7a7a; --sh: 0 1px 3px rgba(0,0,0,.5);
+}

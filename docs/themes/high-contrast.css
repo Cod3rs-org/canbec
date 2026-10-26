@@ -1,0 +1,13 @@
+/* canbec theme: high contrast. Black on white (white on black in dark mode), strong focus colour. */
+:root {
+  --bg: #ffffff; --fg: #000000; --mut: #2b2b2b;
+  --card: #f0f0f0; --hov: #dcdcdc; --act: #ffffff; --line: #000000;
+  --acc: #0047ff; --amber: #8a5a00; --red: #b00000; --sh: 0 0 0 1px #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000; --fg: #ffffff; --mut: #e0e0e0;
+    --card: #141414; --hov: #2a2a2a; --act: #000000; --line: #ffffff;
+    --acc: #ffd400; --amber: #ffb000; --red: #ff5c5c; --sh: 0 0 0 1px #ffffff;
+  }
+}

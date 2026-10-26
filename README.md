@@ -187,6 +187,11 @@ on Linux and `%APPDATA%\canbec` on Windows.
 :root { --acc: #4fae6b; --bg: #fbfaf7; }
 ```
 
+Ready-made: [calm forest, high contrast, night owl](docs/themes/). Or ask Claude: the repo has a
+[`canbec-theme` skill](.claude/skills/canbec-theme/SKILL.md) that writes `theme.css` from a description.
+
+![Three themes: calm forest, high contrast, night owl](docs/img/themes.png)
+
 **Let an AI agent browse (through the same filters):** tick **AI agents** on a profile in
 Settings → Profiles (best a separate "Agent" profile without your logins), then add canbec as an
 MCP server. Tools: `search`, `open`, `read`, `list_tabs`.

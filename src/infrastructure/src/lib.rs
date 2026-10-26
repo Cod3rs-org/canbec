@@ -8,6 +8,7 @@ pub mod mcp;
 pub mod profiles;
 pub mod secret;
 pub mod store;
+pub mod system_dns;
 pub mod wayback;
 
 /// Injected into every website at document start (ads, slop border, feed blocker, shortcuts).

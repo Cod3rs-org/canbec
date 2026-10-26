@@ -40,4 +40,6 @@ Everything we've learned and decided, in reading order. These files are the sour
 Default icon: **sprout** (`img/logos/05-sprout-cursor.svg`). All 7 designs ship with the app and are
 selectable. See the README's Icons section and [contact sheet](img/logos/contact-sheet.svg).
 
+**Guides:** [family-dns.md](family-dns.md): block adult sites in every app (and how to undo it).
+
 **What's next:** [ROADMAP.md](ROADMAP.md): all open work as GitHub issues, by milestone.

@@ -46,6 +46,8 @@ enum AppEvent {
     SidebarReady,
     AdultList(HostBlocklist),
     SharedSlop(canbec_domain::slop::SlopList),
+    /// Whether the system uses the family DNS; with an error if turning it on failed.
+    FamilyDns(bool, Option<String>),
     /// First Wayback captures for search results (`None`: never archived).
     FirstSeen(Vec<(String, Option<String>)>),
     Tick,
@@ -253,6 +255,7 @@ fn main() -> wry::Result<()> {
             Err(e) => eprintln!("canbec: ad list refresh failed (seed + cache still active): {e}"),
         });
     }
+    check_family_dns(&proxy, false);
     if !blocklists::slop_subscriptions(&dir).is_empty() {
         let (p, dir) = (proxy.clone(), dir.clone());
         std::thread::spawn(move || match blocklists::refresh_shared_slop(&dir) {
@@ -383,6 +386,10 @@ fn main() -> wry::Result<()> {
                     service.set_workspaces(workspaces(&profiles));
                 }
                 true
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"enableFamilyDns""#) => {
+                check_family_dns(&proxy, true);
+                false
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"exportSlop""#) => {
                 match save_to_downloads("canbec-slop.txt", &service.export_slop()) {
@@ -530,6 +537,13 @@ fn main() -> wry::Result<()> {
                 let _ = service.engine().view.evaluate_script(&script);
                 false
             }
+            Event::UserEvent(AppEvent::FamilyDns(on, error)) => {
+                service.set_family_dns(on);
+                if let Some(e) = error {
+                    service.notify(format!("Family DNS not turned on: {e}"));
+                }
+                true
+            }
             Event::UserEvent(AppEvent::SharedSlop(list)) => {
                 service.set_shared_slop(list);
                 true
@@ -552,6 +566,17 @@ fn main() -> wry::Result<()> {
             let state = serde_json::to_string(&service.state(now())).unwrap_or_default();
             let _ = sidebar.evaluate_script(&format!("window.canbec && window.canbec.render({state})"));
         }
+    });
+}
+
+/// Reads the system DNS in the background (after switching it to the family servers if asked;
+/// the OS shows its admin prompt for that).
+fn check_family_dns(proxy: &EventLoopProxy<AppEvent>, enable: bool) {
+    use canbec_infrastructure::system_dns;
+    let p = proxy.clone();
+    std::thread::spawn(move || {
+        let error = if enable { system_dns::enable().err() } else { None };
+        send(&p, AppEvent::FamilyDns(canbec_domain::family_dns::is_family(&system_dns::servers()), error));
     });
 }
 

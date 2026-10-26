@@ -142,7 +142,9 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
  <div class="sec"><div class="st" id="sst"></div><p>Share your tags as a text file, or import someone else's. To follow a list, put its link into <b>slop-lists.txt</b> in the config folder.</p>
   <div class="btns"><button class="btn" id="sexp">Export list</button><button class="btn" id="simp">Import list</button></div><input type="file" id="sfile" accept=".txt,text/plain" hidden></div>
  <h2>Adult content</h2>
- <div class="sec"><div class="st">Always blocked</div><p style="margin:0">There is no switch for this, on purpose. The list updates every week and works offline too.</p></div>
+ <div class="sec"><div class="st">Always blocked</div><p>There is no switch for this, on purpose. The list updates every week and works offline too.</p>
+  <div class="st" id="dnst"></div><p id="dnsp" style="margin:0 0 6px">Family DNS blocks adult sites in every app on this computer, not only here.</p>
+  <div class="btns"><button class="btn" id="dnson">Turn on for this computer…</button><button class="lnk" id="dnsg">How it works and how to undo</button></div></div>
  <h2>Pinned sites</h2>
  <div class="sec"><div id="pins"></div><div class="btns" style="margin-top:6px"><button class="btn" id="pin">Pin this page</button></div></div>
  <h2>App icon</h2>
@@ -226,6 +228,9 @@ function renderSettings(){
  $("tools").innerHTML=TOOLS.map(function(t,i){return'<div style="padding:3px 0"><button class="lnk" data-t="'+i+'">'+t[0]+'</button><div style="color:var(--mut);font-size:11px">'+t[2]+'</div></div>'}).join("");
  $("sst").textContent=(s.slopCount||0)+" tagged by you"+(s.sharedSlopCount?" · "+s.sharedSlopCount+" from lists you follow":"");
  $("profs").innerHTML=(s.workspaces||[]).map(function(w){return'<div class="pin"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+h(w.color)+'"></i><span>'+h(w.name)+'</span>'+'<label style="font-size:11px;color:var(--mut);display:flex;gap:3px;align-items:center" title="Let AI agents browse as this profile (canbec --mcp)"><input type="checkbox" data-ag="'+h(w.id)+'"'+(w.agents?" checked":"")+'>AI agents</label>'+(w.active?'<small style="color:var(--mut)">active</small>':'<button class="lnk" data-w="'+h(w.id)+'">switch</button>')+'</div>'}).join("");
+ var dns=s.familyDns,linux=window.__platform==="linux";
+ $("dnst").textContent=dns==null?"System-wide: checking…":dns?"System-wide: on (family DNS)":"System-wide: off";
+ $("dnson").style.display=dns===false&&!linux?"":"none";
  var e=s.essentials||[];
  $("pins").innerHTML=e.length?e.map(function(x,i){return'<div class="pin"><span title="'+h(x.url)+'">'+h(x.title)+'</span><button class="x" data-u="'+i+'" aria-label="Unpin '+h(x.title)+'">'+X+'</button></div>'}).join(""):'<p style="margin:0">Nothing pinned yet.</p>';
  var ic=window.__icons||[],cur=window.__icon||"sprout",custom=!ic.some(function(i){return i.name===cur});
@@ -246,6 +251,8 @@ $("cfg").onclick=function(){send({type:"openConfig"})};
 $("profs").onclick=function(e){var b=e.target.closest("[data-w]");if(b)send({type:"switchWorkspace",id:b.dataset.w})};
 $("profs").onchange=function(e){var c=e.target.closest("[data-ag]");if(c)send({type:"setAgents",id:c.dataset.ag,on:c.checked})};
 $("padd").onsubmit=function(e){e.preventDefault();var n=$("pname").value.trim();if(n){send({type:"addProfile",name:n});$("pname").value=""}};
+$("dnson").onclick=function(){send({type:"enableFamilyDns"})};
+$("dnsg").onclick=function(){send({type:"navigate",url:"https://github.com/Cod3rs-org/canbec/blob/main/docs/family-dns.md"})};
 $("sexp").onclick=function(){send({type:"exportSlop"})};
 $("simp").onclick=function(){$("sfile").click()};
 $("sfile").onchange=function(){var f=this.files[0];this.value="";if(!f||f.size>2e6)return;var r=new FileReader();r.onload=function(){send({type:"importSlop",text:String(r.result)})};r.readAsText(f)};

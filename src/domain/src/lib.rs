@@ -3,6 +3,7 @@
 
 pub mod blocklist;
 pub mod cosmetic;
+pub mod family_dns;
 pub mod feed_lock;
 pub mod first_seen;
 pub mod privacy;

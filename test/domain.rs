@@ -240,3 +240,12 @@ fn results_first_seen_after_chatgpt_are_obsolete() {
     assert!(!is_obsolete("garbage") && !is_obsolete(""));
     assert_eq!(year("20240301120000"), Some("2024"));
 }
+
+#[test]
+fn family_dns_is_on_only_without_other_servers() {
+    use canbec_domain::family_dns::is_family;
+    let s = |v: &[&str]| v.iter().map(|x| x.to_string()).collect::<Vec<_>>();
+    assert!(is_family(&s(&["1.1.1.3", "1.0.0.3"])));
+    assert!(!is_family(&s(&["1.1.1.3", "8.8.8.8"])));
+    assert!(!is_family(&s(&[])));
+}

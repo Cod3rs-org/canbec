@@ -324,3 +324,22 @@ fn switching_profiles_swaps_tabs_and_tags() {
     assert_eq!(svc.state(2).current.url, "https://mine.example/");
     assert_eq!(engine.log.borrow().last().unwrap(), "nav https://mine.example/");
 }
+
+#[test]
+fn closed_tabs_are_listed_newest_first_and_reopen() {
+    let (mut svc, _, _) = service();
+    let active = |svc: &BrowserService<FakeEngine, MemStore>| svc.state(0).tabs.iter().find(|t| t.active).unwrap().id;
+    svc.handle(nav("https://old.example"), 1);
+    let old = active(&svc);
+    svc.handle(UiCommand::NewTab, 2);
+    svc.handle(nav("https://new.example"), 3);
+    let new = active(&svc);
+    svc.handle(UiCommand::CloseTab { id: old }, 4);
+    svc.handle(UiCommand::CloseTab { id: new }, 5);
+    let closed: Vec<String> = svc.state(5).closed.iter().map(|t| t.url.clone()).collect();
+    assert_eq!(closed[..2], ["https://new.example".to_string(), "https://old.example".to_string()]);
+    svc.handle(UiCommand::RestoreTab { id: new }, 6);
+    let state = svc.state(6);
+    assert_eq!(state.current.url, "https://new.example");
+    assert!(state.closed.iter().all(|t| t.id != new));
+}

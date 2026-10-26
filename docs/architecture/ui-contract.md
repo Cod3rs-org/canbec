@@ -18,6 +18,7 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
   "tabs":      [ { "id": 1, "title": "Example", "url": "https://example.org/", "active": true, "slop": false } ],
   "tabLimit":  20,                       // soft cap: UI turns amber at 16, red at 20
   "archive":   [ { "folder": "GitHub", "tabs": [ { "id": 7, "title": "...", "url": "...", "idleDays": 4 } ] } ],
+  "closed":    [ { "id": 9, "title": "...", "url": "...", "idleDays": 0 } ], // closed tabs, newest first (max 200)
   "essentials":[ { "title": "Mail", "url": "https://mail.example/" } ],
   "workspaces":[ { "id": "personal", "name": "Personal", "color": "#ff7a45", "active": true } ],
   "feedLock":  { "locked": true, "unlockedUntil": null },  // News-feed blocker; unlock max 6 h, settings only
@@ -36,7 +37,7 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
 | `back` / `forward` / `reload` | | Navigation |
 | `newTab` | | Refused by the core at 20 open tabs (the UI shows why) |
 | `activateTab` / `closeTab` / `archiveTab` | `id` | Tab actions |
-| `restoreTab` | `id` | Archived tab → open tab |
+| `restoreTab` | `id` | Archived or closed tab → open tab |
 | `tagSlop` | `scope`: `"domain"` \| `"page"` | Mark the current site as AI slop |
 | `untagSlop` | | Remove the mark |
 | `unlockFeeds` | `hours` (1–6, the core enforces the cap) | Temporary unlock, from the settings panel only (after a 10 s wait) |

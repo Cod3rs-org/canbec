@@ -38,6 +38,9 @@ pub enum UiCommand {
     ImportSlop { text: String },
 }
 
+/// Closed tabs sent to the sidebar; older ones stay in state.json.
+pub const CLOSED_SHOWN: usize = 200;
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UiState {
@@ -57,6 +60,8 @@ pub struct UiState {
     pub family_dns: Option<bool>,
     /// Version of a newer release, if there is one.
     pub update: Option<String>,
+    /// Closed tabs, most recently used first (at most [`CLOSED_SHOWN`]). Restore with `restoreTab`.
+    pub closed: Vec<ArchivedTab>,
     /// Names of the installed extensions (`<config>/extensions/`).
     pub extensions: Vec<String>,
     /// One-line message for the user (e.g. "20 tabs open — close or archive one first").

@@ -7,7 +7,7 @@ use canbec_domain::cosmetic::CosmeticRules;
 use canbec_domain::feed_lock::FeedLock;
 use canbec_domain::privacy::{keeps_cookie, strip_tracking};
 use canbec_domain::slop::SlopList;
-use canbec_domain::tabs::{TabPolicy, TabState, Tabs};
+use canbec_domain::tabs::{Tab, TabPolicy, TabState, Tabs};
 use canbec_domain::zoom;
 use canbec_domain::{host_of, Timestamp, DAY};
 use serde::{Deserialize, Serialize};
@@ -348,6 +348,13 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 idle_days: now.saturating_sub(t.last_active) / DAY,
             });
         }
+        let mut closed: Vec<&Tab> = tabs.items.iter().filter(|t| t.state == TabState::Deleted).collect();
+        closed.sort_by_key(|t| std::cmp::Reverse(t.last_active));
+        let closed = closed
+            .into_iter()
+            .take(CLOSED_SHOWN)
+            .map(|t| ArchivedTab { id: t.id, title: t.title.clone(), url: t.url.clone(), idle_days: now.saturating_sub(t.last_active) / DAY })
+            .collect();
         UiState {
             current: Current {
                 url: active.map(|t| t.url.clone()).unwrap_or_default(),
@@ -385,6 +392,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             shared_slop_count: self.shared_slop.tags.len(),
             family_dns: self.family_dns,
             update: self.update.clone(),
+            closed,
             extensions: self.extensions.clone(),
             notice: self.notice.clone(),
         }

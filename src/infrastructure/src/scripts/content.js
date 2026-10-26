@@ -65,6 +65,7 @@
     if (k === "F5") return "reload";
     if (e.altKey && !mod) return { ArrowLeft: "back", ArrowRight: "forward" }[k];
     if (!mod || e.altKey) return;
+    if (e.shiftKey && k === "t") return "reopenTab";
     return { t: "newTab", w: "closeTab", l: "focusAddress", r: "reload", "[": "back", "]": "forward", ",": "settings", d: "pinPage",
       f: "find", "=": "zoomIn", "+": "zoomIn", "-": "zoomOut", "0": "zoomReset" }[k];
   }

@@ -361,6 +361,7 @@ fn main() -> wry::Result<()> {
                     "zoomOut" => Some(UiCommand::Zoom { step: -1 }),
                     "zoomReset" => Some(UiCommand::Zoom { step: 0 }),
                     "closeTab" => service.state(now()).tabs.iter().find(|t| t.active).map(|t| UiCommand::CloseTab { id: t.id }),
+                    "reopenTab" => service.state(now()).closed.first().map(|t| UiCommand::RestoreTab { id: t.id }),
                     "focusAddress" | "settings" | "find" => {
                         let _ = sidebar.focus();
                         let call = match key.as_str() { "settings" => "toggleSettings", "find" => "find", _ => "focusUrl" };

@@ -126,6 +126,7 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
  <button class="row" id="new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New tab</button>
  <div id="hint" style="padding:0 8px"></div>
  <details id="arch"><summary><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>Archive</summary><div id="arc"></div></details>
+ <details id="clo"><summary><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>Recently closed</summary><input id="clq" class="inp" placeholder="Search closed tabs" aria-label="Search closed tabs" autocomplete="off" style="margin:4px 0"><div id="cl"></div></details>
 </div>
 <div id="set" aria-label="Settings">
  <h2>Profiles</h2>
@@ -190,6 +191,7 @@ function render(s){
  var w=(s.workspaces||[]).filter(function(x){return x.active})[0];$("ws").textContent=w?w.name:"";
  $("tabs").innerHTML=tabs.map(function(t){return'<div class="tab'+(t.active?" act":"")+(t.slop?" slop":"")+'" data-id="'+t.id+'"><span class="dot">'+mono(t.title)+'</span><button class="t" data-a="act" title="'+h(t.url)+'"'+(t.active?' aria-current="page"':"")+'>'+h(t.title||t.url)+'</button>'+(t.slop?'<span class="warn" title="Tagged as AI slop" aria-label="AI slop">⚠</span>':"")+'<button class="x" data-a="arch" aria-label="Archive tab" title="Archive tab"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg></button><button class="x" data-a="close" aria-label="Close tab" title="Close tab">'+X+'</button></div>'}).join("");
  var ar=s.archive||[];
+ closed=s.closed||[];renderClosed();
  $("arc").innerHTML=ar.length?ar.map(function(f){return'<div class="fold">'+h(f.folder)+'</div>'+(f.tabs||[]).map(function(t){return'<button class="arc" data-r="'+t.id+'" title="Restore: '+h(t.url)+'"><span>'+h(t.title||t.url)+'</span><small>'+t.idleDays+'d</small></button>'}).join("")}).join(""):'<div class="empty">Nothing archived</div>';
  var k=$("cnt");k.textContent=n+"/"+lim;k.className=n>=lim?"red":n>=lim*0.8?"amber":"";
  $("hint").className=n>=lim?"show":"";$("hint").innerHTML=n>=lim?'<span style="color:var(--red);font-size:11px">Close or archive a tab first</span>':"";
@@ -204,7 +206,12 @@ $("bar").onsubmit=function(e){e.preventDefault();var v=$("url").value.trim();if(
 $("url").onfocus=function(){this.select()};
 $("ess").onclick=function(e){var b=e.target.closest("[data-i]");if(b)send({type:"navigate",url:S.essentials[b.dataset.i].url})};
 $("wsd").onclick=function(e){var b=e.target.closest("[data-w]");if(b)send({type:"switchWorkspace",id:b.dataset.w})};
-$("arc").onclick=function(e){var b=e.target.closest("[data-r]");if(b)send({type:"restoreTab",id:+b.dataset.r})};
+$("arc").onclick=$("cl").onclick=function(e){var b=e.target.closest("[data-r]");if(b)send({type:"restoreTab",id:+b.dataset.r})};
+// Closed tabs are never deleted (state.json keeps them); this shows the newest 30 that match.
+var closed=[];
+function renderClosed(){var q=$("clq").value.toLowerCase(),l=closed.filter(function(t){return!q||(t.title+" "+t.url).toLowerCase().indexOf(q)>=0}).slice(0,30);
+ $("cl").innerHTML=l.length?l.map(function(t){return'<button class="arc" data-r="'+t.id+'" title="Reopen: '+h(t.url)+'"><span>'+h(t.title||t.url)+'</span><small>'+t.idleDays+'d</small></button>'}).join(""):'<div class="empty">'+(q?"No match":"Nothing closed yet")+'</div>'}
+$("clq").oninput=renderClosed;
 $("tabs").onclick=function(e){var b=e.target.closest("[data-a]");if(!b)return;var id=+b.closest(".tab").dataset.id,a=b.dataset.a;
  send({type:a=="act"?"activateTab":a=="close"?"closeTab":"archiveTab",id:id})};
 $("tabs").onauxclick=function(e){if(e.button!=1)return;e.preventDefault();var t=e.target.closest(".tab");if(t)send({type:"archiveTab",id:+t.dataset.id})};
@@ -276,7 +283,7 @@ window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings(
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,
  k=e.key.length===1?e.key.toLowerCase():e.key,a;
  if(k==="F5")a="reload";else if(e.altKey&&!mod)a={ArrowLeft:"back",ArrowRight:"forward"}[k];
- else if(mod&&!e.altKey)a={t:"newTab",w:"closeTab",l:"focusAddress",r:"reload","[":"back","]":"forward",",":"settings",d:"pinPage",f:"find","=":"zoomIn","+":"zoomIn","-":"zoomOut","0":"zoomReset"}[k];
+ else if(mod&&!e.altKey)a=e.shiftKey&&k==="t"?"reopenTab":{t:"newTab",w:"closeTab",l:"focusAddress",r:"reload","[":"back","]":"forward",",":"settings",d:"pinPage",f:"find","=":"zoomIn","+":"zoomIn","-":"zoomOut","0":"zoomReset"}[k];
  if(!a)return;e.preventDefault();
  if(a==="focusAddress")window.canbec.focusUrl();else if(a==="find")openFind();else if(a==="settings")toggleSettings();else send({type:"key",key:a})},true);
 // Window chrome: macOS draws traffic lights itself; Windows/Linux get our own buttons.

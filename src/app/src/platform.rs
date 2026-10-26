@@ -256,6 +256,47 @@ pub fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::Track
     }
 }
 
+/// Linux: WebKitGTK's `web-process-terminated` (crash or memory limit, not our own reloads).
+#[cfg(target_os = "linux")]
+pub fn watch_crashes(view: &wry::WebView, crashed: impl Fn() + 'static) {
+    use webkit2gtk::{WebProcessTerminationReason, WebViewExt};
+    use wry::WebViewExtUnix;
+    view.webview().connect_web_process_terminated(move |_, reason| {
+        if reason != WebProcessTerminationReason::TerminatedByApi {
+            crashed();
+        }
+    });
+}
+
+/// Windows: WebView2's ProcessFailed when the page's renderer exits (a frame's renderer
+/// recovers by itself; an unresponsive one gets WebView2's own wait-or-close prompt).
+#[cfg(windows)]
+pub fn watch_crashes(view: &wry::WebView, crashed: impl Fn() + 'static) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::*;
+    use webview2_com::ProcessFailedEventHandler;
+    use wry::WebViewExtWindows;
+
+    let handler = ProcessFailedEventHandler::create(Box::new(move |_, args| {
+        let mut kind = COREWEBVIEW2_PROCESS_FAILED_KIND::default();
+        // SAFETY: WebView2 calls this on the UI thread with valid args; the out-param is ours.
+        if let Some(args) = args {
+            unsafe { args.ProcessFailedKind(&mut kind)? };
+        }
+        if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED {
+            crashed();
+        }
+        Ok(())
+    }));
+    let mut token = 0i64;
+    // SAFETY: called once on the UI thread right after the webview was built.
+    if let Err(e) = unsafe { view.webview().add_ProcessFailed(&handler, &mut token) } {
+        eprintln!("canbec: crash hook failed: {e}");
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn watch_crashes(_view: &wry::WebView, _crashed: impl Fn() + 'static) {}
+
 /// macOS: Safari's own user agent. WKWebView leaves out `Version/… Safari/…`, which makes canbec
 /// stand out from the crowd of Safari users. WebView2 and WebKitGTK already send stock strings.
 #[cfg(target_os = "macos")]
@@ -286,8 +327,8 @@ pub fn browser_args(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
     builder
 }
 
-/// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's
-/// web-process-terminated yet, so there a crashed page stays white until reload.
+/// Reloads a crashed page: macOS hooks it on the builder here (wry's own hook), Linux and
+/// Windows after building (`watch_crashes`).
 #[cfg(target_os = "macos")]
 pub fn on_crash(builder: WebViewBuilder<'_>, crashed: impl Fn() + 'static) -> WebViewBuilder<'_> {
     use wry::WebViewBuilderExtDarwin;

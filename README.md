@@ -135,6 +135,7 @@ timeline
 | 30 | Recently closed tabs: searchable, Cmd/Ctrl+Shift+T | ✅ | |
 | 31 | Windows refuses third-party cookies within a session and blocks EasyPrivacy path rules too, not just hosts | 🧪 | [#14](https://github.com/Cod3rs-org/canbec/issues/14) [#13](https://github.com/Cod3rs-org/canbec/issues/13) |
 | 32 | Single-page apps (pushState) update the tab URL and back/forward when their title changes | ✅ | |
+| 33 | Crashed pages reload on Linux and Windows too (WebKitGTK signal, WebView2 ProcessFailed) | 🧪 | [#11](https://github.com/Cod3rs-org/canbec/issues/11) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

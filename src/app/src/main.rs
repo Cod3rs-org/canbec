@@ -122,7 +122,7 @@ fn open_config_folder(dir: &std::path::Path) {
 mod mcp;
 mod platform;
 
-use platform::{block_trackers, browser_args, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent};
+use platform::{block_trackers, browser_args, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes};
 
 fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
@@ -230,6 +230,7 @@ fn main() -> wry::Result<()> {
     };
 
     round_corners(&content);
+    watch_crashes(&content, { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) });
     let trackers_cache = dir.join("blocklists").join("trackers.txt");
     {
         let p = proxy.clone();

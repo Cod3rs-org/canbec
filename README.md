@@ -42,7 +42,8 @@ a weak moment.
 3. 🗂️ **20 tabs, no hoarding.** Idle tabs move to folders by themselves and disappear after two
    months, but nothing is ever really deleted.
 4. 🪶 **Small and fast.** 4 MB app, opens in 0.3 s and uses about **2.7× less memory than Safari**
-   ([benchmarks](docs/benchmarks/2026-10-25-macos.md)).
+   ([macOS](docs/benchmarks/2026-10-25-macos.md)). On Windows it uses about 15% less than Chrome
+   and about 4× less than Edge ([Windows](docs/benchmarks/2026-10-26-windows.md)).
 5. 🕵️ **Nobody tracks you.** Every start is a fresh browser: cookies, storage and cache from last
    time are gone, every site sees a slightly different fingerprint, tracker requests are blocked
    and `utm_`/`fbclid` junk is cut from links. You stay logged in only where you say so. No
@@ -84,6 +85,7 @@ timeline
              : 36 tests + 3-OS CI
     Measure  : ~2.7x less memory than Safari
              : 3-5x less than Edge
+             : Windows: ~15% under Chrome
     Polish   : 5 selling points
              : Sprout icon, customizable
     Ready    : Settings, shortcuts, downloads
@@ -121,6 +123,7 @@ timeline
 | 22 | **Profiles:** own tabs, tags and logins per profile; shared slop lists | ✅ | [#26](https://github.com/Cod3rs-org/canbec/issues/26) [#27](https://github.com/Cod3rs-org/canbec/issues/27) |
 | 23 | **AI images blurred** when their metadata says so | ✅ | [#24](https://github.com/Cod3rs-org/canbec/issues/24) |
 | 24 | **MCP server:** AI agents browse through the same filters, only when you allow it | ✅ | [#28](https://github.com/Cod3rs-org/canbec/issues/28) |
+| 25 | Windows benchmarks vs Chrome and Edge: about 15% less memory than Chrome, about 4× less than Edge | ✅ | [benchmarks](docs/benchmarks/2026-10-26-windows.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 
@@ -133,6 +136,18 @@ macOS, same pages, median of 3 runs ([details and caveats](docs/benchmarks/2026-
 | **canbec** | **4 MB** | **0.33 s** | **358 MB** | **5** |
 | Safari | 35 MB | 1.08 s | 976 MB | 11 |
 | Microsoft Edge | 1,111 MB | 0.64 s | 1,963 MB | 15 |
+
+Windows 11, same pages, median of 5 runs ([details and caveats](docs/benchmarks/2026-10-26-windows.md)).
+Memory is private memory, so shared pages aren't counted twice:
+
+| Browser | Size | Time to window | Memory (Wikipedia) | Processes |
+|---|--:|--:|--:|--:|
+| **canbec** | **4.5 MB** + WebView2 (part of Windows) | **0.08 s** | **367 MB** | **8** |
+| Google Chrome | 505 MB | 0.52 s | 432 MB | 11 |
+| Microsoft Edge | 1,785 MB | 0.54 s | 1,527 MB | 24 |
+
+On Windows canbec runs Chrome's engine (WebView2), so it saves less than on macOS. The
+"time to window" for canbec is before WebView2 has started, so it's not first paint.
 
 ## 🧪 Engine bake-off
 

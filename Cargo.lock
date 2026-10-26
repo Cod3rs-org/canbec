@@ -170,9 +170,11 @@ dependencies = [
  "canbec-domain",
  "dirs",
  "png",
+ "ring",
  "serde_json",
  "ureq",
  "url",
+ "windows-sys 0.61.2",
  "wry",
 ]
 

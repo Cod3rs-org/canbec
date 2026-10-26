@@ -185,3 +185,17 @@ mod mcp {
         assert_eq!(titles, ["Rust", "The Book"]);
     }
 }
+
+#[test]
+fn sealed_logins_open_only_with_their_key() {
+    use canbec_infrastructure::secret::{open, seal};
+    let (key, other) = ([7u8; 32], [8u8; 32]);
+    let sealed = seal(&key, br#"["sid=1"]"#).unwrap();
+    assert!(!sealed.windows(5).any(|w| w == b"sid=1"), "no plain text in the file");
+    assert_eq!(open(&key, &sealed).unwrap(), br#"["sid=1"]"#);
+    assert!(open(&other, &sealed).is_none());
+    let mut broken = sealed.clone();
+    *broken.last_mut().unwrap() ^= 1;
+    assert!(open(&key, &broken).is_none());
+    assert_ne!(seal(&key, b"x").unwrap(), seal(&key, b"x").unwrap(), "fresh nonce every time");
+}

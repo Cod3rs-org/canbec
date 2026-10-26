@@ -1,6 +1,8 @@
 //! "Stay logged in" without a persistent cookie store. The content webview runs in incognito
 //! mode, so every start is a brand-new browser for trackers (cookies, storage, cache: all gone).
-//! Only cookies of sites the user chose to stay logged in on are saved here and put back.
+//! Only cookies of sites the user chose to stay logged in on are saved here and put back,
+//! encrypted with a key from the OS secret store (`secret`); `logins.enc` next to the old
+//! plain `logins.json`, which is only used when there is no secret store.
 
 use std::path::Path;
 
@@ -11,13 +13,25 @@ pub fn save(view: &wry::WebView, path: &Path, keep: impl Fn(&str) -> bool) -> Re
     let cookies = view.cookies().map_err(|e| e.to_string())?;
     let lines: Vec<String> =
         cookies.iter().filter(|c| c.domain().is_some_and(&keep)).map(|c| c.to_string()).collect();
-    write_private(path, &serde_json::to_vec(&lines).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    let json = serde_json::to_vec(&lines).map_err(|e| e.to_string())?;
+    match crate::secret::key().and_then(|key| crate::secret::seal(&key, &json)) {
+        Some(sealed) => {
+            write_private(&path.with_extension("enc"), &sealed).map_err(|e| e.to_string())?;
+            let _ = std::fs::remove_file(path); // the old plain copy, if any
+        }
+        None => write_private(path, &json).map_err(|e| e.to_string())?,
+    }
     Ok(lines.len())
 }
 
 /// Puts saved cookies back into a fresh webview. Call before the first page loads.
 pub fn restore(view: &wry::WebView, path: &Path) -> usize {
-    let lines: Vec<String> = std::fs::read(path).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
+    let sealed = std::fs::read(path.with_extension("enc")).ok();
+    let json = match (sealed, crate::secret::key()) {
+        (Some(sealed), Some(key)) => crate::secret::open(&key, &sealed),
+        _ => std::fs::read(path).ok(), // no secret store, or not migrated yet
+    };
+    let lines: Vec<String> = json.and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
     lines.iter().filter_map(|l| Cookie::parse(l.as_str()).ok()).filter(|c| view.set_cookie(c).is_ok()).count()
 }
 

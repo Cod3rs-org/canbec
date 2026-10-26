@@ -6,6 +6,7 @@ pub mod engine_wry;
 pub mod icon;
 pub mod mcp;
 pub mod profiles;
+pub mod secret;
 pub mod store;
 
 /// Injected into every website at document start (ads, slop border, feed blocker, shortcuts).

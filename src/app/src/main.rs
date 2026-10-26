@@ -14,6 +14,7 @@ use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::profiles as profile_files;
+use canbec_infrastructure::updater;
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_domain::profiles::Profiles;
 use canbec_infrastructure::icon::{load_icon, BUILT_IN};
@@ -48,6 +49,9 @@ enum AppEvent {
     SharedSlop(canbec_domain::slop::SlopList),
     /// Whether the system uses the family DNS; with an error if turning it on failed.
     FamilyDns(bool, Option<String>),
+    /// A newer release (checked once a day), or the result of installing it.
+    Update(updater::Release),
+    UpdateInstalled(Result<std::path::PathBuf, String>),
     /// First Wayback captures for search results (`None`: never archived).
     FirstSeen(Vec<(String, Option<String>)>),
     Tick,
@@ -256,6 +260,14 @@ fn main() -> wry::Result<()> {
         });
     }
     check_family_dns(&proxy, false);
+    if updater::due(&dir) {
+        let p = proxy.clone();
+        std::thread::spawn(move || match updater::check(env!("CARGO_PKG_VERSION")) {
+            Ok(Some(release)) => send(&p, AppEvent::Update(release)),
+            Ok(None) => {}
+            Err(e) => eprintln!("canbec: update check failed: {e}"),
+        });
+    }
     if !blocklists::slop_subscriptions(&dir).is_empty() {
         let (p, dir) = (proxy.clone(), dir.clone());
         std::thread::spawn(move || match blocklists::refresh_shared_slop(&dir) {
@@ -281,6 +293,7 @@ fn main() -> wry::Result<()> {
     // First-seen dates for search results. ponytail: in memory for this run only; writing them to
     // disk would leave a trace of what you searched.
     let first_seen: Arc<std::sync::Mutex<std::collections::HashMap<String, Option<String>>>> = Arc::default();
+    let mut release: Option<updater::Release> = None;
     let mut last_url = String::new();
     let mut downloading = String::new();
     event_loop.run(move |event, _, flow| {
@@ -384,6 +397,34 @@ fn main() -> wry::Result<()> {
                     profiles.set_agents(id, on);
                     profile_files::save(&dir, &profiles);
                     service.set_workspaces(workspaces(&profiles));
+                }
+                true
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"installUpdate""#) => {
+                match release.clone() {
+                    // macOS app: swap it in place. Elsewhere (or a source build): the release page.
+                    Some(r) if cfg!(target_os = "macos") && updater::current_bundle().is_some() => {
+                        service.notify(format!("Downloading canbec {}…", r.version));
+                        let p = proxy.clone();
+                        std::thread::spawn(move || send(&p, AppEvent::UpdateInstalled(updater::install(&r))));
+                    }
+                    Some(r) => service.handle(UiCommand::Navigate { url: r.page }, now()),
+                    None => {}
+                }
+                true
+            }
+            Event::UserEvent(AppEvent::Update(r)) => {
+                service.set_update(Some(r.version.clone()));
+                release = Some(r);
+                true
+            }
+            Event::UserEvent(AppEvent::UpdateInstalled(result)) => {
+                match result {
+                    Ok(bundle) => {
+                        updater::relaunch(&bundle);
+                        *flow = ControlFlow::Exit; // logins are saved on the way out
+                    }
+                    Err(e) => service.notify(format!("Update failed: {e}")),
                 }
                 true
             }

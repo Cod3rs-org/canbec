@@ -55,6 +55,8 @@ pub struct UiState {
     pub shared_slop_count: usize,
     /// The computer uses the family DNS (adult sites blocked in every app). `None`: not checked yet.
     pub family_dns: Option<bool>,
+    /// Version of a newer release, if there is one.
+    pub update: Option<String>,
     /// One-line message for the user (e.g. "20 tabs open — close or archive one first").
     pub notice: Option<String>,
 }

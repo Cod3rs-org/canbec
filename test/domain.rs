@@ -266,3 +266,14 @@ fn chrome_match_patterns() {
         assert!(MatchPattern::parse(bad).is_none(), "{bad}");
     }
 }
+
+#[test]
+fn only_real_newer_versions_count() {
+    use canbec_domain::version::is_newer;
+    assert!(is_newer("v0.2.0", "0.1.0"));
+    assert!(is_newer("0.10.0", "0.9.9"));
+    assert!(!is_newer("v0.1.0", "0.1.0"));
+    assert!(!is_newer("v0.0.9", "0.1.0"));
+    assert!(!is_newer("v0.2.0-beta", "0.1.0"), "pre-releases are skipped");
+    assert!(!is_newer("latest", "0.1.0"));
+}

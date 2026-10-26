@@ -14,7 +14,7 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 ![status](https://img.shields.io/badge/status-early%20alpha-orange)
 ![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
 ![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-51%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-57%20passing-brightgreen)
 ![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
 ![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
 
@@ -186,12 +186,17 @@ pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 (or the latest CI run's artifacts). The macOS app isn't signed yet, so the first time right-click
 it → **Open**. Linux needs WebKitGTK 4.1 installed.
 
+**Updates:** canbec checks GitHub Releases once a day. When there's a newer version, an
+**⬆ Update** chip shows in the sidebar. On macOS one click downloads it, checks its SHA-256, swaps
+the app and restarts. On Windows/Linux it opens the release page.
+
 **Or build it yourself:**
 
 ```sh
 git clone https://github.com/Cod3rs-org/canbec && cd canbec
 cargo run --release -p canbec              # Linux also needs WebKitGTK 4.1 (see CI workflow)
-cargo test --workspace                     # 51 tests
+cargo test --workspace                     # tests
+tools/install-macos.sh                     # macOS: build + install to /Applications (again after git pull)
 ```
 
 **Make it yours:** put CSS variables into `theme.css` in your config folder, and they override the

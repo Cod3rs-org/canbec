@@ -22,7 +22,9 @@ canbec is early alpha. Please report vulnerabilities privately through GitHub's
 
 ## What canbec never does
 
-- No telemetry, no accounts, no remote config.
+- No telemetry, no accounts, no remote config. The only call home is the daily update check: a
+  plain GET of the latest release from api.github.com (no ID, no data sent). Updates are checked
+  against the release's SHA256SUMS.txt before the app is replaced.
 - No local servers listening on the network (`tools/serve.py` is a dev tool bound to `127.0.0.1`).
 - The MCP server (`canbec --mcp`) is **off by default**: it refuses to start unless you allowed
   AI agents on a profile in settings. It talks over stdio only (the agent starts it, no port),

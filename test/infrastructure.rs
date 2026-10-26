@@ -199,3 +199,13 @@ fn sealed_logins_open_only_with_their_key() {
     assert!(open(&key, &broken).is_none());
     assert_ne!(seal(&key, b"x").unwrap(), seal(&key, b"x").unwrap(), "fresh nonce every time");
 }
+
+#[test]
+fn update_downloads_must_match_the_release_checksum() {
+    use canbec_infrastructure::updater::checksum_ok;
+    // sha256("hello")
+    let sums = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824  canbec-0.2.0-macos-arm64.zip\n";
+    assert!(checksum_ok(sums, "canbec-0.2.0-macos-arm64.zip", b"hello"));
+    assert!(!checksum_ok(sums, "canbec-0.2.0-macos-arm64.zip", b"hellO"));
+    assert!(!checksum_ok(sums, "other.zip", b"hello"));
+}

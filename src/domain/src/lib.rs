@@ -12,6 +12,7 @@ pub mod profiles;
 pub mod slop;
 pub mod tabs;
 pub mod trackers;
+pub mod version;
 pub mod zoom;
 
 /// Unix time in seconds. Passed in by callers so rules stay testable.

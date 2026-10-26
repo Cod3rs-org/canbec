@@ -59,6 +59,7 @@ App-level messages, handled in `src/app` (not browser state):
 | `switchWorkspace` | `id` | Switch profile: saves logins, clears site data, loads that profile's tabs and logins |
 | `addProfile` | `name` | New profile (max 6) and switch to it |
 | `setAgents` | `id`, `on` | Allow AI agents (`canbec --mcp`) to browse as that profile |
+| `installUpdate` | | Install the newer release (`update` in the state): macOS swaps the app and restarts; elsewhere opens the release page |
 | `enableFamilyDns` | | Switch the computer's DNS to Cloudflare for Families (OS admin prompt); state `familyDns` |
 | `exportSlop` | | Saves the user's slop tags to Downloads as `canbec-slop.txt` |
 

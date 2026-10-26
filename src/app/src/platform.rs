@@ -316,7 +316,10 @@ pub fn isolate(view: &wry::WebView, scripts: &[(String, bool)], on_message: impl
     use objc2_web_kit::{WKContentWorld, WKUserScript, WKUserScriptInjectionTime};
     use wry::WebViewExtMacOS;
 
-    let Some(mtm) = MainThreadMarker::new() else { return };
+    let Some(mtm) = MainThreadMarker::new() else {
+        eprintln!("canbec: content scripts not added (not on the main thread)");
+        return;
+    };
     // SAFETY: main thread; the controller retains the scripts and the handler.
     unsafe {
         let world = WKContentWorld::worldWithName(&NSString::from_str(WORLD), mtm);
@@ -376,19 +379,27 @@ mod world_ipc {
     }
 }
 
-/// Linux: the same with WebKitGTK worlds. wry listens to every script message, so the world's
-/// messages arrive through the content IPC handler and `on_message` isn't needed.
+/// Linux: the same with WebKitGTK worlds. (wry's own listener hears every script message, the
+/// page world's too, so `app` ignores wry's IPC where worlds exist.)
 #[cfg(target_os = "linux")]
-pub fn isolate(view: &wry::WebView, scripts: &[(String, bool)], _on_message: impl Fn(String) + 'static) {
+pub fn isolate(view: &wry::WebView, scripts: &[(String, bool)], on_message: impl Fn(String) + 'static) {
     use webkit2gtk::{UserContentInjectedFrames, UserContentManagerExt, UserScript, UserScriptInjectionTime, WebViewExt};
     use wry::WebViewExtUnix;
 
-    let Some(manager) = view.webview().user_content_manager() else { return };
+    let Some(manager) = view.webview().user_content_manager() else {
+        eprintln!("canbec: content scripts not added (no user content manager)");
+        return;
+    };
     for (source, main_only) in std::iter::once(&(WORLD_IPC.to_owned(), false)).chain(scripts) {
         let frames = if *main_only { UserContentInjectedFrames::TopFrame } else { UserContentInjectedFrames::AllFrames };
         manager.add_script(&UserScript::for_world(source, frames, UserScriptInjectionTime::Start, WORLD, &[], &[]));
     }
     manager.register_script_message_handler_in_world(WORLD, WORLD);
+    manager.connect_script_message_received(Some(WORLD), move |_, message| {
+        if let Some(value) = message.js_value() {
+            on_message(value.to_string());
+        }
+    });
 }
 
 #[cfg(windows)]
@@ -404,6 +415,7 @@ pub fn evaluate_in_world(view: &wry::WebView, js: &str) {
 
     let Some(mtm) = MainThreadMarker::new() else { return };
     // SAFETY: main thread; no completion handler.
+    // ponytail: looks the world up per call; cache it if the core ever calls this per frame.
     unsafe {
         let world = WKContentWorld::worldWithName(&NSString::from_str(WORLD), mtm);
         view.webview().evaluateJavaScript_inFrame_inContentWorld_completionHandler(&NSString::from_str(js), None, &world, None);
@@ -418,11 +430,7 @@ pub fn evaluate_in_world(view: &wry::WebView, js: &str) {
 }
 
 #[cfg(windows)]
-pub fn evaluate_in_world(view: &wry::WebView, js: &str) {
-    if let Err(e) = view.evaluate_script(js) {
-        eprintln!("canbec: script failed: {e}");
-    }
-}
+pub use canbec_infrastructure::engine_wry::page_world as evaluate_in_world;
 
 /// macOS: Safari's own user agent. WKWebView leaves out `Version/… Safari/…`, which makes canbec
 /// stand out from the crowd of Safari users. WebView2 and WebKitGTK already send stock strings.

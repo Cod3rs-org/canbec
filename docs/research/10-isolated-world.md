@@ -10,7 +10,7 @@ page's DOM but not its globals, like Chrome's isolated world for extensions.
 | Engine | Scripts | Messages to the core | Core → script |
 |---|---|---|---|
 | WebKit (macOS) | `WKUserScript` in `WKContentWorld "canbec"` | own `WKScriptMessageHandler` named `canbec`, reachable only from that world; page-world `window.ipc` is ignored | `evaluateJavaScript:inFrame:inContentWorld:` |
-| WebKitGTK (Linux) | `webkit_user_script_new_for_world` | handler registered in the world; wry's IPC listener receives every script message, so it arrives with the page's | `run_javascript_in_world` |
+| WebKitGTK (Linux) | `webkit_user_script_new_for_world` | handler `canbec` registered in the world, own `script-message-received::canbec` listener; wry's listener hears every world, so its IPC is ignored | `run_javascript_in_world` |
 | WebView2 (Windows) | page world, as before | page world | `ExecuteScript` |
 
 The world gets its own `window.ipc` shim, so content.js and the extension runtime didn't change.
@@ -24,7 +24,7 @@ the fake device), so it has to patch the page's own objects. Its wrappers look n
 **Not solved by worlds.** The DOM is shared, so a page can still remove the slop frame or a feed
 lock overlay from its own page. That's cosmetic (see SECURITY.md).
 
-**Checked.** A headless WKWebView (no window) with the real content.js and the ported
+**Checked.** `window.find` (Cmd+F) works from the world too. A headless WKWebView (no window) with the real content.js and the ported
 reading-time extension in the world: the page sees `undefined` for all three globals, the feed lock,
 slop frame, ad cover and the extension's badge all apply, extension storage messages arrive through
 the world's handler, and a page's fake `adsHidden` only reaches the (ignored) page-world handler.

@@ -232,11 +232,11 @@ fn main() -> wry::Result<()> {
                 let p = proxy.clone();
                 move |_, _, ok| send(&p, AppEvent::Download(None, ok))
             })
-            // On macOS our scripts post through their own world's handler (`isolate`), so this
-            // page-world channel only carries what pages send themselves: dropped. WebKitGTK
-            // delivers both worlds here, WebView2 has only this one.
+            // Where worlds exist our scripts post through their own world's handler (`isolate`),
+            // so this channel only carries what pages send themselves: ignored. WebView2 has
+            // only this one.
             .with_ipc_handler(move |req| {
-                if !cfg!(target_os = "macos") {
+                if !HAS_WORLDS {
                     send(&p2, AppEvent::Content(req.into_body()))
                 }
             })
@@ -248,6 +248,7 @@ fn main() -> wry::Result<()> {
     };
 
     isolate(&content, &world_scripts, { let p = proxy.clone(); move |msg| send(&p, AppEvent::Content(msg)) });
+    drop(world_scripts); // main() never returns; the engine has its own copies
     round_corners(&content);
     watch_crashes(&content, { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) });
     let trackers_cache = dir.join("blocklists").join("trackers.txt");

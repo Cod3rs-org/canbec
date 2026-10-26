@@ -14,6 +14,10 @@ wry = "0.57"
 tao = "0.37"
 base64 = "0.23" # already in the tree via wry; icon previews for the settings panel
 
+# Tracker blocking on Linux: WebKitGTK's content-filter store (same crate and version wry uses).
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
+
 # Rounded content card + Dock icon on macOS (same objc2 crates wry already uses).
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

@@ -488,8 +488,7 @@ fn set_main_menu() {}
 
 /// Blocks third-party requests to tracker hosts with WebKit's built-in content blocker (the one
 /// Safari blockers use; compiled once, then cached by WebKit under an id that changes with the list).
-/// ponytail: macOS only. WebKitGTK takes the same JSON (UserContentFilterStore); WebView2 needs
-/// WebResourceRequested filters. Both are a function like this one.
+/// ponytail: WebView2 has no content blocker; it needs WebResourceRequested filters (#13).
 #[cfg(target_os = "macos")]
 /// `compiled` runs when the list had to be compiled first (new list), so the page can reload.
 fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList, compiled: impl Fn() + 'static) {
@@ -541,7 +540,78 @@ fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerLi
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+/// Linux: WebKitGTK compiles the same JSON with its UserContentFilterStore (cached on disk in
+/// `<config>/content-filters`, looked up first by an id that changes with the list).
+/// ponytail: raw FFI because webkit2gtk-rs doesn't bind the store; old compiled lists stay on disk.
+#[cfg(target_os = "linux")]
+fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList, compiled: impl Fn() + 'static) {
+    use std::ffi::{CStr, CString};
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    use std::ptr::null_mut;
+    use webkit2gtk::glib::translate::ToGlibPtr;
+    use webkit2gtk::{ffi, gio, glib, WebViewExt};
+    use wry::WebViewExtUnix;
+
+    struct Job {
+        store: *mut ffi::WebKitUserContentFilterStore,
+        manager: webkit2gtk::UserContentManager,
+        id: CString,
+        json: glib::Bytes,
+        compiled: Box<dyn Fn()>,
+    }
+    unsafe fn add(job: &Job, filter: *mut ffi::WebKitUserContentFilter) {
+        ffi::webkit_user_content_manager_add_filter(job.manager.to_glib_none().0, filter);
+        ffi::webkit_user_content_filter_unref(filter);
+    }
+    unsafe fn take_error(err: *mut glib::ffi::GError) -> String {
+        if err.is_null() {
+            return "unknown error".into();
+        }
+        let msg = CStr::from_ptr((*err).message).to_string_lossy().into_owned();
+        glib::ffi::g_error_free(err);
+        msg
+    }
+    unsafe extern "C" fn saved(_: *mut glib::gobject_ffi::GObject, res: *mut gio::ffi::GAsyncResult, data: glib::ffi::gpointer) {
+        let job = Box::from_raw(data as *mut Job);
+        let mut err = null_mut();
+        let filter = ffi::webkit_user_content_filter_store_save_finish(job.store, res, &mut err);
+        if filter.is_null() {
+            eprintln!("canbec: tracker blocker failed to compile: {}", take_error(err));
+        } else {
+            add(&job, filter);
+            (job.compiled)();
+        }
+    }
+    unsafe extern "C" fn loaded(_: *mut glib::gobject_ffi::GObject, res: *mut gio::ffi::GAsyncResult, data: glib::ffi::gpointer) {
+        let job = data as *mut Job;
+        let mut err = null_mut();
+        let filter = ffi::webkit_user_content_filter_store_load_finish((*job).store, res, &mut err);
+        if !filter.is_null() {
+            add(&Box::from_raw(job), filter);
+            return;
+        }
+        let _ = take_error(err); // not compiled yet: compile now
+        let (store, id, json) = ((*job).store, (*job).id.as_ptr(), (*job).json.to_glib_none().0 as *mut _);
+        ffi::webkit_user_content_filter_store_save(store, id, json, null_mut(), Some(saved), job as glib::ffi::gpointer);
+    }
+
+    let Some(manager) = view.webview().user_content_manager() else { return };
+    let json = list.to_content_blocker_json();
+    let mut hash = DefaultHasher::new();
+    json.hash(&mut hash);
+    let dir = canbec_infrastructure::config_dir().join("content-filters");
+    let (Ok(path), Ok(id)) = (CString::new(dir.to_string_lossy().as_bytes()), CString::new(format!("canbec-trackers-{:x}", hash.finish()))) else {
+        return;
+    };
+    // SAFETY: GTK main thread; the job (and the refs it holds) lives until the last callback frees it.
+    unsafe {
+        let store = ffi::webkit_user_content_filter_store_new(path.as_ptr());
+        let job = Box::into_raw(Box::new(Job { store, manager, id, json: glib::Bytes::from_owned(json.into_bytes()), compiled: Box::new(compiled) }));
+        ffi::webkit_user_content_filter_store_load(store, (*job).id.as_ptr(), null_mut(), Some(loaded), job as glib::ffi::gpointer);
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 fn block_trackers(_view: &wry::WebView, _list: &canbec_domain::trackers::TrackerList, _compiled: impl Fn() + 'static) {}
 
 /// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's

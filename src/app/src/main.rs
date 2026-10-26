@@ -27,7 +27,7 @@ use wry::{dpi, PageLoadEvent, PermissionKind, PermissionResponse, Rect, WebViewB
 const SIDEBAR_HTML: &str = include_str!("../../ui/sidebar.html");
 const SIDEBAR_WIDTH: f64 = 300.0;
 const CARD_GAP: f64 = 8.0;
-#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
 const CARD_RADIUS: f64 = 12.0;
 
 enum AppEvent {
@@ -58,7 +58,7 @@ fn now() -> u64 {
 }
 
 /// The sidebar webview fills the window (its background is the frame); the website floats
-/// on top as an inset card. ponytail: square corners; rounding needs a native layer per OS.
+/// on top as an inset card, rounded by `round_corners` (macOS, Windows).
 fn bounds(window: &Window, sidebar: bool) -> Rect {
     let size = window.inner_size().to_logical::<f64>(window.scale_factor());
     let (x, y, w, h) = if sidebar {
@@ -293,6 +293,7 @@ fn main() -> wry::Result<()> {
             Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {
                 let _ = sidebar.set_bounds(bounds(&window, true));
                 let _ = service.engine().view.set_bounds(bounds(&window, false));
+                round_corners(&service.engine().view);
                 false
             }
             // Window chrome and app settings, not browser state: handled here instead of in BrowserService.
@@ -553,7 +554,6 @@ fn main() -> wry::Result<()> {
     });
 }
 
-/// Rounds the website card. ponytail: macOS only; WebView2 / WebKitGTK need their own region APIs.
 /// macOS ignores window icons; the Dock icon is set on the application instead.
 /// ponytail: Finder/.app bundle icon needs packaging (icns) — comes with release builds.
 #[cfg(target_os = "macos")]
@@ -817,7 +817,35 @@ fn round_corners(view: &wry::WebView) {
     }
 }
 
-#[cfg(not(target_os = "macos"))]
+/// Windows: clips wry's container window (sized to the card) to a rounded region. Called again
+/// on every resize. ponytail: GDI regions aren't anti-aliased; Linux stays square (GTK3 can't
+/// clip a WebKit widget to rounded corners).
+#[cfg(windows)]
+fn round_corners(view: &wry::WebView) {
+    use windows_sys::Win32::Foundation::{HWND, RECT};
+    use windows_sys::Win32::Graphics::Gdi::{CreateRoundRectRgn, SetWindowRgn};
+    use windows_sys::Win32::UI::HiDpi::GetDpiForWindow;
+    use windows_sys::Win32::UI::WindowsAndMessaging::GetClientRect;
+    use wry::WebViewExtWindows;
+    let mut parent = Default::default();
+    // SAFETY: UI thread; the container window lives as long as the webview. After SetWindowRgn
+    // succeeds the system owns the region.
+    unsafe {
+        if view.controller().ParentWindow(&mut parent).is_err() {
+            return;
+        }
+        let hwnd = parent.0 as HWND;
+        let mut rect = RECT { left: 0, top: 0, right: 0, bottom: 0 };
+        if GetClientRect(hwnd, &mut rect) == 0 {
+            return;
+        }
+        let diameter = (2.0 * CARD_RADIUS * GetDpiForWindow(hwnd).max(96) as f64 / 96.0) as i32;
+        let region = CreateRoundRectRgn(0, 0, rect.right + 1, rect.bottom + 1, diameter, diameter);
+        SetWindowRgn(hwnd, region, 1);
+    }
+}
+
+#[cfg(not(any(target_os = "macos", windows)))]
 fn round_corners(_view: &wry::WebView) {}
 
 fn workspaces(profiles: &Profiles) -> Vec<canbec_application::ui::Workspace> {

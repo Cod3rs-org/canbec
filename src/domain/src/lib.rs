@@ -1,6 +1,7 @@
 //! canbec domain: the browser's rules, with no I/O and no engine.
 //! Everything here is deterministic: time is passed in as unix seconds.
 
+pub mod ai_text;
 pub mod blocklist;
 pub mod cosmetic;
 pub mod family_dns;

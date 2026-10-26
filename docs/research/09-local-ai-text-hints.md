@@ -30,6 +30,25 @@ edited or paraphrased AI text. At a 1–3% false-positive rate they still flag o
 - **Revisit** when a sub-100 MB model reaches ≥80% detection at ≤0.5% false positives on edited
   text (Beemo / MAGE paraphrased sets).
 
+## Built (v0.3, 🧪 not yet tried in the running app)
+
+- **Settings → AI text hints**, off by default. Turning it on downloads five files (88 MB) from
+  Hugging Face (model, pinned revision) and jsDelivr (onnxruntime-web 1.22.0), each checked against
+  a pinned SHA-256 (`infrastructure/src/ai_text.rs`). Turning it off deletes them. 26 s on a home
+  connection.
+- **Tokenizer** written out in `scripts/ai-text.js` (byte-level BPE from tokenizer.json): the same
+  token ids and scores as Python `tokenizers` + onnxruntime on the test texts.
+- **Runs** in a hidden webview served only from the `canbec-ai` custom protocol. One wasm thread.
+  It is created on the first page to score and dropped after 10 idle minutes.
+- **Speed** (M-series Mac, one thread): model ready in 0.4–1 s, a paragraph in 0.1–0.2 s, a full
+  512 tokens in 1.5 s. Same in headless WebKit and node.
+- **Memory**: about 500 MB while loaded. With ORT's graph optimizations on it was about 1 GB for
+  the same scores and speed, so they're off.
+- **What it reads**: content.js sends the longest `article`/`main` text (or the body), only with
+  80+ words, at most 4,000 characters. The core scores it under its own URL for the tab.
+- **Hint**: a chip "reads like AI · 91%" only at P ≥ 0.85 (`domain::ai_text::HINT_AT`, picked by
+  hand: 50% already flags 5% of human texts). Never a blur or a block.
+
 ## Sources
 
 - [AI-generated text detectors (ONNX), Hugging Face](https://huggingface.co/Deckard618/textdet)

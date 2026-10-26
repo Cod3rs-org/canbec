@@ -38,6 +38,15 @@ pub enum UiCommand {
     ImportSlop { text: String },
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase", tag = "state", content = "percent")]
+pub enum AiTextMode {
+    Off,
+    /// Downloading the model, percent done.
+    Downloading(u8),
+    On,
+}
+
 /// Closed tabs sent to the sidebar; older ones stay in state.json.
 pub const CLOSED_SHOWN: usize = 200;
 
@@ -64,6 +73,8 @@ pub struct UiState {
     pub closed: Vec<ArchivedTab>,
     /// Names of the installed extensions (`<config>/extensions/`).
     pub extensions: Vec<String>,
+    /// The optional AI text model: off (not downloaded), downloading, or on.
+    pub ai_text: AiTextMode,
     /// One-line message for the user (e.g. "20 tabs open — close or archive one first").
     pub notice: Option<String>,
 }
@@ -80,6 +91,8 @@ pub struct Current {
     pub ads_hidden: u32,
     /// Images on this page whose metadata says they're AI-generated (blurred until clicked).
     pub ai_images: u32,
+    /// "Reads like AI", in percent, when the optional detector is fairly sure (see domain::ai_text).
+    pub ai_text: Option<u8>,
     /// The current site keeps its cookies across restarts.
     pub stay_logged_in: bool,
 }

@@ -323,3 +323,14 @@ fn persona_is_stable_per_site_differs_between_sites_and_never_real() {
         assert_eq!(pick(&screens, Some(&(1920, 1080)), seed, 3), Some(s), "{host}");
     }
 }
+
+#[test]
+fn ai_text_hints_need_a_high_score() {
+    use canbec_domain::ai_text::hint;
+    assert_eq!(hint(0.5), None, "the model's 50% flags 5% of human texts");
+    assert_eq!(hint(0.849), None);
+    assert_eq!(hint(0.85), Some(85));
+    assert_eq!(hint(0.996), Some(100));
+    assert_eq!(hint(f64::NAN), None);
+    assert_eq!(hint(1.5), None);
+}

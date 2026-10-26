@@ -129,13 +129,25 @@
     document.body.append(frame, banner);
   }
 
+  // AI text hints (optional, off by default): the page's main text, once, for the local model.
+  let textSent = false;
+  function sendText() {
+    if (textSent || !document.body) return;
+    textSent = true;
+    const roots = [...document.querySelectorAll("article, main, [role='main']")];
+    const root = roots.sort((a, b) => b.innerText.length - a.innerText.length)[0] || document.body;
+    const text = root.innerText.replace(/\s+/g, " ").trim().slice(0, 4000);
+    if (text.split(" ").length >= 80) send({ type: "pageText", text }); // shorter guesses are mostly wrong
+  }
+
   let flags = { slop: false, feedsLocked: true };
   window.__canbec = {
     // Called by the browser after every page load.
-    flags(slop, feedsLocked) {
+    flags(slop, feedsLocked, readText) {
       flags = { slop, feedsLocked };
       document.documentElement.classList.toggle("canbec-feeds-locked", feedsLocked);
       setSlop(slop);
+      if (readText) setTimeout(sendText, 1500); // after the page has settled
     },
     // Site rules for this page: more ads to cover, and generic rules this site is exempt from.
     ads(hide, allow) {

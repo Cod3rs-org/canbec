@@ -57,6 +57,9 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     /// A newer release the user can install.
     update: Option<String>,
     extensions: Vec<String>,
+    ai_text_mode: AiTextMode,
+    /// Hint for the current page (percent), from the detector's score.
+    ai_text: Option<u8>,
 }
 
 impl<E: Engine, S: StateStore> BrowserService<E, S> {
@@ -64,7 +67,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default(), workspaces: Vec::new(), family_dns: None, update: None, extensions: Vec::new() };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default(), workspaces: Vec::new(), family_dns: None, update: None, extensions: Vec::new(), ai_text_mode: AiTextMode::Off, ai_text: None };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
@@ -92,6 +95,22 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     pub fn set_extensions(&mut self, names: Vec<String>) {
         self.extensions = names;
+    }
+
+    /// The app reports the optional model's state (off, downloading, ready).
+    pub fn set_ai_text_mode(&mut self, mode: AiTextMode, now: Timestamp) {
+        self.ai_text_mode = mode;
+        if mode != AiTextMode::On {
+            self.ai_text = None;
+        }
+        self.push_flags(now);
+    }
+
+    /// The detector's P(AI-generated) for `url`. Ignored when the tab has moved on since.
+    pub fn on_ai_text(&mut self, url: &str, p: f64) {
+        if self.snapshot.tabs.active_tab().is_some_and(|t| t.url == url) {
+            self.ai_text = canbec_domain::ai_text::hint(p);
+        }
     }
 
     pub fn set_family_dns(&mut self, on: bool) {
@@ -262,6 +281,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         if loading {
             self.ads_hidden = 0;
             self.ai_images = 0;
+            self.ai_text = None;
             if let Some(host) = host_of(url) {
                 self.engine.zoom(self.zoom_for(&host)); // the engine's zoom sticks across sites otherwise
                 let site = self.ads.for_host(&host);
@@ -365,6 +385,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 can_go_forward: active.is_some_and(|t| t.can_go_forward()),
                 ads_hidden: self.ads_hidden,
                 ai_images: self.ai_images,
+                ai_text: self.ai_text,
                 stay_logged_in: active.and_then(|t| host_of(&t.url)).is_some_and(|h| self.snapshot.stay_logged_in.contains(&h)),
             },
             tabs: tabs
@@ -394,6 +415,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             update: self.update.clone(),
             closed,
             extensions: self.extensions.clone(),
+            ai_text: self.ai_text_mode,
             notice: self.notice.clone(),
         }
     }
@@ -428,7 +450,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     fn push_flags(&self, now: Timestamp) {
         let slop = self.snapshot.tabs.active_tab().is_some_and(|t| self.is_slop(&t.url));
-        self.engine.page_flags(slop, self.snapshot.feed_lock.is_locked(now));
+        self.engine.page_flags(slop, self.snapshot.feed_lock.is_locked(now), self.ai_text_mode == AiTextMode::On);
     }
 }
 

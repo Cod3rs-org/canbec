@@ -68,7 +68,7 @@ fn tracker_seed_works_offline() {
 
 #[test]
 fn content_script_exposes_the_hooks_the_engine_calls() {
-    for hook in ["window.__canbec", "flags(slop, feedsLocked)", "ads(hide, allow)", "adsHidden", "aiImages", "trainedAlgorithmicMedia", "canbec-feeds-locked"] {
+    for hook in ["window.__canbec", "flags(slop, feedsLocked, readText)", "pageText", "ads(hide, allow)", "adsHidden", "aiImages", "trainedAlgorithmicMedia", "canbec-feeds-locked"] {
         assert!(CONTENT_SCRIPT.contains(hook), "content script lost `{hook}`");
     }
 }
@@ -259,4 +259,16 @@ fn ported_example_extension_loads() {
     let js = canbec_infrastructure::extensions::script(&exts, &Default::default());
     assert_eq!(exts[0].name, "Reading time");
     assert!(js.contains("min read") && js.contains(".reading-time") && !js.contains("sendMessage({"));
+}
+
+#[test]
+fn ai_text_page_serves_only_its_own_files() {
+    use canbec_infrastructure::ai_text::{file, installed, FILES};
+    let config = temp_dir("ai-text");
+    assert!(!installed(&config), "nothing until the user downloads it");
+    assert_eq!(file(&config, "/").unwrap().1, "text/html");
+    assert_eq!(file(&config, "/ai-text.js").unwrap().1, "text/javascript");
+    assert!(file(&config, "/model.onnx").is_none(), "not downloaded yet");
+    assert!(file(&config, "/../state.json").is_none() && file(&config, "/state.json").is_none());
+    assert!(FILES.iter().all(|(_, url, sha, _)| url.starts_with("https://") && sha.len() == 64));
 }

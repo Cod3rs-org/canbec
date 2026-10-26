@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use canbec_application::ports::{Engine, StateStore};
-use canbec_application::ui::UiCommand;
+use canbec_application::ui::{AiTextMode, UiCommand};
 use canbec_application::{resolve_input, BrowserService, Snapshot, HOME_URL, MAX_ESSENTIALS};
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::cosmetic::CosmeticRules;
@@ -23,8 +23,9 @@ impl Engine for FakeEngine {
     fn reload(&self) {
         self.log.borrow_mut().push("reload".into());
     }
-    fn page_flags(&self, slop: bool, feeds_locked: bool) {
-        self.log.borrow_mut().push(format!("flags slop={slop} feeds_locked={feeds_locked}"));
+    fn page_flags(&self, slop: bool, feeds_locked: bool, read_text: bool) {
+        let text = if read_text { " read_text" } else { "" };
+        self.log.borrow_mut().push(format!("flags slop={slop} feeds_locked={feeds_locked}{text}"));
     }
     fn page_ads(&self, hide: &[String], allow: &[String]) {
         self.log.borrow_mut().push(format!("ads hide={hide:?} allow={allow:?}"));
@@ -342,4 +343,22 @@ fn closed_tabs_are_listed_newest_first_and_reopen() {
     let state = svc.state(6);
     assert_eq!(state.current.url, "https://new.example");
     assert!(state.closed.iter().all(|t| t.id != new));
+}
+
+#[test]
+fn ai_text_hint_only_when_on_and_for_the_current_page() {
+    let (mut svc, engine, _) = service();
+    svc.handle(nav("https://blog.example/post"), 1);
+    svc.on_page("https://blog.example/post", None, false, 1);
+    assert!(!engine.log.borrow().last().unwrap().contains("read_text"), "off by default");
+    svc.set_ai_text_mode(AiTextMode::On, 2);
+    assert!(engine.log.borrow().last().unwrap().ends_with("read_text"));
+    svc.on_ai_text("https://other.example/", 0.99);
+    assert_eq!(svc.state(2).current.ai_text, None, "a page the tab already left");
+    svc.on_ai_text("https://blog.example/post", 0.6);
+    assert_eq!(svc.state(2).current.ai_text, None, "too unsure to show");
+    svc.on_ai_text("https://blog.example/post", 0.914);
+    assert_eq!(svc.state(2).current.ai_text, Some(91));
+    svc.on_page("https://blog.example/next", None, true, 3);
+    assert_eq!(svc.state(3).current.ai_text, None, "a new page starts without a hint");
 }

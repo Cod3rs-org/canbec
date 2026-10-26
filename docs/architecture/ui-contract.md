@@ -25,6 +25,8 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
   "stayLoggedIn": ["mail.example"],  // (current.aiImages: AI-labelled images blurred on this page)     // sites whose cookies survive a restart; current.stayLoggedIn for this page
   "slopCount": 12, "sharedSlopCount": 340, // own slop tags; entries from followed lists (slop-lists.txt)
   "extensions": ["Dark Reader Lite"],      // installed extensions (<config>/extensions/)
+  "aiText": {"state": "off"},              // optional AI text model: off | downloading (+ "percent") | on;
+                                           // current.aiText: "reads like AI" percent for this page, or null
   "notice":    null                     // one-line message, e.g. "Blocked: adult content"
 }
 ```
@@ -58,6 +60,7 @@ App-level messages, handled in `src/app` (not browser state):
 | `window` | `action`: `drag` \| `minimize` \| `maximize` \| `close` | Own window buttons (Windows / Linux) |
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `openConfig` | | Shows the config folder in the file manager |
+| `aiText` | `on` | `true` downloads the AI text model (~90 MB) and turns hints on; `false` turns them off and deletes it |
 | `switchWorkspace` | `id` | Switch profile: saves logins, clears site data, loads that profile's tabs and logins |
 | `addProfile` | `name` | New profile (max 6) and switch to it |
 | `setAgents` | `id`, `on` | Allow AI agents (`canbec --mcp`) to browse as that profile |

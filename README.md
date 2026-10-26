@@ -14,7 +14,7 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 ![status](https://img.shields.io/badge/status-early%20alpha-orange)
 ![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
 ![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-61%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-64%20passing-brightgreen)
 ![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
 ![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
 
@@ -138,6 +138,7 @@ timeline
 | 33 | Crashed pages reload on Linux and Windows too (WebKitGTK signal, WebView2 ProcessFailed) | 🧪 | [#11](https://github.com/Cod3rs-org/canbec/issues/11) |
 | 34 | Cosmetic ad rules with `~site` exclusions are applied instead of skipped | ✅ | |
 | 35 | **Isolated world:** content script and extensions run in canbec's own JS world (macOS, Linux); pages can't see or call them | 🧪 | [#20](https://github.com/Cod3rs-org/canbec/issues/20) |
+| 36 | **AI text hints** (optional 88 MB download, off by default): a local model guesses "reads like AI" on a quiet chip | 🧪 | [#25](https://github.com/Cod3rs-org/canbec/issues/25) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

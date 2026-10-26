@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- canbec AI text hints (#25): a hidden page. The core calls classify(url, text); the score goes
+     back over window.ipc. Only this page's own files load here (custom protocol, see ai_text.rs). -->
+<script src="ort.wasm.min.js"></script>
+<script src="ai-text.js"></script>
+<script>
+  ort.env.wasm.numThreads = 1; // threads need cross-origin isolation, and one is enough here
+  ort.env.wasm.wasmPaths = new URL("./", location.href).href;
+  const ready = fetch("tokenizer.json").then((r) => r.json()).then((tok) => canbecAiText.detector(ort, "model.onnx", tok));
+  const send = (msg) => window.ipc.postMessage(JSON.stringify(msg));
+  let queue = Promise.resolve();
+  // One page at a time; a slow page doesn't pile up behind itself.
+  window.classify = (url, text) => {
+    queue = queue.then(async () => send({ url, p: await (await ready)(text) })).catch((e) => send({ url, error: String(e) }));
+  };
+  ready.then(() => send({ ready: true }), (e) => send({ error: String(e) }));
+</script>

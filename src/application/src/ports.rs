@@ -6,9 +6,9 @@ use crate::Snapshot;
 pub trait Engine {
     fn navigate(&self, url: &str);
     fn reload(&self);
-    /// Tells the injected content script whether the current page is tagged as slop
-    /// and whether feeds are locked.
-    fn page_flags(&self, slop: bool, feeds_locked: bool);
+    /// Tells the injected content script whether the current page is tagged as slop, whether
+    /// feeds are locked, and whether to send the page's text for an AI text hint.
+    fn page_flags(&self, slop: bool, feeds_locked: bool, read_text: bool);
     /// Site-specific ad selectors to cover, and generic ones this site is exempt from.
     fn page_ads(&self, hide: &[String], allow: &[String]);
     /// Selects the next (or previous) match of `text` in the page and scrolls to it.

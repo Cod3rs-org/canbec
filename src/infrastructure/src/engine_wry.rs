@@ -31,8 +31,8 @@ impl Engine for WryEngine {
     fn reload(&self) {
         self.js("location.reload()");
     }
-    fn page_flags(&self, slop: bool, feeds_locked: bool) {
-        self.js(&format!("window.__canbec && window.__canbec.flags({slop}, {feeds_locked})"));
+    fn page_flags(&self, slop: bool, feeds_locked: bool, read_text: bool) {
+        self.js(&format!("window.__canbec && window.__canbec.flags({slop}, {feeds_locked}, {read_text})"));
     }
     fn page_ads(&self, hide: &[String], allow: &[String]) {
         let json = |list: &[String]| serde_json::to_string(list).unwrap_or_else(|_| "[]".into());

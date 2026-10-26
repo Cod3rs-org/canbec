@@ -50,7 +50,7 @@ Own search, AI spoilers, AI text hints: the web as written by humans.
 |--:|---|---|:-:|
 | [#23](https://github.com/Cod3rs-org/canbec/issues/23) | Own search: mark results first seen after 2023 as "obsolete" | ai-detection | ✅ |
 | [#24](https://github.com/Cod3rs-org/canbec/issues/24) | AI image spoilers (metadata first) | ai-detection | ✅ |
-| [#25](https://github.com/Cod3rs-org/canbec/issues/25) | AI text hints with a small local model | ai-detection | |
+| [#25](https://github.com/Cod3rs-org/canbec/issues/25) | AI text hints with a small local model | ai-detection | 🧪 |
 | [#26](https://github.com/Cod3rs-org/canbec/issues/26) | Shared slop lists | ai-detection, blocking | ✅ |
 
 ## v1.0 · agents & extensions

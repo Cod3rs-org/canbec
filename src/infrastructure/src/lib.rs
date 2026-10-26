@@ -2,6 +2,7 @@
 
 pub mod blocklists;
 pub mod cookie_jar;
+pub mod ai_text;
 pub mod engine_wry;
 pub mod extensions;
 pub mod icon;

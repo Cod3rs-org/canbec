@@ -8,7 +8,7 @@
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use canbec_application::ui::UiCommand;
+use canbec_application::ui::{AiTextMode, UiCommand};
 use canbec_application::BrowserService;
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::host_of;
@@ -18,7 +18,7 @@ use canbec_infrastructure::updater;
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_domain::profiles::Profiles;
 use canbec_infrastructure::icon::{load_icon, BUILT_IN};
-use canbec_infrastructure::{blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token, save_to_downloads};
+use canbec_infrastructure::{ai_text, blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token, save_to_downloads};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -54,6 +54,10 @@ enum AppEvent {
     UpdateInstalled(Result<std::path::PathBuf, String>),
     /// First Wayback captures for search results (`None`: never archived).
     FirstSeen(Vec<(String, Option<String>)>),
+    /// From the hidden AI text page: `{url, p}`, `{ready}` or `{error}`.
+    AiText(String),
+    /// Model download: percent done, `Ok(None)` when finished.
+    AiTextDownload(Result<Option<u8>, String>),
     Tick,
 }
 
@@ -108,6 +112,30 @@ fn permission(kind: PermissionKind) -> PermissionResponse {
         | PermissionKind::WindowManagement => PermissionResponse::Deny,
         _ => PermissionResponse::Default,
     }
+}
+
+/// The hidden page that runs the optional AI text model (#25). It only loads its own files from
+/// the `canbec-ai` protocol, and its messages are scores. Zero size and invisible.
+/// Created on the first page to score and dropped after 10 idle minutes: it holds ~500 MB.
+/// ponytail: the protocol handler reads the 77 MB model on the UI thread each time it loads.
+fn ai_text_view(window: &Window, dir: &std::path::Path, proxy: &EventLoopProxy<AppEvent>) -> Option<wry::WebView> {
+    let (dir, p) = (dir.to_owned(), proxy.clone());
+    let url = if cfg!(windows) { "http://canbec-ai.localhost/" } else { "canbec-ai://localhost/" };
+    let view = browser_args(WebViewBuilder::new())
+        .with_custom_protocol("canbec-ai".into(), move |_, req| {
+            let (body, mime) = ai_text::file(&dir, req.uri().path()).unwrap_or_default();
+            let status = if body.is_empty() { 404 } else { 200 };
+            wry::http::Response::builder().status(status).header("Content-Type", mime).body(body.into()).unwrap_or_default()
+        })
+        .with_url(url)
+        .with_navigation_handler(move |u| u.starts_with(url))
+        .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
+        .with_permission_handler(|_| PermissionResponse::Deny)
+        .with_ipc_handler(move |req| send(&p, AppEvent::AiText(req.into_body())))
+        .with_bounds(Rect { position: dpi::LogicalPosition::new(0.0, 0.0).into(), size: dpi::LogicalSize::new(0.0, 0.0).into() })
+        .with_visible(false)
+        .build_as_child(window);
+    view.map_err(|e| eprintln!("canbec: AI text page failed: {e}")).ok()
 }
 
 /// Shows the config folder (theme.css, icon, state) in the OS file manager.
@@ -266,6 +294,12 @@ fn main() -> wry::Result<()> {
     service.set_shared_slop(blocklists::load_shared_slop(&dir));
     service.set_workspaces(workspaces(&profiles));
     service.set_extensions(extensions.iter().map(|e| e.name.clone()).collect());
+    // AI text hints: on while the model is downloaded; the page that runs it only while in use.
+    let mut ai_view: Option<wry::WebView> = None;
+    let (mut ai_ready, mut ai_pending, mut ai_used) = (false, None::<String>, 0);
+    if ai_text::installed(&dir) {
+        service.set_ai_text_mode(AiTextMode::On, now());
+    }
     if let Some(url) = std::env::args().nth(1) {
         service.handle(UiCommand::Navigate { url }, now());
     }
@@ -454,6 +488,47 @@ fn main() -> wry::Result<()> {
                 }
                 true
             }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"aiText""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                if msg["on"].as_bool() == Some(true) {
+                    service.set_ai_text_mode(AiTextMode::Downloading(0), now());
+                    let (p, dir) = (proxy.clone(), dir.clone());
+                    std::thread::spawn(move || {
+                        let result = ai_text::install(&dir, |pct| send(&p, AppEvent::AiTextDownload(Ok(Some(pct)))));
+                        send(&p, AppEvent::AiTextDownload(result.map(|_| None)));
+                    });
+                } else {
+                    (ai_view, ai_ready) = (None, false);
+                    ai_text::remove(&dir);
+                    service.set_ai_text_mode(AiTextMode::Off, now());
+                }
+                true
+            }
+            Event::UserEvent(AppEvent::AiTextDownload(progress)) => {
+                match progress {
+                    Ok(Some(pct)) => service.set_ai_text_mode(AiTextMode::Downloading(pct.min(99)), now()),
+                    Ok(None) => service.set_ai_text_mode(AiTextMode::On, now()),
+                    Err(e) => {
+                        service.set_ai_text_mode(AiTextMode::Off, now());
+                        service.notify(format!("AI text model download failed: {e}"));
+                    }
+                }
+                true
+            }
+            Event::UserEvent(AppEvent::AiText(json)) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                if let (Some(url), Some(p)) = (msg["url"].as_str(), msg["p"].as_f64()) {
+                    service.on_ai_text(url, p);
+                } else if msg["ready"].as_bool() == Some(true) {
+                    ai_ready = true;
+                    if let (Some(view), Some(script)) = (&ai_view, ai_pending.take()) {
+                        let _ = view.evaluate_script(&script);
+                    }
+                } else if let Some(e) = msg["error"].as_str() {
+                    eprintln!("canbec: AI text model: {e}");
+                }
+                true
+            }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"enableFamilyDns""#) => {
                 check_family_dns(&proxy, true);
                 false
@@ -535,6 +610,23 @@ fn main() -> wry::Result<()> {
                             });
                             send(&p, AppEvent::FirstSeen(answers));
                         });
+                        false
+                    }
+                    // Text for the optional AI text hint. A page could send other text for itself:
+                    // the worst case is a wrong hint on its own page. Scored under our own URL.
+                    (Some("pageText"), _) if ai_text::installed(&dir) => {
+                        let text: String = msg["text"].as_str().unwrap_or_default().chars().take(4000).collect();
+                        let script = format!("classify({}, {})", serde_json::Value::from(last_url.as_str()), serde_json::Value::from(text));
+                        ai_used = now();
+                        match &ai_view {
+                            Some(view) if ai_ready => drop(view.evaluate_script(&script)),
+                            _ => {
+                                ai_pending = Some(script); // only the newest page waits for the model
+                                if ai_view.is_none() {
+                                    ai_view = ai_text_view(&window, &dir, &proxy);
+                                }
+                            }
+                        }
                         false
                     }
                     // Extension storage: pages can send these too, so they're limited to known
@@ -641,6 +733,9 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Tick) => {
                 save_logins(&service, &cookie_file); // also every minute, in case of a crash
+                if ai_view.is_some() && now().saturating_sub(ai_used) > 600 {
+                    (ai_view, ai_ready) = (None, false); // frees the model's memory
+                }
                 service.tick(now())
             }
             Event::UserEvent(AppEvent::SidebarReady) => true,

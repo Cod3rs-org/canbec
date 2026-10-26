@@ -69,7 +69,7 @@ And under the hood:
 
 ```mermaid
 timeline
-    title canbec, built on 2026-10-25
+    title canbec, built 2026-10-25 to 26
     Research : Goals and engine needs
              : Search, inspiration, UI design
     Bake-off : wry ✅ 5/6
@@ -89,6 +89,10 @@ timeline
     Ready    : Settings, shortcuts, downloads
              : EasyList ads, .app + releases
              : No tracking, fresh every start
+    Roadmap  : Back/forward per tab, find, zoom
+             : Profiles, shared slop lists
+             : AI image spoilers, MCP for agents
+             : Trackers on all 3 OSes
 ```
 
 | # | Step | Status | Read more |
@@ -111,6 +115,12 @@ timeline
 | 16 | `canbec.app` bundle, packaged builds for 3 OSes, tag → GitHub release | ✅ | [ci.yml](.github/workflows/ci.yml) |
 | 17 | **No tracking:** fresh browser every start, fingerprint noise, tracker blocking, clean links, privacy tools | ✅ | [08](docs/research/08-privacy.md) |
 | 18 | Full plan: 33 issues in 4 milestones (release, every OS equal, human web, agents & extensions) | 📝 | [ROADMAP](docs/ROADMAP.md) |
+| 19 | Browser basics: back/forward per tab, find in page, zoom per site, Cmd+click → new tab, camera/mic prompts, crash reload | ✅ | [#6–#11](https://github.com/Cod3rs-org/canbec/milestone/1) |
+| 20 | Tracker blocking with EasyPrivacy path rules on macOS; Linux (WebKitGTK) and Windows (WebView2) wired, need a hand test | ✅ / 🧪 | [#12](https://github.com/Cod3rs-org/canbec/issues/12) [#13](https://github.com/Cod3rs-org/canbec/issues/13) [#21](https://github.com/Cod3rs-org/canbec/issues/21) |
+| 21 | Feed lock on 12 sites + your own `feeds.txt` | ✅ | [#22](https://github.com/Cod3rs-org/canbec/issues/22) |
+| 22 | **Profiles:** own tabs, tags and logins per profile; shared slop lists | ✅ | [#26](https://github.com/Cod3rs-org/canbec/issues/26) [#27](https://github.com/Cod3rs-org/canbec/issues/27) |
+| 23 | **AI images blurred** when their metadata says so | ✅ | [#24](https://github.com/Cod3rs-org/canbec/issues/24) |
+| 24 | **MCP server:** AI agents browse through the same filters, only when you allow it | ✅ | [#28](https://github.com/Cod3rs-org/canbec/issues/28) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

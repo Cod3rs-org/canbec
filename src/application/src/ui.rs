@@ -109,6 +109,8 @@ pub struct Workspace {
     pub name: String,
     pub color: String,
     pub active: bool,
+    /// AI agents may use this profile (`canbec --mcp`).
+    pub agents: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -381,7 +381,8 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         Some(url)
     }
 
-    fn is_slop(&self, url: &str) -> bool {
+    /// Tagged by the user or on a list they follow.
+    pub fn is_slop(&self, url: &str) -> bool {
         self.snapshot.slop.find(url).is_some() || self.shared_slop.find(url).is_some()
     }
 

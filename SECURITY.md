@@ -24,5 +24,8 @@ canbec is early alpha. Please report vulnerabilities privately through GitHub's
 
 - No telemetry, no accounts, no remote config.
 - No local servers listening on the network (`tools/serve.py` is a dev tool bound to `127.0.0.1`).
-- The planned MCP server is **off by default**, local-only, and restricted per profile
-  (see docs/research/06-extensibility.md).
+- The MCP server (`canbec --mcp`) is **off by default**: it refuses to start unless you allowed
+  AI agents on a profile in settings. It talks over stdio only (the agent starts it, no port),
+  browses with the same filters as you, can't use the camera/mic or download files, never
+  touches your saved tabs, and logs every call to `agent.log` in that profile's folder.
+  Page text it returns is untrusted: a page can still try prompt injection on the agent.

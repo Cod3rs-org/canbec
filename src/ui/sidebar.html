@@ -129,7 +129,7 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
 </div>
 <div id="set" aria-label="Settings">
  <h2>Profiles</h2>
- <div class="sec"><p>Each profile has its own tabs, slop tags and logins. Switch with the dots at the bottom.</p><div id="profs"></div>
+ <div class="sec"><p>Each profile has its own tabs, slop tags and logins. Switch with the dots at the bottom. <b>AI agents</b> lets tools like Claude browse as that profile through canbec's filters: add <code>canbec --mcp</code> as an MCP server. Best on its own profile without your logins.</p><div id="profs"></div>
   <form id="padd" class="btns" style="margin-top:6px" autocomplete="off"><input id="pname" class="inp" maxlength="24" placeholder="New profile, e.g. Work" aria-label="New profile name"><button class="btn">Add</button></form></div>
  <h2>News feeds</h2>
  <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div>
@@ -225,7 +225,7 @@ function renderSettings(){
  var kb=$("keep");kb.style.display=host&&!c.stayLoggedIn?"":"none";kb.textContent="Stay logged in on "+host;
  $("tools").innerHTML=TOOLS.map(function(t,i){return'<div style="padding:3px 0"><button class="lnk" data-t="'+i+'">'+t[0]+'</button><div style="color:var(--mut);font-size:11px">'+t[2]+'</div></div>'}).join("");
  $("sst").textContent=(s.slopCount||0)+" tagged by you"+(s.sharedSlopCount?" · "+s.sharedSlopCount+" from lists you follow":"");
- $("profs").innerHTML=(s.workspaces||[]).map(function(w){return'<div class="pin"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+h(w.color)+'"></i><span>'+h(w.name)+'</span>'+(w.active?'<small style="color:var(--mut)">active</small>':'<button class="lnk" data-w="'+h(w.id)+'">switch</button>')+'</div>'}).join("");
+ $("profs").innerHTML=(s.workspaces||[]).map(function(w){return'<div class="pin"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+h(w.color)+'"></i><span>'+h(w.name)+'</span>'+'<label style="font-size:11px;color:var(--mut);display:flex;gap:3px;align-items:center" title="Let AI agents browse as this profile (canbec --mcp)"><input type="checkbox" data-ag="'+h(w.id)+'"'+(w.agents?" checked":"")+'>AI agents</label>'+(w.active?'<small style="color:var(--mut)">active</small>':'<button class="lnk" data-w="'+h(w.id)+'">switch</button>')+'</div>'}).join("");
  var e=s.essentials||[];
  $("pins").innerHTML=e.length?e.map(function(x,i){return'<div class="pin"><span title="'+h(x.url)+'">'+h(x.title)+'</span><button class="x" data-u="'+i+'" aria-label="Unpin '+h(x.title)+'">'+X+'</button></div>'}).join(""):'<p style="margin:0">Nothing pinned yet.</p>';
  var ic=window.__icons||[],cur=window.__icon||"sprout",custom=!ic.some(function(i){return i.name===cur});
@@ -244,6 +244,7 @@ $("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type
 $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
 $("cfg").onclick=function(){send({type:"openConfig"})};
 $("profs").onclick=function(e){var b=e.target.closest("[data-w]");if(b)send({type:"switchWorkspace",id:b.dataset.w})};
+$("profs").onchange=function(e){var c=e.target.closest("[data-ag]");if(c)send({type:"setAgents",id:c.dataset.ag,on:c.checked})};
 $("padd").onsubmit=function(e){e.preventDefault();var n=$("pname").value.trim();if(n){send({type:"addProfile",name:n});$("pname").value=""}};
 $("sexp").onclick=function(){send({type:"exportSlop"})};
 $("simp").onclick=function(){$("sfile").click()};

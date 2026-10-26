@@ -138,3 +138,50 @@ mod icon {
         assert_eq!(load_icon(&dir).source, DEFAULT_ICON);
     }
 }
+
+mod mcp {
+    use canbec_infrastructure::mcp::{handle_line, search_results, tool_result, Call, Incoming};
+    use serde_json::{json, Value};
+
+    fn reply(line: &str) -> Value {
+        match handle_line(line) {
+            Incoming::Reply(s) => serde_json::from_str(&s).unwrap(),
+            other => panic!("expected a reply, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn handshake_and_tool_list() {
+        let init = reply(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26"}}"#);
+        assert_eq!(init["result"]["protocolVersion"], "2025-03-26");
+        assert_eq!(init["result"]["serverInfo"]["name"], "canbec");
+        assert_eq!(handle_line(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#), Incoming::Ignore);
+        let names: Vec<_> = reply(r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#)["result"]["tools"]
+            .as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap().to_owned()).collect();
+        assert_eq!(names, ["search", "open", "read", "list_tabs"]);
+        assert_eq!(reply(r#"{"jsonrpc":"2.0","id":3,"method":"nope"}"#)["error"]["code"], -32601);
+        assert_eq!(reply("not json")["error"]["code"], -32700);
+    }
+
+    #[test]
+    fn tool_calls_become_browser_calls() {
+        let call = handle_line(r#"{"jsonrpc":"2.0","id":"a","method":"tools/call","params":{"name":"open","arguments":{"url":" https://x.example "}}}"#);
+        assert_eq!(call, Incoming::Call { id: json!("a"), call: Call::Open { url: "https://x.example".into() } });
+        assert_eq!(reply(r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"search","arguments":{}}}"#)["error"]["code"], -32602);
+        let done: Value = serde_json::from_str(&tool_result(&json!(5), "hi", false)).unwrap();
+        assert_eq!(done["result"]["content"][0]["text"], "hi");
+    }
+
+    #[test]
+    fn search_results_come_from_duckduckgo_redirect_links() {
+        let links = vec![
+            ("Rust".to_owned(), "https://duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.rust-lang.org%2F&rut=1".to_owned()),
+            ("rust-lang.org".to_owned(), "https://duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.rust-lang.org%2F".to_owned()),
+            ("Settings".to_owned(), "https://duckduckgo.com/settings".to_owned()),
+            ("The Book".to_owned(), "https://doc.rust-lang.org/book/".to_owned()),
+            ("doc.rust-lang.org/book/".to_owned(), "https://doc.rust-lang.org/book/".to_owned()),
+        ];
+        let titles: Vec<_> = search_results(&links).into_iter().map(|(t, _)| t).collect();
+        assert_eq!(titles, ["Rust", "The Book"]);
+    }
+}

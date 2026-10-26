@@ -113,7 +113,12 @@ fn open_config_folder(dir: &std::path::Path) {
     }
 }
 
+mod mcp;
+
 fn main() -> wry::Result<()> {
+    if std::env::args().any(|a| a == "--mcp") {
+        return mcp::run();
+    }
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let dir = config_dir();
@@ -360,6 +365,15 @@ fn main() -> wry::Result<()> {
                 };
                 if let Some(id) = id {
                     switch_profile(&id, &mut profiles, &mut service, &mut cookie_file, &dir);
+                }
+                true
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"setAgents""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                if let (Some(id), Some(on)) = (msg["id"].as_str(), msg["on"].as_bool()) {
+                    profiles.set_agents(id, on);
+                    profile_files::save(&dir, &profiles);
+                    service.set_workspaces(workspaces(&profiles));
                 }
                 true
             }
@@ -748,7 +762,7 @@ fn workspaces(profiles: &Profiles) -> Vec<canbec_application::ui::Workspace> {
     profiles
         .list
         .iter()
-        .map(|p| canbec_application::ui::Workspace { id: p.id.clone(), name: p.name.clone(), color: p.color.clone(), active: p.id == profiles.active })
+        .map(|p| canbec_application::ui::Workspace { id: p.id.clone(), name: p.name.clone(), color: p.color.clone(), active: p.id == profiles.active, agents: p.agents })
         .collect()
 }
 

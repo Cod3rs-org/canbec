@@ -14,7 +14,7 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 ![status](https://img.shields.io/badge/status-early%20alpha-orange)
 ![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
 ![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-36%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-51%20passing-brightgreen)
 ![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
 ![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
 
@@ -166,7 +166,7 @@ it → **Open**. Linux needs WebKitGTK 4.1 installed.
 ```sh
 git clone https://github.com/Cod3rs-org/canbec && cd canbec
 cargo run --release -p canbec              # Linux also needs WebKitGTK 4.1 (see CI workflow)
-cargo test --workspace                     # 36 tests
+cargo test --workspace                     # 51 tests
 ```
 
 **Make it yours:** put CSS variables into `theme.css` in your config folder, and they override the
@@ -175,6 +175,14 @@ on Linux and `%APPDATA%\canbec` on Windows.
 
 ```css
 :root { --acc: #4fae6b; --bg: #fbfaf7; }
+```
+
+**Let an AI agent browse (through the same filters):** tick **AI agents** on a profile in
+Settings → Profiles (best a separate "Agent" profile without your logins), then add canbec as an
+MCP server. Tools: `search`, `open`, `read`, `list_tabs`.
+
+```sh
+claude mcp add canbec -- /Applications/canbec.app/Contents/MacOS/canbec --mcp
 ```
 
 **Pick your icon:** create a file named `icon` in the same folder and write a built-in name (see

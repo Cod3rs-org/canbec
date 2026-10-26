@@ -90,7 +90,9 @@
   // One stylesheet for all ad rules. Selectors go in chunks; a chunk with a selector this
   // engine doesn't understand is retried one by one, so one bad rule can't disable the rest.
   const adSheet = document.createElement("style");
+  const adHidden = [], adAllowed = []; // for readable(): what to leave out for agents
   function addRules(selectors, body) {
+    (body === AD_STYLE ? adHidden : adAllowed).push(...selectors);
     const sheet = adSheet.sheet;
     if (!sheet) return;
     for (let i = 0; i < selectors.length; i += 300) {
@@ -137,6 +139,25 @@
     ads(hide, allow) {
       addRules(hide, AD_STYLE);
       addRules(allow, AD_UNDO);
+    },
+    // For AI agents (canbec --mcp): the page as plain text and links, without ads, locked
+    // feeds and AI-labelled images. ponytail: a page can still overwrite this hook (#20).
+    readable() {
+      const root = document.body ? document.body.cloneNode(true) : document.createElement("body");
+      const drop = (sel) => { try { root.querySelectorAll(sel).forEach((e) => e.remove()); } catch {} };
+      const allowed = adAllowed.join(",");
+      for (let i = 0; i < adHidden.length; i += 300) {
+        const sel = adHidden.slice(i, i + 300).join(",");
+        try { root.querySelectorAll(sel).forEach((e) => { if (!allowed || !e.matches(allowed)) e.remove(); }); } catch { adHidden.slice(i, i + 300).forEach(drop); }
+      }
+      if (flags.feedsLocked) feedSelectors.forEach(drop);
+      drop("script,style,noscript,template,svg,iframe,#canbec-slop,#canbec-slop-banner");
+      root.querySelectorAll("img.canbec-ai").forEach((e) => e.replaceWith("[AI image hidden]"));
+      root.querySelectorAll("p,div,li,h1,h2,h3,h4,h5,h6,br,tr,section,article,header,footer,blockquote,pre").forEach((e) => e.append("\n"));
+      const text = root.textContent.replace(/[ \t\r\f\v]+/g, " ").replace(/\n\s*\n+/g, "\n\n").trim().slice(0, 60000);
+      const links = [...document.links].filter((a) => /^https?:/.test(a.href)).slice(0, 300)
+        .map((a) => ({ text: a.textContent.trim().replace(/\s+/g, " ").slice(0, 120), href: a.href }));
+      return { title: document.title, url: location.href, text, links };
     },
   };
 

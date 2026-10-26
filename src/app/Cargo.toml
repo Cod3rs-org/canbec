@@ -10,6 +10,7 @@ canbec-domain.workspace = true
 canbec-application.workspace = true
 canbec-infrastructure.workspace = true
 serde_json.workspace = true
+url.workspace = true
 wry = "0.57"
 tao = "0.37"
 base64 = "0.23" # already in the tree via wry; icon previews for the settings panel

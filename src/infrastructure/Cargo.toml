@@ -9,6 +9,7 @@ description = "Adapters: wry engine, JSON state store, blocklist download, injec
 canbec-domain.workspace = true
 canbec-application.workspace = true
 serde_json.workspace = true
+url.workspace = true
 wry = "0.57"
 dirs = "7"
 ureq = "3"

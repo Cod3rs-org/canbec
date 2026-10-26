@@ -4,6 +4,7 @@ pub mod blocklists;
 pub mod cookie_jar;
 pub mod engine_wry;
 pub mod icon;
+pub mod mcp;
 pub mod profiles;
 pub mod store;
 

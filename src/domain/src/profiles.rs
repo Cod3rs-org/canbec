@@ -12,6 +12,9 @@ pub struct Profile {
     pub id: String,
     pub name: String,
     pub color: String,
+    /// AI agents may use this profile through `canbec --mcp`. Off unless the user turns it on.
+    #[serde(default)]
+    pub agents: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -22,7 +25,7 @@ pub struct Profiles {
 
 impl Default for Profiles {
     fn default() -> Self {
-        let personal = Profile { id: DEFAULT_PROFILE.into(), name: "Personal".into(), color: COLORS[0].into() };
+        let personal = Profile { id: DEFAULT_PROFILE.into(), name: "Personal".into(), color: COLORS[0].into(), agents: false };
         Self { list: vec![personal], active: DEFAULT_PROFILE.into() }
     }
 }
@@ -49,8 +52,19 @@ impl Profiles {
         let base = if slug.is_empty() { "profile" } else { slug };
         let id = (1..).map(|n| if n == 1 { base.to_owned() } else { format!("{base}-{n}") }).find(|id| self.list.iter().all(|p| p.id != *id)).unwrap_or_default();
         let color = COLORS[self.list.len() % COLORS.len()].to_owned();
-        self.list.push(Profile { id: id.clone(), name: name.to_owned(), color });
+        self.list.push(Profile { id: id.clone(), name: name.to_owned(), color, agents: false });
         Ok(id)
+    }
+
+    pub fn set_agents(&mut self, id: &str, on: bool) {
+        if let Some(p) = self.list.iter_mut().find(|p| p.id == id) {
+            p.agents = on;
+        }
+    }
+
+    /// The profile `canbec --mcp` runs as: the one asked for, else the first that allows agents.
+    pub fn for_agents(&self, wanted: Option<&str>) -> Option<&Profile> {
+        self.list.iter().find(|p| p.agents && wanted.is_none_or(|w| w == p.id))
     }
 
     /// Makes `id` the active profile; false if there is no such profile or it's already active.

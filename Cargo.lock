@@ -135,6 +135,7 @@ dependencies = [
  "objc2-web-kit",
  "serde_json",
  "tao",
+ "url",
  "webkit2gtk",
  "webview2-com",
  "windows-core",
@@ -170,6 +171,7 @@ dependencies = [
  "png",
  "serde_json",
  "ureq",
+ "url",
  "wry",
 ]
 

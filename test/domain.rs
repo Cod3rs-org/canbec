@@ -218,3 +218,14 @@ fn profiles_get_safe_unique_ids_and_a_cap() {
     }
     assert!(p.add("one more").is_err());
 }
+
+#[test]
+fn agents_only_get_profiles_that_allow_them() {
+    use canbec_domain::profiles::Profiles;
+    let mut p = Profiles::default();
+    let agent = p.add("Agent").unwrap();
+    assert!(p.for_agents(None).is_none(), "off by default");
+    p.set_agents(&agent, true);
+    assert_eq!(p.for_agents(None).unwrap().id, agent);
+    assert!(p.for_agents(Some("personal")).is_none());
+}

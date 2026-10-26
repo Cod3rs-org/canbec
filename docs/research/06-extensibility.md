@@ -62,8 +62,11 @@ filters a human does**.
 Safety: no cookies or session from the user's own tabs (a separate profile). Every call is
 logged in the sidebar. The user can see and kill agent tabs.
 
-Implementation: the official Rust MCP SDK (`rmcp`) in the infrastructure layer as a *driving
-adapter*. It calls the same application use cases the UI calls.
+Implementation (done, v0.1): `canbec --mcp` is a stdio server. The JSON-RPC part is hand-written
+in `infrastructure/src/mcp.rs` (four tools don't need `rmcp` and an async runtime). `app/src/mcp.rs`
+runs a hidden browser with the same content scripts, blocklists and `BrowserService`, as the
+first profile with "AI agents" ticked (or `--profile <id>`). Tools: `search`, `open`, `read`,
+`list_tabs`. Not yet: `tag_slop` and a live agent log in the sidebar (calls go to `agent.log`).
 
 ## 5. Profiles (and per-profile MCP access)
 

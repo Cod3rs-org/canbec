@@ -51,7 +51,8 @@
       background: #1f2328; color: #f6f1e7; font: 600 13px system-ui, sans-serif; padding: 6px 12px; border-radius: 999px;
       box-shadow: 0 2px 10px rgba(0,0,0,.25); cursor: pointer; }`;
 
-  // Captured before any page script runs, so a page can't wrap it to steal the shortcut token.
+  // Captured before any page script runs, so a page can't wrap it to steal the shortcut token
+  // (where this runs in the page world: --mcp and Windows).
   const post = window.ipc && window.ipc.postMessage.bind(window.ipc);
   const send = (msg) => post && post(JSON.stringify(msg));
 
@@ -146,7 +147,8 @@
       for (const a of document.querySelectorAll(RESULT_LINKS)) if (map[a.href]) badge(a, map[a.href]);
     },
     // For AI agents (canbec --mcp): the page as plain text and links, without ads, locked
-    // feeds and AI-labelled images. ponytail: a page can still overwrite this hook (#20).
+    // feeds and AI-labelled images. ponytail: --mcp runs this in the page world, where a page
+    // can overwrite the hook; the browser itself uses an isolated world (#20).
     readable() {
       const root = document.body ? document.body.cloneNode(true) : document.createElement("body");
       const drop = (sel) => { try { root.querySelectorAll(sel).forEach((e) => e.remove()); } catch {} };

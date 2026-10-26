@@ -297,6 +297,133 @@ pub fn watch_crashes(view: &wry::WebView, crashed: impl Fn() + 'static) {
 #[cfg(target_os = "macos")]
 pub fn watch_crashes(_view: &wry::WebView, _crashed: impl Fn() + 'static) {}
 
+/// canbec's own and extension scripts run in this JS world (#20): same DOM as the page, but not
+/// its globals, so a page can't see, call or overwrite them. privacy.js stays in the page world
+/// because it has to change what page scripts see.
+pub const WORLD: &str = "canbec";
+/// Engines with JS worlds. WebView2 has none; there the scripts go into the page world.
+pub const HAS_WORLDS: bool = cfg!(any(target_os = "macos", target_os = "linux"));
+/// The world's own `window.ipc`, posting to the `canbec` handler only this world can reach.
+#[cfg_attr(windows, allow(dead_code))]
+const WORLD_IPC: &str = "window.ipc={postMessage:(m)=>window.webkit.messageHandlers.canbec.postMessage(m)};";
+
+/// macOS: adds `scripts` (source, main frame only) to the [`WORLD`] at document start; its
+/// `window.ipc` messages go to `on_message`. Before the first navigation, or they miss a page.
+#[cfg(target_os = "macos")]
+pub fn isolate(view: &wry::WebView, scripts: &[(String, bool)], on_message: impl Fn(String) + 'static) {
+    use objc2::{rc::Retained, runtime::ProtocolObject, MainThreadMarker};
+    use objc2_foundation::NSString;
+    use objc2_web_kit::{WKContentWorld, WKUserScript, WKUserScriptInjectionTime};
+    use wry::WebViewExtMacOS;
+
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    // SAFETY: main thread; the controller retains the scripts and the handler.
+    unsafe {
+        let world = WKContentWorld::worldWithName(&NSString::from_str(WORLD), mtm);
+        let controller = view.webview().configuration().userContentController();
+        for (source, main_only) in std::iter::once(&(WORLD_IPC.to_owned(), false)).chain(scripts) {
+            let script = WKUserScript::initWithSource_injectionTime_forMainFrameOnly_inContentWorld(
+                mtm.alloc(),
+                &NSString::from_str(source),
+                WKUserScriptInjectionTime::AtDocumentStart,
+                *main_only,
+                &world,
+            );
+            controller.addUserScript(&script);
+        }
+        let handler: Retained<world_ipc::Handler> = world_ipc::Handler::new(Box::new(on_message), mtm);
+        controller.addScriptMessageHandler_contentWorld_name(ProtocolObject::from_ref(&*handler), &world, &NSString::from_str(WORLD));
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod world_ipc {
+    use objc2::rc::Retained;
+    use objc2::runtime::{NSObject, NSObjectProtocol};
+    use objc2::{define_class, msg_send, DeclaredClass, MainThreadMarker, MainThreadOnly};
+    use objc2_foundation::NSString;
+    use objc2_web_kit::{WKScriptMessage, WKScriptMessageHandler, WKUserContentController};
+
+    pub struct Ivars {
+        on_message: Box<dyn Fn(String)>,
+    }
+
+    define_class!(
+        #[unsafe(super(NSObject))]
+        #[thread_kind = MainThreadOnly]
+        #[ivars = Ivars]
+        pub struct Handler;
+
+        unsafe impl NSObjectProtocol for Handler {}
+
+        unsafe impl WKScriptMessageHandler for Handler {
+            #[unsafe(method(userContentController:didReceiveScriptMessage:))]
+            fn did_receive(&self, _controller: &WKUserContentController, message: &WKScriptMessage) {
+                // SAFETY: WebKit calls this on the main thread with a live message.
+                if let Ok(body) = unsafe { message.body() }.downcast::<NSString>() {
+                    (self.ivars().on_message)(body.to_string());
+                }
+            }
+        }
+    );
+
+    impl Handler {
+        pub fn new(on_message: Box<dyn Fn(String)>, mtm: MainThreadMarker) -> Retained<Self> {
+            let this = mtm.alloc::<Self>().set_ivars(Ivars { on_message });
+            // SAFETY: plain NSObject init.
+            unsafe { msg_send![super(this), init] }
+        }
+    }
+}
+
+/// Linux: the same with WebKitGTK worlds. wry listens to every script message, so the world's
+/// messages arrive through the content IPC handler and `on_message` isn't needed.
+#[cfg(target_os = "linux")]
+pub fn isolate(view: &wry::WebView, scripts: &[(String, bool)], _on_message: impl Fn(String) + 'static) {
+    use webkit2gtk::{UserContentInjectedFrames, UserContentManagerExt, UserScript, UserScriptInjectionTime, WebViewExt};
+    use wry::WebViewExtUnix;
+
+    let Some(manager) = view.webview().user_content_manager() else { return };
+    for (source, main_only) in std::iter::once(&(WORLD_IPC.to_owned(), false)).chain(scripts) {
+        let frames = if *main_only { UserContentInjectedFrames::TopFrame } else { UserContentInjectedFrames::AllFrames };
+        manager.add_script(&UserScript::for_world(source, frames, UserScriptInjectionTime::Start, WORLD, &[], &[]));
+    }
+    manager.register_script_message_handler_in_world(WORLD, WORLD);
+}
+
+#[cfg(windows)]
+pub fn isolate(_view: &wry::WebView, _scripts: &[(String, bool)], _on_message: impl Fn(String) + 'static) {}
+
+/// Runs `js` in the [`WORLD`] (the page world on Windows), where content.js lives.
+#[cfg(target_os = "macos")]
+pub fn evaluate_in_world(view: &wry::WebView, js: &str) {
+    use objc2::MainThreadMarker;
+    use objc2_foundation::NSString;
+    use objc2_web_kit::WKContentWorld;
+    use wry::WebViewExtMacOS;
+
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    // SAFETY: main thread; no completion handler.
+    unsafe {
+        let world = WKContentWorld::worldWithName(&NSString::from_str(WORLD), mtm);
+        view.webview().evaluateJavaScript_inFrame_inContentWorld_completionHandler(&NSString::from_str(js), None, &world, None);
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub fn evaluate_in_world(view: &wry::WebView, js: &str) {
+    use webkit2gtk::WebViewExt;
+    use wry::WebViewExtUnix;
+    view.webview().run_javascript_in_world(js, WORLD, None::<&webkit2gtk::gio::Cancellable>, |_| {});
+}
+
+#[cfg(windows)]
+pub fn evaluate_in_world(view: &wry::WebView, js: &str) {
+    if let Err(e) = view.evaluate_script(js) {
+        eprintln!("canbec: script failed: {e}");
+    }
+}
+
 /// macOS: Safari's own user agent. WKWebView leaves out `Version/… Safari/…`, which makes canbec
 /// stand out from the crowd of Safari users. WebView2 and WebKitGTK already send stock strings.
 #[cfg(target_os = "macos")]

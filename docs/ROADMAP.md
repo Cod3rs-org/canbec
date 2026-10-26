@@ -37,7 +37,7 @@ Windows and Linux get everything macOS has (tracker blocking, rounded card, DNS 
 | [#17](https://github.com/Cod3rs-org/canbec/issues/17) | Benchmarks on Windows and Linux | release | |
 | [#18](https://github.com/Cod3rs-org/canbec/issues/18) | Encrypt the saved logins with the OS keychain | privacy | ✅ |
 | [#19](https://github.com/Cod3rs-org/canbec/issues/19) | Stay-logged-in sites: keep localStorage/IndexedDB too | privacy | ✅ |
-| [#20](https://github.com/Cod3rs-org/canbec/issues/20) | Content scripts in an isolated world | privacy, blocking | |
+| [#20](https://github.com/Cod3rs-org/canbec/issues/20) | Content scripts in an isolated world | privacy, blocking | 🧪 |
 | [#21](https://github.com/Cod3rs-org/canbec/issues/21) | EasyPrivacy path rules and site exceptions | blocking | ✅ |
 | [#22](https://github.com/Cod3rs-org/canbec/issues/22) | More feed-lock sites and a user list | blocking | ✅ |
 | [#34](https://github.com/Cod3rs-org/canbec/issues/34) | Fake device persona: common hardware, never the real values | privacy, windows, linux, macos | 🧪 |

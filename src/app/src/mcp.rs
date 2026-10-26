@@ -96,7 +96,7 @@ pub fn run() -> wry::Result<()> {
     };
     block_trackers(&content, &blocklists::load_trackers(&dir.join("blocklists").join("trackers.txt")), || {});
     cookie_jar::restore(&content, &profile_dir.join("logins.json"));
-    let mut service = BrowserService::start(WryEngine { view: content }, NoStore, adult, now());
+    let mut service = BrowserService::start(WryEngine { view: content, eval: canbec_infrastructure::engine_wry::page_world }, NoStore, adult, now());
     service.set_ad_rules(ads);
     service.set_shared_slop(blocklists::load_shared_slop(&dir));
 

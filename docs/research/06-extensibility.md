@@ -34,9 +34,10 @@ Goal: port most "content tweak" Chrome extensions without carrying a full WebExt
 **Install:** unpack the extension into `<config>/extensions/<name>/` (folder name = id: letters,
 digits, `-`, `_`) and restart. Settings → Extensions lists what loaded.
 
-**Limits (v1):** scripts run in the page's own JavaScript world (isolated world is #20), so a page
-can see and change an extension's storage; that's why the core only accepts storage for installed
-extensions, as JSON objects, up to 1 MB. Storage changes reach other open pages on their next
+**Limits (v1):** on macOS and Linux scripts run in canbec's isolated JavaScript world, like Chrome's
+(see 10-isolated-world.md). On Windows they run in the page's world, so a page can see and change an
+extension's storage; that's why the core only accepts storage for installed extensions, as JSON
+objects, up to 1 MB. Storage changes reach other open pages on their next
 load, not live. Storage is shared by all profiles.
 
 **Porting skill:** a Claude Code skill (`.claude/skills/port-chrome-extension/`). It reads a Chrome

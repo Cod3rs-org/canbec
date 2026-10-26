@@ -122,7 +122,7 @@ fn open_config_folder(dir: &std::path::Path) {
 mod mcp;
 mod platform;
 
-use platform::{block_trackers, browser_args, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes};
+use platform::{block_trackers, browser_args, evaluate_in_world, isolate, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
 
 fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
@@ -180,16 +180,27 @@ fn main() -> wry::Result<()> {
             .build_as_child(&window)?
     };
 
+    // Extensions (all frames) and content.js (main frame): in canbec's own JS world where the
+    // engine has one, out of the page scripts' reach (#20); in the page world otherwise.
+    let world_scripts: Vec<(String, bool)> = [
+        (canbec_infrastructure::extensions::script(&extensions, &ext_storage), false),
+        (content_script(&key_token, &ads.generic, &std::fs::read_to_string(dir.join("feeds.txt")).unwrap_or_default()), true),
+    ]
+    .into_iter()
+    .filter(|(script, _)| !script.is_empty())
+    .collect();
     let content = {
         let (p1, p2, p3, p4) = (proxy.clone(), proxy.clone(), proxy.clone(), proxy.clone());
         let adult = adult.clone();
-        on_crash(user_agent(browser_args(WebViewBuilder::new())), { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) })
+        let builder = on_crash(user_agent(browser_args(WebViewBuilder::new())), { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) })
             // No tracking across runs: a fresh, in-memory browser profile on every start.
             // Logins the user wants to keep are put back by cookie_jar.
             .with_incognito(true)
-            .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
-            .with_initialization_script_for_main_only(canbec_infrastructure::extensions::script(&extensions, &ext_storage), false)
-            .with_initialization_script(content_script(&key_token, &ads.generic, &std::fs::read_to_string(dir.join("feeds.txt")).unwrap_or_default()))
+            .with_initialization_script_for_main_only(privacy_script(&random_token()), false);
+        let page_world = if HAS_WORLDS { &[][..] } else { &world_scripts[..] };
+        page_world
+            .iter()
+            .fold(builder, |b, (script, main_only)| b.with_initialization_script_for_main_only(script.as_str(), *main_only))
             .with_bounds(bounds(&window, false))
             .with_permission_handler(permission)
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
@@ -221,7 +232,14 @@ fn main() -> wry::Result<()> {
                 let p = proxy.clone();
                 move |_, _, ok| send(&p, AppEvent::Download(None, ok))
             })
-            .with_ipc_handler(move |req| send(&p2, AppEvent::Content(req.into_body())))
+            // On macOS our scripts post through their own world's handler (`isolate`), so this
+            // page-world channel only carries what pages send themselves: dropped. WebKitGTK
+            // delivers both worlds here, WebView2 has only this one.
+            .with_ipc_handler(move |req| {
+                if !cfg!(target_os = "macos") {
+                    send(&p2, AppEvent::Content(req.into_body()))
+                }
+            })
             .with_on_page_load_handler(move |e, url| {
                 send(&p3, AppEvent::PageLoad { url, finished: matches!(e, PageLoadEvent::Finished) })
             })
@@ -229,6 +247,7 @@ fn main() -> wry::Result<()> {
             .build_as_child(&window)?
     };
 
+    isolate(&content, &world_scripts, { let p = proxy.clone(); move |msg| send(&p, AppEvent::Content(msg)) });
     round_corners(&content);
     watch_crashes(&content, { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) });
     let trackers_cache = dir.join("blocklists").join("trackers.txt");
@@ -241,7 +260,7 @@ fn main() -> wry::Result<()> {
     cookie_jar::restore(&content, &cookie_file);
     let snapshot_list = adult.read().map(|l| l.clone()).unwrap_or_default();
     let store = JsonFileStore::new(profile_dir.join("state.json"));
-    let mut service = BrowserService::start(WryEngine { view: content }, store, snapshot_list, now());
+    let mut service = BrowserService::start(WryEngine { view: content, eval: evaluate_in_world }, store, snapshot_list, now());
     service.set_ad_rules(ads);
     service.set_shared_slop(blocklists::load_shared_slop(&dir));
     service.set_workspaces(workspaces(&profiles));
@@ -521,7 +540,7 @@ fn main() -> wry::Result<()> {
                     // extensions and a size cap (see extensions::save_storage).
                     (Some("extStorageGet"), _) => {
                         let all = serde_json::Value::Object(ext_storage.clone());
-                        let _ = service.engine().view.evaluate_script(&format!("window.__canbecExtStorage && window.__canbecExtStorage({all})"));
+                        service.engine().js(&format!("window.__canbecExtStorage && window.__canbecExtStorage({all})"));
                         false
                     }
                     (Some("extStorageSet"), _) => {
@@ -598,7 +617,7 @@ fn main() -> wry::Result<()> {
                     })
                     .collect();
                 let script = format!("window.__canbec && window.__canbec.dates({})", serde_json::Value::Object(map));
-                let _ = service.engine().view.evaluate_script(&script);
+                service.engine().js(&script);
                 false
             }
             Event::UserEvent(AppEvent::FamilyDns(on, error)) => {

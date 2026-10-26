@@ -137,6 +137,7 @@ timeline
 | 32 | Single-page apps (pushState) update the tab URL and back/forward when their title changes | ✅ | |
 | 33 | Crashed pages reload on Linux and Windows too (WebKitGTK signal, WebView2 ProcessFailed) | 🧪 | [#11](https://github.com/Cod3rs-org/canbec/issues/11) |
 | 34 | Cosmetic ad rules with `~site` exclusions are applied instead of skipped | ✅ | |
+| 35 | **Isolated world:** content script and extensions run in canbec's own JS world (macOS, Linux); pages can't see or call them | 🧪 | [#20](https://github.com/Cod3rs-org/canbec/issues/20) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

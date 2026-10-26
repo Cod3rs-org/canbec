@@ -1,7 +1,8 @@
 // canbec extension runtime: the small MV3 subset, content scripts + chrome.storage.
 // infrastructure::extensions appends one __canbecExt(...) call per content_scripts entry.
-// ponytail: runs in the page's world like content.js (isolated world is #20), so a page can see
-// an extension's storage. No background pages or runtime messaging yet.
+// Runs in canbec's isolated JS world with content.js on macOS and Linux, so pages can't see an
+// extension's storage there. ponytail: Windows (WebView2) has no worlds, so there they can.
+// No background pages or runtime messaging yet.
 (() => {
   if (window.__canbecExt) return;
   const STORAGE = "__CANBEC_EXT_STORAGE__"; // { id: items } as of browser start

@@ -37,7 +37,9 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
   types (`application/src/ui.rs`) and `src/ui/sidebar.html` together.
 - Websites can call `window.ipc` too. Content IPC accepts only harmless messages (`adsHidden`,
   `aiImages`, `emailField`, and `key` / `openTab` with the per-run token). Never act on content messages for anything
-  security-relevant.
+  security-relevant. content.js and extensions run in canbec's own JS world on macOS/Linux
+  (`isolate` in `platform.rs`; call them with `engine.js()`, not `evaluate_script`); privacy.js
+  stays in the page world.
 - macOS needs a main menu for Cmd+C/V/Q (`set_main_menu` in `app`). Browser shortcuts are JS
   key handlers in `content.js` and `sidebar.html` (keep the two maps in sync).
 

@@ -4,13 +4,21 @@ use canbec_application::ports::Engine;
 
 pub struct WryEngine {
     pub view: wry::WebView,
+    /// Runs a script where content.js lives: the page world ([`page_world`]) or the app's
+    /// isolated world (#20, per OS in `app`).
+    pub eval: fn(&wry::WebView, &str),
+}
+
+pub fn page_world(view: &wry::WebView, script: &str) {
+    if let Err(e) = view.evaluate_script(script) {
+        eprintln!("canbec: script failed: {e}");
+    }
 }
 
 impl WryEngine {
-    fn js(&self, script: &str) {
-        if let Err(e) = self.view.evaluate_script(script) {
-            eprintln!("canbec: script failed: {e}");
-        }
+    /// A script for content.js (`window.__canbec`) or the extension runtime.
+    pub fn js(&self, script: &str) {
+        (self.eval)(&self.view, script)
     }
 }
 

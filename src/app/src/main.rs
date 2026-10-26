@@ -591,7 +591,7 @@ fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerLi
             return;
         }
         let _ = take_error(err); // not compiled yet: compile now
-        let (store, id, json) = ((*job).store, (*job).id.as_ptr(), (*job).json.to_glib_none().0 as *mut _);
+        let (store, id, json) = ((*job).store, (*job).id.as_ptr(), ToGlibPtr::<*const glib::ffi::GBytes>::to_glib_none(&(*job).json).0 as *mut _);
         ffi::webkit_user_content_filter_store_save(store, id, json, null_mut(), Some(saved), job as glib::ffi::gpointer);
     }
 
@@ -611,8 +611,64 @@ fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerLi
     }
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
-fn block_trackers(_view: &wry::WebView, _list: &canbec_domain::trackers::TrackerList, _compiled: impl Fn() + 'static) {}
+/// Windows: WebView2 has no content blocker, so every request passes this handler and tracker
+/// hosts (third-party only) get an empty 403. Pages themselves are never blocked.
+/// ponytail: host rules only; EasyPrivacy path rules need a URL matcher here.
+#[cfg(windows)]
+fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList, _compiled: impl Fn() + 'static) {
+    use canbec_domain::host_matches;
+    use webview2_com::Microsoft::Web::WebView2::Win32::*;
+    use webview2_com::{take_pwstr, WebResourceRequestedEventHandler};
+    use windows_core::{Interface, HSTRING, PWSTR};
+    use wry::WebViewExtWindows;
+
+    let (webview, env, list) = (view.webview(), view.environment(), list.clone());
+    // Edge's own "Strict" tracking prevention on top: known trackers lose cookie and storage
+    // access in third-party frames. ponytail: not every third-party cookie, like WebKit does.
+    // SAFETY: UI thread; plain COM casts and a setter.
+    let strict = unsafe {
+        webview
+            .cast::<ICoreWebView2_13>()
+            .and_then(|w| w.Profile())
+            .and_then(|p| p.cast::<ICoreWebView2Profile3>())
+            .and_then(|p| p.SetPreferredTrackingPreventionLevel(COREWEBVIEW2_TRACKING_PREVENTION_LEVEL_STRICT))
+    };
+    if let Err(e) = strict {
+        eprintln!("canbec: strict tracking prevention unavailable: {e}");
+    }
+    let page = webview.clone();
+    let handler = WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
+        let Some(args) = args else { return Ok(()) };
+        let mut context = COREWEBVIEW2_WEB_RESOURCE_CONTEXT::default();
+        // SAFETY: WebView2 calls this on the UI thread with valid args; out-params are ours.
+        unsafe {
+            args.ResourceContext(&mut context)?;
+            if context == COREWEBVIEW2_WEB_RESOURCE_CONTEXT_DOCUMENT {
+                return Ok(());
+            }
+            let (mut uri, mut source) = (PWSTR::null(), PWSTR::null());
+            args.Request()?.Uri(&mut uri)?;
+            page.Source(&mut source)?;
+            let (Some(host), page_host) = (host_of(&take_pwstr(uri)), host_of(&take_pwstr(source))) else { return Ok(()) };
+            let first_party = page_host.is_some_and(|p| host_matches(&host, &p) || host_matches(&p, &host));
+            if !first_party && list.blocks_host(&host) {
+                let response = env.CreateWebResourceResponse(None, 403, &HSTRING::from("Blocked"), &HSTRING::new())?;
+                args.SetResponse(&response)?;
+            }
+        }
+        Ok(())
+    }));
+    let mut token = 0i64;
+    // SAFETY: called once on the UI thread right after the webview was built.
+    let result = unsafe {
+        webview
+            .AddWebResourceRequestedFilter(&HSTRING::from("*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL)
+            .and_then(|_| webview.add_WebResourceRequested(&handler, &mut token))
+    };
+    if let Err(e) = result {
+        eprintln!("canbec: tracker blocker failed: {e}");
+    }
+}
 
 /// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's
 /// web-process-terminated yet, so there a crashed page stays white until reload.

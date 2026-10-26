@@ -14,6 +14,11 @@ wry = "0.57"
 tao = "0.37"
 base64 = "0.23" # already in the tree via wry; icon previews for the settings panel
 
+# Tracker blocking on Windows: WebView2's request filter (same crates wry uses).
+[target.'cfg(windows)'.dependencies]
+webview2-com = "0.39"
+windows-core = "0.62"
+
 # Tracker blocking on Linux: WebKitGTK's content-filter store (same crate and version wry uses).
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }

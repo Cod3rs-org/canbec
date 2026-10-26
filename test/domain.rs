@@ -176,3 +176,12 @@ fn zoom_steps_stop_at_the_ends_and_reset() {
     assert_eq!(step(1.2, 1), 1.5); // an odd value snaps to the next level up first
     assert!(LEVELS.contains(&1.0));
 }
+
+#[test]
+fn tracker_hosts_match_subdomains_but_not_lookalikes() {
+    let list = TrackerList::parse("||stats.example^\n||px.example^$third-party\n||ok.example^\n@@||ok.example^\n||p.example/x.js\n");
+    assert!(list.blocks_host("stats.example") && list.blocks_host("eu.stats.example") && list.blocks_host("px.example"));
+    assert!(!list.blocks_host("mystats.example") && !list.blocks_host("example"));
+    assert!(!list.blocks_host("ok.example"), "global exception");
+    assert!(!list.blocks_host("p.example"), "path rules aren't host rules");
+}

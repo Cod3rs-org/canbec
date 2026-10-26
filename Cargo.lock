@@ -136,6 +136,8 @@ dependencies = [
  "serde_json",
  "tao",
  "webkit2gtk",
+ "webview2-com",
+ "windows-core",
  "wry",
 ]
 

@@ -22,6 +22,9 @@ struct Rule {
 pub struct TrackerList {
     block: BTreeSet<Rule>,
     allow: BTreeSet<Rule>,
+    /// Plain `||host^` block rules minus global host exceptions, for engines without a content
+    /// blocker (WebView2 matches hosts itself).
+    hosts: BTreeSet<String>,
 }
 
 impl TrackerList {
@@ -36,11 +39,31 @@ impl TrackerList {
                 Some(rest) => (true, rest),
                 None => (false, line),
             };
-            if let Some(rule) = parse_rule(rule, exception) {
-                if exception { &mut list.allow } else { &mut list.block }.insert(rule);
+            let Some(parsed) = parse_rule(rule, exception) else { continue };
+            if let Some(host) = rule.strip_prefix("||").and_then(|r| r.strip_suffix('^').or_else(|| r.strip_suffix("^$third-party"))) {
+                if !exception {
+                    list.hosts.insert(host.to_ascii_lowercase());
+                } else if rule.ends_with('^') {
+                    list.hosts.remove(&host.to_ascii_lowercase());
+                }
             }
+            if exception { &mut list.allow } else { &mut list.block }.insert(parsed);
         }
         list
+    }
+
+    /// True when `host` or one of its parent domains is a tracker host.
+    pub fn blocks_host(&self, host: &str) -> bool {
+        let mut rest = host;
+        loop {
+            if self.hosts.contains(rest) {
+                return true;
+            }
+            match rest.split_once('.') {
+                Some((_, parent)) if parent.contains('.') => rest = parent,
+                _ => return false,
+            }
+        }
     }
 
     pub fn len(&self) -> usize {

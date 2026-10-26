@@ -39,6 +39,8 @@ enum AppEvent {
     Blocked,
     /// The page's web process died.
     Crashed,
+    /// A new tracker list finished compiling (the first page loaded without it).
+    TrackersReady,
     /// Download started (file name) or finished (`None` name, success flag).
     Download(Option<String>, bool),
     SidebarReady,
@@ -207,7 +209,10 @@ fn main() -> wry::Result<()> {
 
     round_corners(&content);
     let trackers_cache = dir.join("blocklists").join("trackers.txt");
-    block_trackers(&content, &blocklists::load_trackers(&trackers_cache));
+    {
+        let p = proxy.clone();
+        block_trackers(&content, &blocklists::load_trackers(&trackers_cache), move || send(&p, AppEvent::TrackersReady));
+    }
 
     let cookie_file = dir.join("logins.json");
     cookie_jar::restore(&content, &cookie_file);
@@ -392,6 +397,10 @@ fn main() -> wry::Result<()> {
                 service.notify(if ok { format!("Downloaded {name} to Downloads") } else { format!("Download failed: {name}") });
                 true
             }
+            Event::UserEvent(AppEvent::TrackersReady) => {
+                service.handle(UiCommand::Reload, now());
+                false
+            }
             Event::UserEvent(AppEvent::Crashed) => {
                 service.on_crashed(now());
                 true
@@ -482,7 +491,8 @@ fn set_main_menu() {}
 /// ponytail: macOS only. WebKitGTK takes the same JSON (UserContentFilterStore); WebView2 needs
 /// WebResourceRequested filters. Both are a function like this one.
 #[cfg(target_os = "macos")]
-fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList) {
+/// `compiled` runs when the list had to be compiled first (new list), so the page can reload.
+fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList, compiled: impl Fn() + 'static) {
     use std::hash::{DefaultHasher, Hash, Hasher};
     use block2::RcBlock;
     use objc2::MainThreadMarker;
@@ -507,14 +517,19 @@ fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerLi
                 }
             }
         };
+        let compiled = std::rc::Rc::new(compiled);
         let compile = {
             let (store, add) = (store.clone(), add.clone());
             let (id, json) = (id.clone(), NSString::from_str(&json));
             move || {
                 let add = add.clone();
+                let compiled = compiled.clone();
                 let done = RcBlock::new(move |list: *mut WKContentRuleList, err: *mut NSError| match err.as_ref() {
                     Some(err) => eprintln!("canbec: tracker blocker failed to compile: {err:?}"),
-                    None => add(list),
+                    None => {
+                        add(list);
+                        compiled();
+                    }
                 });
                 store.compileContentRuleListForIdentifier_encodedContentRuleList_completionHandler(Some(&id), Some(&json), Some(&done));
             }
@@ -527,7 +542,7 @@ fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerLi
 }
 
 #[cfg(not(target_os = "macos"))]
-fn block_trackers(_view: &wry::WebView, _list: &canbec_domain::trackers::TrackerList) {}
+fn block_trackers(_view: &wry::WebView, _list: &canbec_domain::trackers::TrackerList, _compiled: impl Fn() + 'static) {}
 
 /// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's
 /// web-process-terminated yet, so there a crashed page stays white until reload.

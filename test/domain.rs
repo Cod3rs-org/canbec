@@ -135,19 +135,34 @@ fn only_stay_logged_in_sites_keep_cookies() {
 }
 
 #[test]
-fn tracker_rules_become_third_party_content_blocker_json() {
+fn tracker_rules_become_content_blocker_json() {
     let list = TrackerList::parse(
         "! EasyPrivacy\n||stats.example^\n||pixel.example^$third-party\n||path.example/track.js\n\
-         ||img.example^$image\n@@||stats.example^$script\n||bad host^\n\
-         ||mx.example^$third-party\n@@||mx.example^$script,domain=shop.example\n",
+         ||img.example^$image\n@@||stats.example^$script\n||bad host^\n/collect?tid=\n\
+         ||mx.example^$third-party\n@@||mx.example^$script,domain=shop.example\n\
+         /^regex$/\n||x.example^$csp=none\n||y.example^$domain=a.example|~b.example\n/ab^\n",
     );
-    assert_eq!(list.len(), 3);
     let json: serde_json::Value = serde_json::from_str(&list.to_content_blocker_json()).unwrap();
     let rules = json.as_array().unwrap();
-    assert_eq!(rules.len(), 4); // mx.example stays blocked: its exception is for one site only
-    assert_eq!(rules[1]["trigger"]["url-filter"], r"^[^:]+://+([^:/]+\.)?pixel\.example[:/]");
-    assert_eq!(rules[0]["trigger"]["load-type"][0], "third-party");
-    assert_eq!(rules[3]["action"]["type"], "ignore-previous-rules");
+    let find = |part: &str| rules.iter().find(|r| r["trigger"]["url-filter"].as_str().unwrap().contains(part)).unwrap().clone();
+    assert_eq!(list.len(), 6); // stats, pixel, path, img, collect, mx
+    assert_eq!(rules.len(), 8);
+
+    let pixel = find(r"pixel\.example");
+    assert_eq!(pixel["trigger"]["url-filter"], r"^[^:]+://+([^:/]+\.)?pixel\.example[:/]");
+    assert_eq!(pixel["trigger"]["load-type"][0], "third-party");
+    assert!(!pixel["trigger"]["resource-type"].as_array().unwrap().contains(&"document".into()), "pages are never blocked");
+    assert_eq!(find("stats")["trigger"]["load-type"][0], "third-party", "plain host rules spare the tracker's own site");
+
+    let path = find("track");
+    assert_eq!(path["trigger"]["url-filter"], r"^[^:]+://+([^:/]+\.)?path\.example/track\.js");
+    assert!(path["trigger"]["load-type"].is_null(), "path rules also block first-party analytics");
+    assert_eq!(find("collect")["trigger"]["url-filter"], r"/collect\?tid=");
+    assert_eq!(find("img")["trigger"]["resource-type"], serde_json::json!(["image"]));
+
+    let site_exception = rules.iter().find(|r| r["action"]["type"] == "ignore-previous-rules" && r["trigger"]["url-filter"].as_str().unwrap().contains("mx")).unwrap();
+    assert_eq!(site_exception["action"]["type"], "ignore-previous-rules");
+    assert_eq!(site_exception["trigger"]["if-domain"], serde_json::json!(["*shop.example"]));
 }
 
 #[test]

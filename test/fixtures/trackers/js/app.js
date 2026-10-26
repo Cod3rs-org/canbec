@@ -1,0 +1,1 @@
+window.firstParty=1

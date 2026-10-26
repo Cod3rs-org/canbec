@@ -1,0 +1,17 @@
+<!doctype html><title>Tracker test</title><h1>Tracker test</h1><pre id="out">running…</pre>
+<script>
+const tests = {
+  "first-party app.js (should load)": "/js/app.js",
+  "first-party /a8c-analytics.js path rule (should block)": "/a8c-analytics.js",
+  "google-analytics.com (should block)": "https://www.google-analytics.com/analytics.js",
+  "static.hotjar.com (should block)": "https://static.hotjar.com/c/hotjar-1.js",
+  "jquery CDN (should load)": "https://code.jquery.com/jquery-3.7.1.min.js",
+};
+const out = [];
+Promise.all(Object.entries(tests).map(([name, src]) => new Promise(done => {
+  const s = document.createElement("script"); s.src = src;
+  s.onload = () => { out.push("LOADED  " + name); done(); };
+  s.onerror = () => { out.push("BLOCKED " + name); done(); };
+  document.head.appendChild(s);
+}))).then(() => document.getElementById("out").textContent = out.sort().join("\n"));
+</script>

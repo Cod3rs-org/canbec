@@ -26,7 +26,8 @@ comes back, landing and link URLs lose `utm_*`/`fbclid`.
   switch (#14, `browser_args` in `app/platform.rs`); WebKit's ITP already blocks them on macOS and
   Linux. Not yet checked on a Windows machine. It's a test switch, so Edge may drop it one day.
 - **Tracker request blocking** is in `block_trackers` in `app`: a WebKit content blocker on macOS,
-  the same JSON in WebKitGTK's filter store on Linux, a host filter on WebView2 requests on Windows.
+  the same JSON in WebKitGTK's filter store on Linux, and on Windows the same rules checked per
+  WebView2 request (`TrackerList::blocks`, about 80 µs a request with full EasyPrivacy).
   EasyPrivacy path rules and site exceptions are compiled too (#21).
 - **Kept sites keep only cookies**, not localStorage/IndexedDB. Logins based on localStorage
   tokens need a re-login after restart; settings says so next to the list. Why not more: the

@@ -2,13 +2,17 @@
 //! (the JSON format WebKit's `WKContentRuleList` / WebKitGTK's `UserContentFilter` compile).
 //! Pages themselves are never blocked, only what they load (scripts, pixels, requests, …).
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
+
+use crate::host_matches;
 
 /// Resource types a rule applies to when it names none: everything except the page itself.
 const SUBRESOURCES: &[&str] = &["image", "style-sheet", "script", "font", "raw", "svg-document", "media", "ping", "fetch", "websocket", "other"];
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Rule {
+    /// The ABP pattern, lower-cased, for [`TrackerList::blocks`].
+    pattern: String,
     /// `url-filter` regex (WebKit's small regex subset).
     filter: String,
     /// `third-party` / `first-party`, or none for both.
@@ -22,9 +26,89 @@ struct Rule {
 pub struct TrackerList {
     block: BTreeSet<Rule>,
     allow: BTreeSet<Rule>,
-    /// Plain `||host^` block rules minus global host exceptions, for engines without a content
-    /// blocker (WebView2 matches hosts itself).
-    hosts: BTreeSet<String>,
+    /// The same rules for engines without a content blocker (WebView2 asks per request).
+    block_index: Index,
+    allow_index: Index,
+}
+
+/// `||host…` rules by host, so a request only checks the rules of its host and parent domains.
+/// ponytail: the other rules (a few thousand in EasyPrivacy) are scanned, after a cheap
+/// substring check; an Aho-Corasick prefilter if that ever shows up in page loads.
+#[derive(Debug, Default, Clone)]
+struct Index {
+    by_host: HashMap<String, Vec<Rule>>,
+    rest: Vec<Rule>,
+}
+
+impl Index {
+    fn add(&mut self, rule: Rule) {
+        let rest = rule.pattern.strip_prefix("||").unwrap_or_default();
+        let key = rest.split(|c: char| !(c.is_ascii_alphanumeric() || c == '.' || c == '-')).next().unwrap_or_default();
+        let ends_host = matches!(rest[key.len()..].chars().next(), None | Some('^' | '/' | ':' | '|'));
+        if key.contains('.') && ends_host {
+            self.by_host.entry(key.to_owned()).or_default().push(rule);
+        } else {
+            self.rest.push(rule);
+        }
+    }
+
+    fn any(&self, req: &Request) -> bool {
+        let parents = std::iter::successors(Some(req.host), |h| h.split_once('.').map(|(_, p)| p));
+        parents.filter_map(|h| self.by_host.get(h)).flatten().chain(&self.rest).any(|r| r.applies(req))
+    }
+}
+
+struct Request<'a> {
+    url: &'a str,
+    host: &'a str,
+    page: Option<&'a str>,
+    ty: &'a str,
+}
+
+impl Rule {
+    fn applies(&self, req: &Request) -> bool {
+        let third_party = req.page.is_none_or(|p| !host_matches(req.host, p) && !host_matches(p, req.host));
+        let on = |d: &String| req.page.is_some_and(|p| host_matches(p, &d[1..]));
+        let literal = self.pattern.split(['*', '^', '|']).max_by_key(|l| l.len()).unwrap_or_default();
+        match self.load {
+            Some("third-party") if !third_party => return false,
+            Some("first-party") if third_party => return false,
+            _ => {}
+        }
+        (self.if_domain.is_empty() || self.if_domain.iter().any(on))
+            && !self.unless_domain.iter().any(on)
+            && (self.types.is_empty() || self.types.contains(&req.ty))
+            && req.url.contains(literal)
+            && abp_match(&self.pattern, req.url)
+    }
+}
+
+/// ABP pattern against a lower-cased URL: `||` host anchor, `|` start/end anchors, `*` anything,
+/// `^` a separator (or the end).
+fn abp_match(pattern: &str, url: &str) -> bool {
+    fn at(p: &[u8], t: &[u8], end: bool) -> bool {
+        let sep = |c: u8| !(c.is_ascii_alphanumeric() || b"_-.%".contains(&c));
+        match p.first() {
+            None => !end || t.is_empty(),
+            Some(b'*') => (0..=t.len()).any(|i| at(&p[1..], &t[i..], end)),
+            Some(b'^') => match t.first() {
+                None => at(&p[1..], t, end),
+                Some(&c) => sep(c) && at(&p[1..], &t[1..], end),
+            },
+            Some(c) => t.first() == Some(c) && at(&p[1..], &t[1..], end),
+        }
+    }
+    let (body, end) = pattern.strip_suffix('|').map_or((pattern, false), |b| (b, true));
+    let (url, p) = (url.as_bytes(), body.as_bytes());
+    if let Some(rest) = p.strip_prefix(b"||") {
+        let Some(start) = url.windows(3).position(|w| w == b"://").map(|i| i + 3) else { return false };
+        let host_end = url[start..].iter().position(|c| b"/:?#".contains(c)).map_or(url.len(), |i| start + i);
+        (start..host_end).filter(|&i| i == start || url[i - 1] == b'.').any(|i| at(rest, &url[i..], end))
+    } else if let Some(rest) = p.strip_prefix(b"|") {
+        at(rest, url, end)
+    } else {
+        (0..=url.len()).any(|i| at(p, &url[i..], end))
+    }
 }
 
 impl TrackerList {
@@ -40,30 +124,20 @@ impl TrackerList {
                 None => (false, line),
             };
             let Some(parsed) = parse_rule(rule, exception) else { continue };
-            if let Some(host) = rule.strip_prefix("||").and_then(|r| r.strip_suffix('^').or_else(|| r.strip_suffix("^$third-party"))) {
-                if !exception {
-                    list.hosts.insert(host.to_ascii_lowercase());
-                } else if rule.ends_with('^') {
-                    list.hosts.remove(&host.to_ascii_lowercase());
-                }
-            }
             if exception { &mut list.allow } else { &mut list.block }.insert(parsed);
         }
+        list.block.iter().for_each(|r| list.block_index.add(r.clone()));
+        list.allow.iter().for_each(|r| list.allow_index.add(r.clone()));
         list
     }
 
-    /// True when `host` or one of its parent domains is a tracker host.
-    pub fn blocks_host(&self, host: &str) -> bool {
-        let mut rest = host;
-        loop {
-            if self.hosts.contains(rest) {
-                return true;
-            }
-            match rest.split_once('.') {
-                Some((_, parent)) if parent.contains('.') => rest = parent,
-                _ => return false,
-            }
-        }
+    /// Request check for engines without a content blocker, same rules as the JSON: `ty` is a
+    /// content-blocker resource type (`script`, `image`, `fetch`, …), `page` the page's host.
+    pub fn blocks(&self, url: &str, page: Option<&str>, ty: &str) -> bool {
+        let url = url.to_ascii_lowercase();
+        let Some(host) = url::Url::parse(&url).ok().and_then(|u| u.host_str().map(str::to_owned)) else { return false };
+        let req = Request { url: &url, host: &host, page, ty };
+        self.block_index.any(&req) && !self.allow_index.any(&req)
     }
 
     pub fn len(&self) -> usize {
@@ -107,7 +181,7 @@ fn parse_rule(line: &str, exception: bool) -> Option<Rule> {
         Some((p, o)) => (p, o),
         None => (line, ""),
     };
-    let mut rule = Rule { filter: String::new(), load: None, types: Vec::new(), if_domain: Vec::new(), unless_domain: Vec::new() };
+    let mut rule = Rule { pattern: pattern.to_ascii_lowercase(), filter: String::new(), load: None, types: Vec::new(), if_domain: Vec::new(), unless_domain: Vec::new() };
     for option in options.split(',').filter(|o| !o.is_empty()) {
         let ty = match option {
             "third-party" | "3p" => {

@@ -178,12 +178,25 @@ fn zoom_steps_stop_at_the_ends_and_reset() {
 }
 
 #[test]
-fn tracker_hosts_match_subdomains_but_not_lookalikes() {
-    let list = TrackerList::parse("||stats.example^\n||px.example^$third-party\n||ok.example^\n@@||ok.example^\n||p.example/x.js\n");
-    assert!(list.blocks_host("stats.example") && list.blocks_host("eu.stats.example") && list.blocks_host("px.example"));
-    assert!(!list.blocks_host("mystats.example") && !list.blocks_host("example"));
-    assert!(!list.blocks_host("ok.example"), "global exception");
-    assert!(!list.blocks_host("p.example"), "path rules aren't host rules");
+fn tracker_requests_match_like_the_content_blocker() {
+    let list = TrackerList::parse(
+        "||stats.example^\n||ok.example^\n@@||ok.example^\n||p.example/x.js\n/collect?tid=\n\
+         ||img.example^$image\n||mx.example^\n@@||mx.example^$script,domain=shop.example\n||fb.example/tr^\n|https://ad.example/pix|\n",
+    );
+    let blocks = |url: &str, page: &str, ty: &str| list.blocks(url, Some(page), ty);
+    assert!(blocks("https://stats.example/a.js", "news.example", "script"));
+    assert!(blocks("https://eu.stats.example/a.js", "news.example", "script"), "subdomains");
+    assert!(!blocks("https://mystats.example/a.js", "news.example", "script"), "lookalike host");
+    assert!(!blocks("https://stats.example/", "stats.example", "script"), "plain host rules spare the tracker's own site");
+    assert!(!blocks("https://ok.example/a.js", "news.example", "script"), "global exception");
+    assert!(blocks("https://cdn.p.example/x.js?v=1", "p.example", "script"), "path rules block first-party too");
+    assert!(!blocks("https://p.example/y.js", "news.example", "script"));
+    assert!(blocks("https://shop.example/g/COLLECT?tid=1", "shop.example", "fetch"), "anywhere in the URL, any case");
+    assert!(blocks("https://img.example/1.gif", "news.example", "image") && !blocks("https://img.example/1.js", "news.example", "script"));
+    assert!(blocks("https://mx.example/m.js", "news.example", "script") && !blocks("https://mx.example/m.js", "a.shop.example", "script"), "site exception");
+    assert!(blocks("https://fb.example/tr?id=1", "news.example", "image") && blocks("https://fb.example/tr", "news.example", "image"), "^ is a separator or the end");
+    assert!(!blocks("https://fb.example/track", "news.example", "image"));
+    assert!(blocks("https://ad.example/pix", "news.example", "image") && !blocks("https://ad.example/pix2", "news.example", "image"), "| anchors");
 }
 
 #[test]

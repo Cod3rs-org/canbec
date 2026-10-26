@@ -188,12 +188,12 @@ pub fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::Track
     }
 }
 
-/// Windows: WebView2 has no content blocker, so every request passes this handler and tracker
-/// hosts (third-party only) get an empty 403. Pages themselves are never blocked.
-/// ponytail: host rules only; EasyPrivacy path rules need a URL matcher here.
+/// Windows: WebView2 has no content blocker, so every request passes this handler and
+/// `TrackerList::blocks` (the same rules as the macOS/Linux JSON) answers with an empty 403.
+/// Pages themselves are never blocked.
 #[cfg(windows)]
 pub fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::TrackerList, _compiled: impl Fn() + 'static) {
-    use canbec_domain::{host_matches, host_of};
+    use canbec_domain::host_of;
     use webview2_com::Microsoft::Web::WebView2::Win32::*;
     use webview2_com::{take_pwstr, WebResourceRequestedEventHandler};
     use windows_core::{Interface, HSTRING, PWSTR};
@@ -226,9 +226,18 @@ pub fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::Track
             let (mut uri, mut source) = (PWSTR::null(), PWSTR::null());
             args.Request()?.Uri(&mut uri)?;
             page.Source(&mut source)?;
-            let (Some(host), page_host) = (host_of(&take_pwstr(uri)), host_of(&take_pwstr(source))) else { return Ok(()) };
-            let first_party = page_host.is_some_and(|p| host_matches(&host, &p) || host_matches(&p, &host));
-            if !first_party && list.blocks_host(&host) {
+            let ty = match context {
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE => "image",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_SCRIPT => "script",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_STYLESHEET => "style-sheet",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_FONT => "font",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_MEDIA => "media",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_FETCH | COREWEBVIEW2_WEB_RESOURCE_CONTEXT_XML_HTTP_REQUEST => "fetch",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_PING => "ping",
+                COREWEBVIEW2_WEB_RESOURCE_CONTEXT_WEBSOCKET => "websocket",
+                _ => "other",
+            };
+            if list.blocks(&take_pwstr(uri), host_of(&take_pwstr(source)).as_deref(), ty) {
                 let response = env.CreateWebResourceResponse(None, 403, &HSTRING::from("Blocked"), &HSTRING::new())?;
                 args.SetResponse(&response)?;
             }

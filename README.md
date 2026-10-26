@@ -133,7 +133,7 @@ timeline
 | 28 | **Fake device persona:** common cores, screen and GPU per site, never the real ones; Safari's user agent | ✅ | [#34](https://github.com/Cod3rs-org/canbec/issues/34) |
 | 29 | **Chrome extensions** (content scripts + storage) and a skill that ports the rest | ✅ | [#29](https://github.com/Cod3rs-org/canbec/issues/29) [#30](https://github.com/Cod3rs-org/canbec/issues/30) |
 | 30 | Recently closed tabs: searchable, Cmd/Ctrl+Shift+T | ✅ | |
-| 31 | Windows refuses third-party cookies within a session too | 🧪 | [#14](https://github.com/Cod3rs-org/canbec/issues/14) |
+| 31 | Windows refuses third-party cookies within a session and blocks EasyPrivacy path rules too, not just hosts | 🧪 | [#14](https://github.com/Cod3rs-org/canbec/issues/14) [#13](https://github.com/Cod3rs-org/canbec/issues/13) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

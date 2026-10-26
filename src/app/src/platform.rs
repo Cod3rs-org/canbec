@@ -247,6 +247,21 @@ pub fn block_trackers(view: &wry::WebView, list: &canbec_domain::trackers::Track
     }
 }
 
+/// macOS: Safari's own user agent. WKWebView leaves out `Version/… Safari/…`, which makes canbec
+/// stand out from the crowd of Safari users. WebView2 and WebKitGTK already send stock strings.
+#[cfg(target_os = "macos")]
+pub fn user_agent(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
+    let out = std::process::Command::new("sw_vers").arg("-productVersion").output().ok();
+    let macos: u32 = out.and_then(|o| String::from_utf8_lossy(&o.stdout).split('.').next()?.trim().parse().ok()).unwrap_or(26);
+    let safari = if macos >= 26 { macos } else { macos + 3 }; // macOS 15 shipped Safari 18; 26 → 26
+    builder.with_user_agent(format!("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{safari}.0 Safari/605.1.15"))
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn user_agent(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
+    builder
+}
+
 /// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's
 /// web-process-terminated yet, so there a crashed page stays white until reload.
 #[cfg(target_os = "macos")]

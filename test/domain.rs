@@ -277,3 +277,30 @@ fn only_real_newer_versions_count() {
     assert!(!is_newer("v0.2.0-beta", "0.1.0"), "pre-releases are skipped");
     assert!(!is_newer("latest", "0.1.0"));
 }
+
+#[test]
+fn persona_is_stable_per_site_differs_between_sites_and_never_real() {
+    use canbec_domain::persona::{lists, pick, site_seed};
+    for (os, real) in [("macos", 10), ("windows", 8), ("linux", 4), ("linux", 1), ("windows", 64)] {
+        let l = lists(os, real);
+        assert!(!l.cores.is_empty() && !l.cores.contains(&real), "{os} {real}: {:?}", l.cores);
+        assert!(!l.gpus.is_empty() && l.gpus.iter().all(|g| g.1 != "WebKit WebGL"));
+    }
+    assert!(lists("windows", 8).gpus[0].1.starts_with("ANGLE"), "Windows looks like Chromium");
+    let l = lists("windows", 8);
+    let cores = |host: &str| pick(&l.cores, Some(&8), site_seed("run1", host), 1).unwrap();
+    assert_eq!(cores("a.example"), cores("a.example"), "same site, same run");
+    let hosts = ["a.example", "b.example", "c.example", "d.example", "e.example", "f.example"];
+    assert!(hosts.iter().any(|h| cores(h) != cores("a.example")), "sites differ");
+    for seed in 0..500 {
+        assert_ne!(pick(&l.screens, Some(&(1920, 1080)), seed, 3), Some((1920, 1080)));
+    }
+    assert_eq!(pick(&[5], Some(&5), 1, 1), None, "only the real value: nothing to fake with");
+    // Same answers as privacy.js's pick (computed there with node).
+    let screens = [(1366, 768), (1536, 864), (1920, 1080), (1440, 900)];
+    for (host, c, s) in [("a.example", 10, (1440, 900)), ("b.example", 10, (1536, 864)), ("news.example.org", 16, (1366, 768))] {
+        let seed = site_seed("run1", host);
+        assert_eq!(pick(&[4, 6, 10, 12, 14, 16], Some(&8), seed, 1), Some(c), "{host}");
+        assert_eq!(pick(&screens, Some(&(1920, 1080)), seed, 3), Some(s), "{host}");
+    }
+}

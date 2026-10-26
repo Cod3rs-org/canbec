@@ -1,6 +1,7 @@
 // canbec privacy script, injected at document start into every page and iframe.
 // 1. Fingerprint noise: canvas, WebGL and audio readouts get tiny, invisible changes, different
 //    for every site and new on every start, so trackers can't recognise the same browser.
+//    Hardware values (cores, memory, screen, GPU) come from a fake but common device.
 // 2. Tracking parameters (utm_*, fbclid, …) are removed from links before you follow them,
 //    and from the address of the page you landed on.
 // 3. Global Privacy Control: tells sites you opt out of selling or sharing your data.
@@ -61,12 +62,61 @@
     return img;
   });
 
-  // WebGL: report a generic GPU instead of the exact model.
+  // Fake device ("persona"): common values near this computer's, never its own, the same on a
+  // site until restart. The lists come from domain::persona; `pick` is persona::pick (keep in sync).
+  const P = "__CANBEC_PERSONA__";
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const pick = (options, real, salt) => {
+    const allowed = options.filter((o) => !same(o, real));
+    let x = Math.imul(seed ^ salt, 2654435761);
+    x ^= x >>> 15;
+    x = Math.imul(x, 2246822507) >>> 0;
+    return allowed.length ? allowed[x % allowed.length] : real;
+  };
+  // Replaces a getter; the new one prints like the native one.
+  function fake(proto, name, value) {
+    const desc = proto && Object.getOwnPropertyDescriptor(proto, name);
+    if (!desc || !desc.get) return;
+    const get = Object.getOwnPropertyDescriptor({ get [name]() { return value; } }, name).get;
+    originals.set(get, desc.get);
+    Object.defineProperty(proto, name, { ...desc, get });
+  }
+  fake(Navigator.prototype, "hardwareConcurrency", pick(P.cores, navigator.hardwareConcurrency, 1));
+  if ("deviceMemory" in navigator) fake(Navigator.prototype, "deviceMemory", pick(P.memory, navigator.deviceMemory, 2));
+  // Screen: picked on first read, when the window size is known (it's 0 at document start).
+  // Never smaller than the window; the taskbar/menu bar keeps its real height.
+  let size;
+  const fakeScreen = () => {
+    if (size) return size;
+    const { width, height, availWidth, availHeight } = real;
+    const fits = P.screens.filter(([w, h]) => w >= outerWidth && h >= outerHeight);
+    const [w, h] = pick(fits, [width, height], 3);
+    return (size = { width: w, height: h, availWidth: w - (width - availWidth), availHeight: h - (height - availHeight) });
+  };
+  const real = {};
+  for (const name of ["width", "height", "availWidth", "availHeight"]) {
+    const desc = Object.getOwnPropertyDescriptor(Screen.prototype, name);
+    if (!desc || !desc.get) continue;
+    Object.defineProperty(real, name, { get: () => desc.get.call(screen) });
+    const get = Object.getOwnPropertyDescriptor({ get [name]() { return fakeScreen()[name]; } }, name).get;
+    originals.set(get, desc.get);
+    Object.defineProperty(Screen.prototype, name, { ...desc, get });
+  }
+  if (window.NavigatorUAData && P.platform_versions.length) {
+    wrap(NavigatorUAData.prototype, "getHighEntropyValues", (f) => function (...a) {
+      return f.apply(this, a).then((v) => {
+        if (v.platformVersion) v.platformVersion = pick(P.platform_versions, v.platformVersion, 5);
+        return v;
+      });
+    });
+  }
+  // WebGL: a common GPU for this OS instead of the exact model.
+  let gpu;
   for (const gl of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) {
     wrap(gl && gl.prototype, "getParameter", (f) => function (p) {
-      if (p === 0x9245) return "WebKit"; // UNMASKED_VENDOR_WEBGL
-      if (p === 0x9246) return "WebKit WebGL"; // UNMASKED_RENDERER_WEBGL
-      return f.call(this, p);
+      if (p !== 0x9245 && p !== 0x9246) return f.call(this, p); // UNMASKED_VENDOR/RENDERER_WEBGL
+      gpu = gpu || pick(P.gpus, [f.call(this, 0x9245), f.call(this, 0x9246)], 4);
+      return p === 0x9245 ? gpu[0] : gpu[1];
     });
   }
 

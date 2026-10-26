@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>canbec device check</title>
+<style>body{font:15px system-ui;margin:2em}td{padding:3px 12px;border-bottom:1px solid #ddd}td:first-child{color:#666}</style>
+<h1>What this site sees about your device</h1>
+<p>Reload: same values. Restart canbec or open on another host (127.0.0.1 vs localhost): new values.</p>
+<table id="t"></table>
+<script>
+  const gl = document.createElement("canvas").getContext("webgl");
+  const rows = {
+    "User agent": navigator.userAgent,
+    "Cores": navigator.hardwareConcurrency,
+    "Memory (GB)": navigator.deviceMemory ?? "not exposed",
+    "Screen": `${screen.width}×${screen.height} (avail ${screen.availWidth}×${screen.availHeight})`,
+    "Window": `${outerWidth}×${outerHeight}`,
+    "Pixel ratio": devicePixelRatio,
+    "GPU vendor": gl ? gl.getParameter(0x9245) : "no WebGL",
+    "GPU renderer": gl ? gl.getParameter(0x9246) : "no WebGL",
+    "Getter looks native": String(Object.getOwnPropertyDescriptor(Navigator.prototype, "hardwareConcurrency").get),
+    "GPC": navigator.globalPrivacyControl,
+  };
+  const add = (k, v) => document.getElementById("t").insertAdjacentHTML("beforeend", `<tr><td>${k}</td><td>${v}</td></tr>`);
+  for (const [k, v] of Object.entries(rows)) add(k, v);
+  navigator.userAgentData?.getHighEntropyValues(["platformVersion", "architecture"]).then((v) => add("Platform version", v.platformVersion));
+</script>

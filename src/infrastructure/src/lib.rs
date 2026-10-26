@@ -45,10 +45,16 @@ pub fn feed_rules(text: &str) -> std::collections::BTreeMap<String, Vec<String>>
 /// Injected into every page *and iframe*: fingerprint noise, tracking-parameter removal, GPC.
 pub const PRIVACY_SCRIPT: &str = include_str!("scripts/privacy.js");
 
-/// The privacy script with this run's fingerprint seed and the tracking-parameter list.
+/// The privacy script with this run's fingerprint seed, the tracking-parameter list and the
+/// fake-device lists for this OS and machine.
 pub fn privacy_script(fingerprint_seed: &str) -> String {
     let params = serde_json::to_string(canbec_domain::privacy::TRACKING_PARAMS).unwrap_or_else(|_| "[]".into());
-    PRIVACY_SCRIPT.replace("__CANBEC_FP_SEED__", fingerprint_seed).replace("\"__CANBEC_TRACKING_PARAMS__\"", &params)
+    let cores = std::thread::available_parallelism().map_or(8, |n| n.get() as u32);
+    let persona = serde_json::to_string(&canbec_domain::persona::lists(std::env::consts::OS, cores)).unwrap_or_else(|_| "null".into());
+    PRIVACY_SCRIPT
+        .replace("__CANBEC_FP_SEED__", fingerprint_seed)
+        .replace("\"__CANBEC_TRACKING_PARAMS__\"", &params)
+        .replace("\"__CANBEC_PERSONA__\"", &persona)
 }
 
 /// A random per-run secret (128 bits from the std hasher's random keys; no extra crate).

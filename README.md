@@ -14,7 +14,7 @@ infinite feeds, so you browse the web as a human, not a parrot.*
 ![status](https://img.shields.io/badge/status-early%20alpha-orange)
 ![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
 ![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-57%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-61%20passing-brightgreen)
 ![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
 ![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
 
@@ -59,11 +59,13 @@ a weak moment.
 | 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Settings in the sidebar.** Feeds unlock only after a 10 s wait, privacy tools like 10 Minute Mail, pinned sites, app icon. |
 
 And under the hood:
-- ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), F (find), +/-/0 (zoom, kept per site), `[` `]` (back/forward per tab), copy/paste, downloads
-  to your Downloads folder.
-- 🔞 **Adult content is blocked** on every navigation, also offline, no off switch (system DNS lock is next).
-- 🫥 **AI images get a spoiler overlay** (C2PA / IPTC metadata first). *In progress.*
-- 🔎 **Human search**: results first seen after 2023 are marked *obsolete*. For now, search goes
+- ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), F (find), +/-/0 (zoom, kept per site), `[` `]` (back/forward per tab),
+  Shift+T (reopen a closed tab; "Recently closed" in the sidebar is searchable), copy/paste, downloads to your Downloads folder.
+- 🔞 **Adult content is blocked** on every navigation, also offline, no off switch. Optional: family DNS for the whole computer, one click in settings.
+- 🫥 **AI images get a spoiler overlay** when their metadata says they're AI-made.
+- 🕵️ **A fake device:** sites see common hardware (cores, screen, GPU) similar to yours, never your own, different on every site.
+- 🧩 **Chrome extensions that only change pages** (content scripts + storage) run unchanged; a Claude skill ports the rest.
+- 🔎 **Human search**: results first seen after ChatGPT came out get an *AI era* badge. For now, search goes
   to [DuckDuckGo NoAI](https://noai.duckduckgo.com).
 
 ## 🛤️ What is done so far
@@ -95,6 +97,8 @@ timeline
              : Profiles, shared slop lists
              : AI image spoilers, MCP for agents
              : Trackers on all 3 OSes
+             : Fake device persona, Chrome extensions
+             : Self-update, recently closed tabs
 ```
 
 | # | Step | Status | Read more |
@@ -124,6 +128,11 @@ timeline
 | 23 | **AI images blurred** when their metadata says so | ✅ | [#24](https://github.com/Cod3rs-org/canbec/issues/24) |
 | 24 | **MCP server:** AI agents browse through the same filters, only when you allow it | ✅ | [#28](https://github.com/Cod3rs-org/canbec/issues/28) |
 | 25 | Windows benchmarks vs Chrome and Edge: about 15% less memory than Chrome, about 4× less than Edge | ✅ | [benchmarks](docs/benchmarks/2026-10-26-windows.md) |
+| 26 | Family DNS for the whole computer, logins encrypted with the OS keychain, "AI era" badges on search results, theme skill | ✅ | [#16](https://github.com/Cod3rs-org/canbec/issues/16) [#18](https://github.com/Cod3rs-org/canbec/issues/18) [#23](https://github.com/Cod3rs-org/canbec/issues/23) [#31](https://github.com/Cod3rs-org/canbec/issues/31) |
+| 27 | Self-update from GitHub Releases (one click on macOS, checksum checked), `tools/install-macos.sh` | ✅ | [updater.rs](src/infrastructure/src/updater.rs) |
+| 28 | **Fake device persona:** common cores, screen and GPU per site, never the real ones; Safari's user agent | ✅ | [#34](https://github.com/Cod3rs-org/canbec/issues/34) |
+| 29 | **Chrome extensions** (content scripts + storage) and a skill that ports the rest | ✅ | [#29](https://github.com/Cod3rs-org/canbec/issues/29) [#30](https://github.com/Cod3rs-org/canbec/issues/30) |
+| 30 | Recently closed tabs: searchable, Cmd/Ctrl+Shift+T | ✅ | |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

@@ -10,7 +10,6 @@ use std::time::Duration;
 use canbec_application::ports::StateStore;
 use canbec_application::ui::UiCommand;
 use canbec_application::{BrowserService, Snapshot};
-use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::mcp::{handle_line, search_results, tool_result, Call, Incoming};
 use canbec_infrastructure::profiles as profile_files;
@@ -79,7 +78,7 @@ pub fn run() -> wry::Result<()> {
             .with_initialization_script(content_script(&random_token(), &ads.generic, &feeds))
             .with_permission_handler(|_| wry::PermissionResponse::Deny) // no camera/mic for agents
             .with_navigation_handler(move |url| {
-                let blocked = host_of(&url).is_some_and(|h| nav_adult.is_blocked(&h));
+                let blocked = nav_adult.blocks_url(&url);
                 if blocked {
                     send(&p1, McpEvent::Blocked);
                 }

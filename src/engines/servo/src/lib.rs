@@ -3,7 +3,6 @@
 //! subresource load (tracker rules), and runs our user scripts. See docs/research/05.
 
 use canbec_application::ports::Engine;
-use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::host_of;
 use canbec_domain::trackers::TrackerList;
 use canbec_infrastructure::content_calls;
@@ -48,14 +47,9 @@ impl Engine for ServoEngine {
     }
 }
 
-/// Top-level pages and frames: refused when the host is on the adult list.
-pub fn allows_navigation(adult: &HostBlocklist, url: &Url) -> bool {
-    !host_of(url.as_str()).is_some_and(|h| adult.is_blocked(&h))
-}
-
 /// Subresources: the same EasyPrivacy rules as the other engines. Servo doesn't say what kind of
-/// resource a request is, so typed rules (`$image`, `$script`) don't apply here.
-/// ponytail: guess the type from `Sec-Fetch-Dest` once Servo sends it to the embedder.
+/// resource a request is, so typed block rules (`$image`, `$script`) don't apply here; typed
+/// exceptions do. ponytail: guess the type from `Sec-Fetch-Dest` once Servo sends it to the embedder.
 pub fn blocks_resource(trackers: &TrackerList, url: &Url, page: Option<&Url>) -> bool {
-    trackers.blocks(url.as_str(), page.and_then(|p| host_of(p.as_str())).as_deref(), "other")
+    trackers.blocks(url.as_str(), page.and_then(|p| host_of(p.as_str())).as_deref(), "")
 }

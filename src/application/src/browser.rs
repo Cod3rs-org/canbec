@@ -150,7 +150,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     /// Adult content can't be switched off: every navigation goes through this check.
     pub fn is_allowed(&self, url: &str) -> bool {
-        host_of(url).is_none_or(|host| !self.adult.is_blocked(&host))
+        !self.adult.blocks_url(url)
     }
 
     pub fn handle(&mut self, cmd: UiCommand, now: Timestamp) {
@@ -431,7 +431,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     fn checked(&mut self, input: &str) -> Option<String> {
         let url = resolve_input(input);
         let url = strip_tracking(&url).unwrap_or(url);
-        if host_of(&url).is_some_and(|h| self.adult.is_blocked(&h)) {
+        if self.adult.blocks_url(&url) {
             self.notice = Some("Blocked: adult content".into());
             return None;
         }

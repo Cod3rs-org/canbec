@@ -11,11 +11,10 @@ use canbec_application::ports::StateStore;
 use canbec_application::ui::UiCommand;
 use canbec_application::{BrowserService, Snapshot};
 use canbec_domain::blocklist::HostBlocklist;
-use canbec_domain::host_of;
 use canbec_domain::tabs::TabPolicy;
 use canbec_domain::trackers::TrackerList;
 use canbec_infrastructure::{blocklists, config_dir, content_script, privacy_script, random_token};
-use canbec_servo::{allows_navigation, blocks_resource, ServoEngine};
+use canbec_servo::{blocks_resource, ServoEngine};
 use dpi::PhysicalSize;
 use euclid::{Box2D, Point2D};
 use servo::{
@@ -47,13 +46,15 @@ struct Delegate {
     adult: HostBlocklist,
     trackers: TrackerList,
     blocked: Cell<u32>,
+    /// The main-frame URL being loaded (`webview.url()` still shows the previous page meanwhile).
+    page: RefCell<Option<url::Url>>,
     refused: RefCell<Vec<String>>,
     seen: RefCell<Vec<Seen>>,
 }
 
 impl WebViewDelegate for Delegate {
     fn request_navigation(&self, _: WebView, request: NavigationRequest) {
-        if allows_navigation(&self.adult, &request.url) {
+        if !self.adult.blocks_url(request.url.as_str()) {
             request.allow();
         } else {
             self.refused.borrow_mut().push(request.url.to_string());
@@ -62,21 +63,30 @@ impl WebViewDelegate for Delegate {
     }
     fn load_web_resource(&self, webview: WebView, load: WebResourceLoad) {
         let (url, main_frame) = (load.request().url.clone(), load.request().is_for_main_frame);
-        // Loads the app starts itself skip request_navigation, so pages are checked here too.
-        if main_frame && !allows_navigation(&self.adult, &url) {
+        if main_frame {
+            *self.page.borrow_mut() = Some(url.clone());
+        }
+        // Loads the app starts itself skip request_navigation, and frames never ask, so every
+        // request is checked against the adult list here too.
+        if self.adult.blocks_url(url.as_str()) {
             self.refused.borrow_mut().push(url.to_string());
             load.intercept(WebResourceResponse::new(url)).cancel();
-        } else if !main_frame && blocks_resource(&self.trackers, &url, webview.url().as_ref()) {
+        } else if !main_frame && blocks_resource(&self.trackers, &url, self.page.borrow().as_ref().or(webview.url().as_ref())) {
             self.blocked.set(self.blocked.get() + 1);
             load.intercept(WebResourceResponse::new(url)).cancel();
         }
         // not intercepted: dropping `load` lets it through
     }
     fn notify_load_status_changed(&self, webview: WebView, status: LoadStatus) {
-        let url = webview.url().map(|u| u.to_string()).unwrap_or_default();
         match status {
-            LoadStatus::Started => self.seen.borrow_mut().push(Seen::Started(url)),
-            LoadStatus::Complete => self.seen.borrow_mut().push(Seen::Finished(url, webview.page_title())),
+            LoadStatus::Started => {
+                let url = self.page.borrow().as_ref().or(webview.url().as_ref()).map(|u| u.to_string());
+                self.seen.borrow_mut().push(Seen::Started(url.unwrap_or_default()));
+            }
+            LoadStatus::Complete => {
+                let url = webview.url().map(|u| u.to_string()).unwrap_or_default();
+                self.seen.borrow_mut().push(Seen::Finished(url, webview.page_title()));
+            }
             _ => {}
         }
     }
@@ -104,6 +114,7 @@ fn main() {
     let adult = blocklists::load_adult(&lists.join("adult.txt"));
     let ads = blocklists::load_ads(&lists.join("ads.txt"));
     let trackers = blocklists::load_trackers(&lists.join("trackers.txt"));
+    let feeds = std::fs::read_to_string(dir.join("feeds.txt")).unwrap_or_default();
 
     let ctx: Rc<dyn RenderingContext> =
         Rc::new(SoftwareRenderingContext::new(PhysicalSize::new(W, H)).expect("software rendering context"));
@@ -113,11 +124,14 @@ fn main() {
     // shortcuts) don't reach the core; the flags and ad rules the core sends do work.
     let scripts = Rc::new(UserContentManager::new(&servo));
     scripts.add_script(Rc::new(UserScript::new(privacy_script(&random_token()), None)));
-    scripts.add_script(Rc::new(UserScript::new(content_script(&random_token(), &ads.generic, ""), None)));
+    // Servo runs user scripts in every frame; the content script is main-frame only elsewhere.
+    let content = format!("if (window === window.top) {{\n{}\n}}", content_script(&random_token(), &ads.generic, &feeds));
+    scripts.add_script(Rc::new(UserScript::new(content, None)));
     let delegate = Rc::new(Delegate {
         adult: adult.clone(),
         trackers,
         blocked: Cell::new(0),
+        page: RefCell::default(),
         refused: RefCell::default(),
         seen: RefCell::default(),
     });
@@ -128,12 +142,18 @@ fn main() {
 
     // Servo drops a load asked for while another one is still pending (its first about:blank,
     // then the service's blank tab), so each one finishes first.
-    let settle = || {
-        while !delegate.seen.take().iter().any(|s| matches!(s, Seen::Finished(..))) {
+    let spin_until = |what: &str, done: &mut dyn FnMut() -> bool| {
+        let start = Instant::now();
+        while !done() {
+            if start.elapsed() > Duration::from_secs(60) {
+                eprintln!("canbec-servo: {what} timed out");
+                std::process::exit(1);
+            }
             servo.spin_event_loop();
             std::thread::sleep(Duration::from_millis(2));
         }
     };
+    let settle = || spin_until("start page", &mut || delegate.seen.take().iter().any(|s| matches!(s, Seen::Finished(..))));
     settle();
     let mut service = BrowserService::start(ServoEngine { webview: webview.clone() }, BlankTab, adult, now());
     service.set_ad_rules(ads);
@@ -154,8 +174,10 @@ fn main() {
                 Seen::Started(u) => service.on_page(&u, None, true, now()),
                 Seen::Finished(u, title) => {
                     service.on_page(&u, title.as_deref(), false, now()); // pushes slop/feed flags
-                    if host_of(&u).is_some() && host_of(&u) == host_of(&url) {
-                        done_at.get_or_insert_with(Instant::now); // the page we asked for, not the start page
+                    // The blank start page settled before Navigate, so any real page is ours
+                    // (bare hosts and redirects included).
+                    if !u.starts_with("about:") {
+                        done_at.get_or_insert_with(Instant::now);
                     }
                 }
             }
@@ -183,10 +205,7 @@ fn main() {
         webview.evaluate_javascript("JSON.stringify(window.__canbec && window.__canbec.readable())", move |v| {
             *r.borrow_mut() = Some(v);
         });
-        while readable.borrow().is_none() {
-            servo.spin_event_loop();
-            std::thread::sleep(Duration::from_millis(2));
-        }
+        spin_until("readable()", &mut || readable.borrow().is_some());
         match readable.take() {
             Some(Ok(JSValue::String(json))) => println!("readable: {} chars of JSON, starts {:?}", json.len(), json.chars().take(160).collect::<String>()),
             other => println!("readable: {other:?}"),

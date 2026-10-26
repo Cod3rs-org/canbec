@@ -233,7 +233,7 @@ fn main() -> wry::Result<()> {
             .with_permission_handler(permission)
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
             .with_navigation_handler(move |url| {
-                let blocked = host_of(&url).is_some_and(|h| adult.read().map(|l| l.is_blocked(&h)).unwrap_or(true));
+                let blocked = adult.read().map(|l| l.blocks_url(&url)).unwrap_or(true);
                 if blocked {
                     send(&p1, AppEvent::Blocked);
                 }

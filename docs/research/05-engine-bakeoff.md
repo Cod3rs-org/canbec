@@ -74,9 +74,9 @@ filters use Servo's own hooks:
 
 | canbec needs | Servo hook |
 |---|---|
-| Adult block on every page and frame | `BrowserService` for typed URLs; `request_navigation` → `deny()` for links; main-frame loads in `load_web_resource` (loads the app starts skip `request_navigation`) |
-| Tracker requests | `WebViewDelegate::load_web_resource` → `TrackerList::blocks` → `intercept(..).cancel()` (same rules as the other engines; no resource type yet, so `$image`-style rules don't apply) |
-| privacy.js, content.js | `UserContentManager` user scripts (page world) |
+| Adult block on every page and frame | `BrowserService` for typed URLs; `request_navigation` → `deny()` for links; every request in `load_web_resource` (loads the app starts and frames skip `request_navigation`) |
+| Tracker requests | `WebViewDelegate::load_web_resource` → `TrackerList::blocks` → `intercept(..).cancel()` (same rules as the other engines; no resource type yet, so typed block rules like `$image` don't apply, typed `@@` exceptions do) |
+| privacy.js, content.js | `UserContentManager` user scripts (page world, all frames; content.js guards itself to the main frame) |
 | Core → page (flags, ad rules, find) | `WebView::evaluate_javascript`, sharing `infrastructure::content_calls` with wry |
 | Zoom | `WebView::set_page_zoom` |
 

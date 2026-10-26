@@ -26,6 +26,7 @@ fn blocklist_parses_hosts_files_and_matches_subdomains() {
     assert!(list.is_blocked("ADS.test"));
     assert!(!list.is_blocked("notadult.example"));
     assert!(!list.is_blocked("example"));
+    assert!(list.blocks_url("https://cdn.adult.example/x") && !list.blocks_url("about:blank"));
 }
 
 #[test]
@@ -200,6 +201,9 @@ fn tracker_requests_match_like_the_content_blocker() {
     assert!(blocks("https://fb.example/tr?id=1", "news.example", "image") && blocks("https://fb.example/tr", "news.example", "image"), "^ is a separator or the end");
     assert!(!blocks("https://fb.example/track", "news.example", "image"));
     assert!(blocks("https://ad.example/pix", "news.example", "image") && !blocks("https://ad.example/pix2", "news.example", "image"), "| anchors");
+    // Engines that don't know the type (Servo): untyped rules block, typed exceptions still spare.
+    assert!(blocks("https://stats.example/a", "news.example", "") && !blocks("https://img.example/1.gif", "news.example", ""));
+    assert!(!blocks("https://mx.example/m.js", "a.shop.example", ""), "typed site exception");
 }
 
 #[test]

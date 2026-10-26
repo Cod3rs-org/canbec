@@ -40,6 +40,11 @@ impl HostBlocklist {
         self.hosts.is_empty()
     }
 
+    /// A URL whose host (or a parent domain) is listed; URLs without a host never are.
+    pub fn blocks_url(&self, url: &str) -> bool {
+        crate::host_of(url).is_some_and(|host| self.is_blocked(&host))
+    }
+
     /// Blocked if the host or any parent domain is listed.
     pub fn is_blocked(&self, host: &str) -> bool {
         let host = host.to_ascii_lowercase();

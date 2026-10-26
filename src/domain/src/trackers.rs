@@ -58,11 +58,14 @@ impl Index {
     }
 }
 
+#[derive(Clone, Copy)]
 struct Request<'a> {
     url: &'a str,
     host: &'a str,
     page: Option<&'a str>,
     ty: &'a str,
+    /// Unknown type (`ty` empty) while checking exceptions: typed `@@` rules still apply.
+    any_type: bool,
 }
 
 impl Rule {
@@ -77,7 +80,7 @@ impl Rule {
         }
         (self.if_domain.is_empty() || self.if_domain.iter().any(on))
             && !self.unless_domain.iter().any(on)
-            && (self.types.is_empty() || self.types.contains(&req.ty))
+            && (self.types.is_empty() || req.any_type || self.types.contains(&req.ty))
             && req.url.contains(literal)
             && abp_match(&self.pattern, req.url)
     }
@@ -132,12 +135,14 @@ impl TrackerList {
     }
 
     /// Request check for engines without a content blocker, same rules as the JSON: `ty` is a
-    /// content-blocker resource type (`script`, `image`, `fetch`, …), `page` the page's host.
+    /// content-blocker resource type (`script`, `image`, `fetch`, …) or `""` when the engine doesn't
+    /// say (only untyped block rules apply then, but every exception does), `page` the page's host.
     pub fn blocks(&self, url: &str, page: Option<&str>, ty: &str) -> bool {
         let url = url.to_ascii_lowercase();
         let Some(host) = url::Url::parse(&url).ok().and_then(|u| u.host_str().map(str::to_owned)) else { return false };
-        let req = Request { url: &url, host: &host, page, ty };
-        self.block_index.any(&req) && !self.allow_index.any(&req)
+        // Untyped rules list every subresource type, so "other" picks exactly those.
+        let req = Request { url: &url, host: &host, page, ty: if ty.is_empty() { "other" } else { ty }, any_type: false };
+        self.block_index.any(&req) && !self.allow_index.any(&Request { any_type: ty.is_empty(), ..req })
     }
 
     pub fn len(&self) -> usize {

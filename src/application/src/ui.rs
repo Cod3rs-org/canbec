@@ -20,7 +20,6 @@ pub enum UiCommand {
     RestoreTab { id: TabId },
     TagSlop { scope: SlopScope },
     UntagSlop,
-    SwitchWorkspace { id: String },
     /// From the settings panel only (the UI waits a few seconds before it allows this).
     UnlockFeeds { hours: u64 },
     RelockFeeds,

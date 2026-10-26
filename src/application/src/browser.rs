@@ -50,6 +50,8 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     last_crash: Option<Timestamp>,
     /// Slop lists the user subscribed to (read-only, refreshed weekly).
     shared_slop: SlopList,
+    /// Profiles for the sidebar dots (switching is done by the app: it swaps store and logins).
+    workspaces: Vec<Workspace>,
 }
 
 impl<E: Engine, S: StateStore> BrowserService<E, S> {
@@ -57,13 +59,30 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default() };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default(), workspaces: Vec::new() };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
         }
         service.load_active();
         service
+    }
+
+    /// Another profile: its own saved tabs, tags and settings. The app clears the engine's site
+    /// data and puts that profile's logins back before calling this.
+    pub fn switch_store(&mut self, store: S, now: Timestamp) {
+        self.store.save(&self.snapshot);
+        self.store = store;
+        self.snapshot = self.store.load().unwrap_or_default();
+        self.snapshot.tabs.sweep(&self.policy, now);
+        if self.snapshot.tabs.active_tab().is_none() {
+            let _ = self.snapshot.tabs.open(HOME_URL, &self.policy, now);
+        }
+        self.load_active();
+    }
+
+    pub fn set_workspaces(&mut self, workspaces: Vec<Workspace>) {
+        self.workspaces = workspaces;
     }
 
     /// The engine adapter, e.g. for resizing its view.
@@ -166,8 +185,6 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 }
                 self.push_flags(now);
             }
-            // ponytail: one workspace until profiles exist (docs/research/06).
-            UiCommand::SwitchWorkspace { .. } => {}
             UiCommand::UnlockFeeds { hours } => {
                 self.snapshot.feed_lock.unlock(hours, now);
                 self.push_flags(now);
@@ -341,12 +358,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             tab_limit: self.policy.limit,
             archive: archive.into_iter().map(|(folder, tabs)| ArchiveFolder { folder, tabs }).collect(),
             essentials: self.snapshot.essentials.clone(),
-            workspaces: vec![Workspace {
-                id: "personal".into(),
-                name: "Personal".into(),
-                color: "#ff7a45".into(),
-                active: true,
-            }],
+            workspaces: self.workspaces.clone(),
             feed_lock: FeedLockView {
                 locked: self.snapshot.feed_lock.is_locked(now),
                 unlocked_until: self.snapshot.feed_lock.unlocked_until.filter(|&u| u > now),

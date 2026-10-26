@@ -4,6 +4,7 @@ pub mod blocklists;
 pub mod cookie_jar;
 pub mod engine_wry;
 pub mod icon;
+pub mod profiles;
 pub mod store;
 
 /// Injected into every website at document start (ads, slop border, feed blocker, shortcuts).

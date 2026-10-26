@@ -38,7 +38,6 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
 | `restoreTab` | `id` | Archived tab → open tab |
 | `tagSlop` | `scope`: `"domain"` \| `"page"` | Mark the current site as AI slop |
 | `untagSlop` | | Remove the mark |
-| `switchWorkspace` | `id` | |
 | `unlockFeeds` | `hours` (1–6, the core enforces the cap) | Temporary unlock, from the settings panel only (after a 10 s wait) |
 | `relockFeeds` | | Lock feeds again now |
 | `pinPage` | | Pin the current page to essentials (max 9) |
@@ -57,6 +56,8 @@ App-level messages, handled in `src/app` (not browser state):
 | `window` | `action`: `drag` \| `minimize` \| `maximize` \| `close` | Own window buttons (Windows / Linux) |
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `openConfig` | | Shows the config folder in the file manager |
+| `switchWorkspace` | `id` | Switch profile: saves logins, clears site data, loads that profile's tabs and logins |
+| `addProfile` | `name` | New profile (max 6) and switch to it |
 | `exportSlop` | | Saves the user's slop tags to Downloads as `canbec-slop.txt` |
 
 The settings panel is part of the sidebar (the gear toggles it). The app also injects

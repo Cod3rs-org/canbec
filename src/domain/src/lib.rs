@@ -5,6 +5,7 @@ pub mod blocklist;
 pub mod cosmetic;
 pub mod feed_lock;
 pub mod privacy;
+pub mod profiles;
 pub mod slop;
 pub mod tabs;
 pub mod trackers;

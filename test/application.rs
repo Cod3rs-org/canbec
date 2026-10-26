@@ -309,3 +309,18 @@ fn imported_and_followed_slop_lists_flag_pages() {
     assert!(engine.log.borrow().contains(&"flags slop=true feeds_locked=true".to_string()));
     assert!(svc.export_slop().contains("mine.example") && !svc.export_slop().contains("theirs"));
 }
+
+#[test]
+fn switching_profiles_swaps_tabs_and_tags() {
+    let (mut svc, engine, personal) = service();
+    svc.handle(nav("https://mine.example/"), 0);
+    svc.handle(UiCommand::TagSlop { scope: SlopScope::Domain }, 0);
+    let work = MemStore::default();
+    svc.switch_store(work.clone(), 1);
+    assert_eq!(svc.state(1).current.url, HOME_URL, "a new profile starts at home");
+    assert_eq!(svc.state(1).slop_count, 0);
+    assert!(personal.saved.borrow().as_ref().unwrap().slop.find("https://mine.example/").is_some());
+    svc.switch_store(personal.clone(), 2);
+    assert_eq!(svc.state(2).current.url, "https://mine.example/");
+    assert_eq!(engine.log.borrow().last().unwrap(), "nav https://mine.example/");
+}

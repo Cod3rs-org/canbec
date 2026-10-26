@@ -13,7 +13,9 @@ use canbec_application::BrowserService;
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
+use canbec_infrastructure::profiles as profile_files;
 use canbec_infrastructure::store::JsonFileStore;
+use canbec_domain::profiles::Profiles;
 use canbec_infrastructure::icon::{load_icon, AppIcon, BUILT_IN};
 use canbec_infrastructure::{blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token, save_to_downloads};
 use tao::dpi::{LogicalPosition, LogicalSize};
@@ -115,6 +117,8 @@ fn main() -> wry::Result<()> {
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let dir = config_dir();
+    let mut profiles = profile_files::load(&dir);
+    let profile_dir = profile_files::dir(&dir, &profiles.active);
     let icon = load_icon(&dir);
     let builder = WindowBuilder::new()
         .with_window_icon(Icon::from_rgba(icon.rgba.clone(), icon.width, icon.height).ok())
@@ -215,13 +219,14 @@ fn main() -> wry::Result<()> {
         block_trackers(&content, &blocklists::load_trackers(&trackers_cache), move || send(&p, AppEvent::TrackersReady));
     }
 
-    let cookie_file = dir.join("logins.json");
+    let mut cookie_file = profile_dir.join("logins.json");
     cookie_jar::restore(&content, &cookie_file);
     let snapshot_list = adult.read().map(|l| l.clone()).unwrap_or_default();
-    let store = JsonFileStore::new(dir.join("state.json"));
+    let store = JsonFileStore::new(profile_dir.join("state.json"));
     let mut service = BrowserService::start(WryEngine { view: content }, store, snapshot_list, now());
     service.set_ad_rules(ads);
     service.set_shared_slop(blocklists::load_shared_slop(&dir));
+    service.set_workspaces(workspaces(&profiles));
     if let Some(url) = std::env::args().nth(1) {
         service.handle(UiCommand::Navigate { url }, now());
     }
@@ -339,6 +344,24 @@ fn main() -> wry::Result<()> {
                     }
                     None => false,
                 }
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"switchWorkspace""#) || json.contains(r#""type":"addProfile""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                let id = match (msg["type"].as_str(), msg["name"].as_str(), msg["id"].as_str()) {
+                    (Some("addProfile"), Some(name), _) => match profiles.add(name) {
+                        Ok(id) => Some(id),
+                        Err(e) => {
+                            service.notify(e);
+                            None
+                        }
+                    },
+                    (Some("switchWorkspace"), _, Some(id)) => Some(id.to_owned()),
+                    _ => None,
+                };
+                if let Some(id) = id {
+                    switch_profile(&id, &mut profiles, &mut service, &mut cookie_file, &dir);
+                }
+                true
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"exportSlop""#) => {
                 match save_to_downloads("canbec-slop.txt", &service.export_slop()) {
@@ -720,6 +743,33 @@ fn round_corners(view: &wry::WebView) {
 
 #[cfg(not(target_os = "macos"))]
 fn round_corners(_view: &wry::WebView) {}
+
+fn workspaces(profiles: &Profiles) -> Vec<canbec_application::ui::Workspace> {
+    profiles
+        .list
+        .iter()
+        .map(|p| canbec_application::ui::Workspace { id: p.id.clone(), name: p.name.clone(), color: p.color.clone(), active: p.id == profiles.active })
+        .collect()
+}
+
+/// Another identity: the current profile's logins are saved, the engine forgets every site
+/// (cookies, storage), the new profile's logins come back and its tabs load.
+fn switch_profile(id: &str, profiles: &mut Profiles, service: &mut BrowserService<WryEngine, JsonFileStore>, cookie_file: &mut std::path::PathBuf, config: &std::path::Path) {
+    if !profiles.activate(id) {
+        return;
+    }
+    save_logins(service, cookie_file);
+    if let Err(e) = service.engine().view.clear_all_browsing_data() {
+        eprintln!("canbec: could not clear site data: {e}");
+    }
+    let dir = profile_files::dir(config, id);
+    *cookie_file = dir.join("logins.json");
+    cookie_jar::restore(&service.engine().view, cookie_file);
+    service.switch_store(JsonFileStore::new(dir.join("state.json")), now());
+    service.set_workspaces(workspaces(profiles));
+    profile_files::save(config, profiles);
+    service.notify(format!("Profile: {}", profiles.active().name));
+}
 
 /// Keeps cookies only for "stay logged in" sites; every other site starts fresh next time.
 fn save_logins<S: canbec_application::ports::StateStore>(service: &BrowserService<WryEngine, S>, file: &std::path::Path) {

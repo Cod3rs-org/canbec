@@ -97,6 +97,8 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
 .ico{flex-direction:column;gap:3px;padding:6px 2px;font-size:10px;color:var(--mut);border:2px solid transparent}
 .ico img{width:36px;height:36px;border-radius:9px}
 .ico.act{border-color:var(--acc);color:var(--fg)}
+.inp{flex:1;min-width:0;height:28px;padding:0 10px;border:0;border-radius:10px;background:var(--act);color:inherit;font:inherit;font-size:12px;outline:0;box-shadow:var(--sh);user-select:text;-webkit-user-select:text}
+.inp:focus{box-shadow:0 0 0 2px var(--acc)}
 .lnk{color:var(--acc);text-decoration:underline;cursor:pointer;padding:0;border-radius:0}.lnk:hover{background:none}
 </style></head><body>
 <div id="top"></div>
@@ -126,6 +128,9 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
  <details id="arch"><summary><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>Archive</summary><div id="arc"></div></details>
 </div>
 <div id="set" aria-label="Settings">
+ <h2>Profiles</h2>
+ <div class="sec"><p>Each profile has its own tabs, slop tags and logins. Switch with the dots at the bottom.</p><div id="profs"></div>
+  <form id="padd" class="btns" style="margin-top:6px" autocomplete="off"><input id="pname" class="inp" maxlength="24" placeholder="New profile, e.g. Work" aria-label="New profile name"><button class="btn">Add</button></form></div>
  <h2>News feeds</h2>
  <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div>
  <h2>Privacy</h2>
@@ -220,6 +225,7 @@ function renderSettings(){
  var kb=$("keep");kb.style.display=host&&!c.stayLoggedIn?"":"none";kb.textContent="Stay logged in on "+host;
  $("tools").innerHTML=TOOLS.map(function(t,i){return'<div style="padding:3px 0"><button class="lnk" data-t="'+i+'">'+t[0]+'</button><div style="color:var(--mut);font-size:11px">'+t[2]+'</div></div>'}).join("");
  $("sst").textContent=(s.slopCount||0)+" tagged by you"+(s.sharedSlopCount?" · "+s.sharedSlopCount+" from lists you follow":"");
+ $("profs").innerHTML=(s.workspaces||[]).map(function(w){return'<div class="pin"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+h(w.color)+'"></i><span>'+h(w.name)+'</span>'+(w.active?'<small style="color:var(--mut)">active</small>':'<button class="lnk" data-w="'+h(w.id)+'">switch</button>')+'</div>'}).join("");
  var e=s.essentials||[];
  $("pins").innerHTML=e.length?e.map(function(x,i){return'<div class="pin"><span title="'+h(x.url)+'">'+h(x.title)+'</span><button class="x" data-u="'+i+'" aria-label="Unpin '+h(x.title)+'">'+X+'</button></div>'}).join(""):'<p style="margin:0">Nothing pinned yet.</p>';
  var ic=window.__icons||[],cur=window.__icon||"sprout",custom=!ic.some(function(i){return i.name===cur});
@@ -237,6 +243,8 @@ $("tools").onclick=function(e){var b=e.target.closest("[data-t]");if(b)send({typ
 $("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type:"unpinEssential",index:+b.dataset.u})};
 $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
 $("cfg").onclick=function(){send({type:"openConfig"})};
+$("profs").onclick=function(e){var b=e.target.closest("[data-w]");if(b)send({type:"switchWorkspace",id:b.dataset.w})};
+$("padd").onsubmit=function(e){e.preventDefault();var n=$("pname").value.trim();if(n){send({type:"addProfile",name:n});$("pname").value=""}};
 $("sexp").onclick=function(){send({type:"exportSlop"})};
 $("simp").onclick=function(){$("sfile").click()};
 $("sfile").onchange=function(){var f=this.files[0];this.value="";if(!f||f.size>2e6)return;var r=new FileReader();r.onload=function(){send({type:"importSlop",text:String(r.result)})};r.readAsText(f)};

@@ -201,3 +201,20 @@ fn slop_lists_export_and_import_as_plain_text() {
     assert!(theirs.find("https://news.example/ai-article").is_some());
     assert!(theirs.find("https://news.example/other").is_none());
 }
+
+#[test]
+fn profiles_get_safe_unique_ids_and_a_cap() {
+    use canbec_domain::profiles::{Profiles, DEFAULT_PROFILE, MAX_PROFILES};
+    let mut p = Profiles::default();
+    assert_eq!(p.active().id, DEFAULT_PROFILE);
+    assert_eq!(p.add("Work / Client A").unwrap(), "work---client-a");
+    assert!(p.add("work / client a").is_err(), "names are unique");
+    assert_eq!(p.add("../..").unwrap(), "profile", "ids can't escape the profiles folder");
+    assert!(p.add("  ").is_err());
+    assert!(p.activate("profile") && !p.activate("profile") && !p.activate("nope"));
+    assert_eq!(p.active().name, "../..");
+    while p.list.len() < MAX_PROFILES {
+        p.add(&format!("p{}", p.list.len())).unwrap();
+    }
+    assert!(p.add("one more").is_err());
+}

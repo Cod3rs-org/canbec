@@ -23,6 +23,7 @@ Everything we've learned and decided, in reading order. These files are the sour
 | 06 | [Extensibility](research/06-extensibility.md) | Any-engine harness, MV3 subset + porting skill, feed lock, MCP, profiles |
 | 07 | [Roadmap notes](research/07-roadmap-notes.md) | Simplicity rule, UI customization, benchmarks, Hacker News launch |
 | 08 | [No tracking](research/08-privacy.md) | Fresh browser every start, stay-logged-in sites, fingerprint noise, tracking params, privacy tools |
+| 09 | [Local AI text hints](research/09-local-ai-text-hints.md) | Small offline detectors: sizes, catch rates, false positives; why it stays opt-in |
 
 ## Benchmarks
 

@@ -18,6 +18,7 @@ PAGES = {
     "docs/research/06-extensibility.md": "06-Extensibility-MCP-Profiles",
     "docs/research/07-roadmap-notes.md": "07-Roadmap-Notes",
     "docs/research/08-privacy.md": "08-No-Tracking",
+    "docs/research/09-local-ai-text-hints.md": "09-Local-AI-Text-Hints",
     "docs/architecture/ui-contract.md": "UI-Contract",
     "docs/ROADMAP.md": "Roadmap",
     "docs/benchmarks/2026-10-25-macos.md": "Benchmarks",

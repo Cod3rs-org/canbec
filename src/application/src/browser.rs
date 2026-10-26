@@ -47,6 +47,8 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     loading: bool,
     ads_hidden: u32,
     last_crash: Option<Timestamp>,
+    /// Slop lists the user subscribed to (read-only, refreshed weekly).
+    shared_slop: SlopList,
 }
 
 impl<E: Engine, S: StateStore> BrowserService<E, S> {
@@ -54,7 +56,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, last_crash: None };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, last_crash: None, shared_slop: SlopList::default() };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
@@ -75,6 +77,15 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     /// Ad rules; the generic part is injected by the engine adapter, site rules go per page.
     pub fn set_ad_rules(&mut self, rules: CosmeticRules) {
         self.ads = rules;
+    }
+
+    pub fn set_shared_slop(&mut self, list: SlopList) {
+        self.shared_slop = list;
+    }
+
+    /// The user's own tags as a shareable text list.
+    pub fn export_slop(&self) -> String {
+        self.snapshot.slop.export()
     }
 
     /// Adult content can't be switched off: every navigation goes through this check.
@@ -183,6 +194,11 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 }
             }
             UiCommand::ForgetLogin { domain } => self.snapshot.stay_logged_in.retain(|d| *d != domain),
+            UiCommand::ImportSlop { text } => {
+                let added = self.snapshot.slop.import(&text, now);
+                self.notice = Some(format!("Imported {added} new slop tags"));
+                self.push_flags(now);
+            }
             UiCommand::Find { text, backwards } => self.engine.find(&text, backwards),
             UiCommand::Zoom { step } => {
                 if let Some(host) = tabs.active_tab().and_then(|t| host_of(&t.url)) {
@@ -280,7 +296,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     pub fn state(&self, now: Timestamp) -> UiState {
         let tabs = &self.snapshot.tabs;
-        let slop = |url: &str| self.snapshot.slop.find(url).is_some();
+        let slop = |url: &str| self.is_slop(url);
         let active = tabs.active_tab();
         let mut archive: BTreeMap<String, Vec<ArchivedTab>> = BTreeMap::new();
         for t in tabs.items.iter().filter(|t| t.state == TabState::Archived) {
@@ -328,6 +344,8 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 unlocked_until: self.snapshot.feed_lock.unlocked_until.filter(|&u| u > now),
             },
             stay_logged_in: self.snapshot.stay_logged_in.clone(),
+            slop_count: self.snapshot.slop.tags.len(),
+            shared_slop_count: self.shared_slop.tags.len(),
             notice: self.notice.clone(),
         }
     }
@@ -343,6 +361,10 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         Some(url)
     }
 
+    fn is_slop(&self, url: &str) -> bool {
+        self.snapshot.slop.find(url).is_some() || self.shared_slop.find(url).is_some()
+    }
+
     fn zoom_for(&self, host: &str) -> f64 {
         self.snapshot.zoom.get(host).copied().unwrap_or(1.0)
     }
@@ -356,7 +378,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     }
 
     fn push_flags(&self, now: Timestamp) {
-        let slop = self.snapshot.tabs.active_tab().is_some_and(|t| self.snapshot.slop.find(&t.url).is_some());
+        let slop = self.snapshot.tabs.active_tab().is_some_and(|t| self.is_slop(&t.url));
         self.engine.page_flags(slop, self.snapshot.feed_lock.is_locked(now));
     }
 }

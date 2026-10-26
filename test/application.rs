@@ -293,3 +293,19 @@ fn a_crashed_page_reloads_once_then_waits_for_the_user() {
     svc.on_crashed(500);
     assert_eq!(loads(), before + 2);
 }
+
+#[test]
+fn imported_and_followed_slop_lists_flag_pages() {
+    let (mut svc, engine, _) = service();
+    svc.handle(UiCommand::ImportSlop { text: "mine.example\n".into() }, 0);
+    assert_eq!(svc.state(0).slop_count, 1);
+    let mut followed = canbec_domain::slop::SlopList::default();
+    followed.import("theirs.example", 0);
+    svc.set_shared_slop(followed);
+    svc.handle(nav("https://theirs.example/x"), 0);
+    svc.on_page("https://theirs.example/x", None, false, 0);
+    assert!(svc.state(0).current.slop);
+    assert_eq!(svc.state(0).shared_slop_count, 1);
+    assert!(engine.log.borrow().contains(&"flags slop=true feeds_locked=true".to_string()));
+    assert!(svc.export_slop().contains("mine.example") && !svc.export_slop().contains("theirs"));
+}

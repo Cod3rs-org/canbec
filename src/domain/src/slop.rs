@@ -57,6 +57,32 @@ impl SlopList {
         self.tags.iter().find(|t| Self::matches(t, host.as_deref(), &page))
     }
 
+    /// Plain-text list to share: one host (whole site) or full URL (one page) per line.
+    pub fn export(&self) -> String {
+        let mut out = String::from("# canbec slop list: one site or page per line\n");
+        for t in &self.tags {
+            out += &t.pattern;
+            out.push('\n');
+        }
+        out
+    }
+
+    /// Adds the entries of a shared list (see [`export`](Self::export)); returns how many were new.
+    /// Lines that are neither a host nor an http(s) URL are skipped.
+    pub fn import(&mut self, text: &str, now: Timestamp) -> usize {
+        let before = self.tags.len();
+        for line in text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with(['#', '!'])) {
+            if line.starts_with("https://") || line.starts_with("http://") {
+                if host_of(line).is_some() {
+                    self.tag(line, SlopScope::Page, now);
+                }
+            } else if line.contains('.') && line.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-') {
+                self.tag(&format!("https://{line}/"), SlopScope::Domain, now);
+            }
+        }
+        self.tags.len() - before
+    }
+
     fn matches(tag: &SlopTag, host: Option<&str>, page: &str) -> bool {
         match tag.scope {
             SlopScope::Domain => host.is_some_and(|h| host_matches(h, &tag.pattern)),

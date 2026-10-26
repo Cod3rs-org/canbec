@@ -9,6 +9,7 @@ use std::time::{Duration, SystemTime};
 
 use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::cosmetic::CosmeticRules;
+use canbec_domain::slop::SlopList;
 use canbec_domain::trackers::TrackerList;
 
 pub const ADULT_LIST_URL: &str =
@@ -36,7 +37,7 @@ pub fn needs_refresh(cache: &Path) -> bool {
 
 /// Downloads the full list into `cache`. Run off the UI thread.
 pub fn refresh_adult(cache: &Path) -> Result<HostBlocklist, String> {
-    download(ADULT_LIST_URL, cache, |text| HostBlocklist::parse(text).len())?;
+    download(ADULT_LIST_URL, cache, 1000, |text| HostBlocklist::parse(text).len())?;
     Ok(load_adult(cache))
 }
 
@@ -54,7 +55,7 @@ pub fn load_ads(cache: &Path) -> CosmeticRules {
 
 /// Downloads EasyList into `cache`. Run off the UI thread. New rules apply from the next start.
 pub fn refresh_ads(cache: &Path) -> Result<(), String> {
-    download(ADS_LIST_URL, cache, |text| CosmeticRules::parse(text).len())
+    download(ADS_LIST_URL, cache, 1000, |text| CosmeticRules::parse(text).len())
 }
 
 /// Seed + cached EasyPrivacy.
@@ -65,12 +66,47 @@ pub fn load_trackers(cache: &Path) -> TrackerList {
 
 /// Downloads EasyPrivacy into `cache`. Run off the UI thread. New rules apply from the next start.
 pub fn refresh_trackers(cache: &Path) -> Result<(), String> {
-    download(TRACKERS_LIST_URL, cache, |text| TrackerList::parse(text).len())
+    download(TRACKERS_LIST_URL, cache, 1000, |text| TrackerList::parse(text).len())
 }
 
-/// Fetches `url` and saves it to `cache` only if it parses into 1,000+ entries.
+/// `<config>/slop-lists.txt`: https URLs of shared slop lists, one per line (`#` comments).
+pub fn slop_subscriptions(config: &Path) -> Vec<String> {
+    let text = std::fs::read_to_string(config.join("slop-lists.txt")).unwrap_or_default();
+    text.lines().map(str::trim).filter(|l| l.starts_with("https://")).map(str::to_owned).collect()
+}
+
+fn slop_cache(config: &Path, url: &str) -> std::path::PathBuf {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    let mut hash = DefaultHasher::new();
+    url.hash(&mut hash);
+    config.join("blocklists").join(format!("slop-{:x}.txt", hash.finish()))
+}
+
+/// All subscribed slop lists from their cached copies (read-only for the user).
+pub fn load_shared_slop(config: &Path) -> SlopList {
+    let mut list = SlopList::default();
+    for url in slop_subscriptions(config) {
+        if let Ok(text) = std::fs::read_to_string(slop_cache(config, &url)) {
+            list.import(&text, 0);
+        }
+    }
+    list
+}
+
+/// Downloads subscribed slop lists older than a week. Run off the UI thread.
+pub fn refresh_shared_slop(config: &Path) -> Result<SlopList, String> {
+    for url in slop_subscriptions(config) {
+        let cache = slop_cache(config, &url);
+        if needs_refresh(&cache) {
+            download(&url, &cache, 1, |text| SlopList::default().import(text, 0))?;
+        }
+    }
+    Ok(load_shared_slop(config))
+}
+
+/// Fetches `url` and saves it to `cache` only if it parses into at least `min` entries.
 /// Broken downloads (captive portals, error pages) are refused instead of weakening a list.
-fn download(url: &str, cache: &Path, entries: impl Fn(&str) -> usize) -> Result<(), String> {
+fn download(url: &str, cache: &Path, min: usize, entries: impl Fn(&str) -> usize) -> Result<(), String> {
     let text = ureq::get(url)
         .call()
         .map_err(|e| e.to_string())?
@@ -80,7 +116,7 @@ fn download(url: &str, cache: &Path, entries: impl Fn(&str) -> usize) -> Result<
         .read_to_string()
         .map_err(|e| e.to_string())?;
     let n = entries(&text);
-    if n < 1000 {
+    if n < min {
         return Err(format!("downloaded list too small ({n} entries)"));
     }
     if let Some(dir) = cache.parent() {

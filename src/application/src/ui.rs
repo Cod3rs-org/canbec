@@ -35,6 +35,8 @@ pub enum UiCommand {
     Find { text: String, #[serde(default)] backwards: bool },
     /// `1` zoom in, `-1` zoom out, `0` reset. Remembered per site.
     Zoom { step: i8 },
+    /// Adds a shared slop list (plain text, one host or URL per line).
+    ImportSlop { text: String },
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -49,6 +51,9 @@ pub struct UiState {
     pub feed_lock: FeedLockView,
     /// Sites whose cookies survive a restart. Everything else starts fresh on every launch.
     pub stay_logged_in: Vec<String>,
+    /// Sites/pages tagged by the user, and entries from subscribed lists.
+    pub slop_count: usize,
+    pub shared_slop_count: usize,
     /// One-line message for the user (e.g. "20 tabs open — close or archive one first").
     pub notice: Option<String>,
 }

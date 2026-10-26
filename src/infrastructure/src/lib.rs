@@ -52,6 +52,18 @@ pub fn random_token() -> String {
     format!("{:016x}{:016x}", part(), part())
 }
 
+/// Writes `text` to the OS Downloads folder as `name` (or `name-2`, … if taken).
+pub fn save_to_downloads(name: &str, text: &str) -> std::io::Result<std::path::PathBuf> {
+    let dir = dirs::download_dir().unwrap_or_else(std::env::temp_dir);
+    let (stem, ext) = name.rsplit_once('.').unwrap_or((name, "txt"));
+    let path = (1..100)
+        .map(|i| dir.join(if i == 1 { format!("{stem}.{ext}") } else { format!("{stem}-{i}.{ext}") }))
+        .find(|p| !p.exists())
+        .ok_or_else(|| std::io::Error::other("too many files with that name"))?;
+    std::fs::write(&path, text)?;
+    Ok(path)
+}
+
 /// Per-user config folder: `~/.config/canbec` (Linux), `~/Library/Application Support/canbec`
 /// (macOS), `%APPDATA%\canbec` (Windows). Users edit `theme.css` here.
 /// `CANBEC_CONFIG_DIR` overrides it (screenshots, benchmarks, throwaway profiles).

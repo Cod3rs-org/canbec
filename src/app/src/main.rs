@@ -15,7 +15,7 @@ use canbec_domain::host_of;
 use canbec_infrastructure::engine_wry::WryEngine;
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_infrastructure::icon::{load_icon, AppIcon, BUILT_IN};
-use canbec_infrastructure::{blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token};
+use canbec_infrastructure::{blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token, save_to_downloads};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -45,6 +45,7 @@ enum AppEvent {
     Download(Option<String>, bool),
     SidebarReady,
     AdultList(HostBlocklist),
+    SharedSlop(canbec_domain::slop::SlopList),
     Tick,
 }
 
@@ -220,6 +221,7 @@ fn main() -> wry::Result<()> {
     let store = JsonFileStore::new(dir.join("state.json"));
     let mut service = BrowserService::start(WryEngine { view: content }, store, snapshot_list, now());
     service.set_ad_rules(ads);
+    service.set_shared_slop(blocklists::load_shared_slop(&dir));
     if let Some(url) = std::env::args().nth(1) {
         service.handle(UiCommand::Navigate { url }, now());
     }
@@ -236,6 +238,13 @@ fn main() -> wry::Result<()> {
         std::thread::spawn(move || match blocklists::refresh_ads(&ads_cache) {
             Ok(()) => eprintln!("canbec: ad rules updated, active from the next start"),
             Err(e) => eprintln!("canbec: ad list refresh failed (seed + cache still active): {e}"),
+        });
+    }
+    if !blocklists::slop_subscriptions(&dir).is_empty() {
+        let (p, dir) = (proxy.clone(), dir.clone());
+        std::thread::spawn(move || match blocklists::refresh_shared_slop(&dir) {
+            Ok(list) => send(&p, AppEvent::SharedSlop(list)),
+            Err(e) => eprintln!("canbec: slop list refresh failed (cached copies still active): {e}"),
         });
     }
     if blocklists::needs_refresh(&adult_cache) {
@@ -331,6 +340,13 @@ fn main() -> wry::Result<()> {
                     None => false,
                 }
             }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"exportSlop""#) => {
+                match save_to_downloads("canbec-slop.txt", &service.export_slop()) {
+                    Ok(path) => service.notify(format!("Saved your slop list to {}", path.display())),
+                    Err(e) => service.notify(format!("Could not save the slop list: {e}")),
+                }
+                true
+            }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"openConfig""#) => {
                 open_config_folder(&dir);
                 false
@@ -407,6 +423,10 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Blocked) => {
                 service.on_blocked();
+                true
+            }
+            Event::UserEvent(AppEvent::SharedSlop(list)) => {
+                service.set_shared_slop(list);
                 true
             }
             Event::UserEvent(AppEvent::AdultList(list)) => {

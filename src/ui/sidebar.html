@@ -133,6 +133,9 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
   <div id="kept"></div><div class="btns" style="margin-top:6px"><button class="btn" id="keep"></button></div></div>
  <h2>Privacy tools</h2>
  <div class="sec" id="tools"></div>
+ <h2>AI slop</h2>
+ <div class="sec"><div class="st" id="sst"></div><p>Share your tags as a text file, or import someone else's. To follow a list, put its link into <b>slop-lists.txt</b> in the config folder.</p>
+  <div class="btns"><button class="btn" id="sexp">Export list</button><button class="btn" id="simp">Import list</button></div><input type="file" id="sfile" accept=".txt,text/plain" hidden></div>
  <h2>Adult content</h2>
  <div class="sec"><div class="st">Always blocked</div><p style="margin:0">There is no switch for this, on purpose. The list updates every week and works offline too.</p></div>
  <h2>Pinned sites</h2>
@@ -215,6 +218,7 @@ function renderSettings(){
  $("kept").innerHTML=kept.length?'<p style="margin:0 0 4px">Staying logged in on:</p>'+kept.map(function(d){return'<div class="pin"><span>'+h(d)+'</span><button class="x" data-f="'+h(d)+'" aria-label="Forget login on '+h(d)+'" title="Forget at next start">'+X+'</button></div>'}).join(""):"";
  var kb=$("keep");kb.style.display=host&&!c.stayLoggedIn?"":"none";kb.textContent="Stay logged in on "+host;
  $("tools").innerHTML=TOOLS.map(function(t,i){return'<div style="padding:3px 0"><button class="lnk" data-t="'+i+'">'+t[0]+'</button><div style="color:var(--mut);font-size:11px">'+t[2]+'</div></div>'}).join("");
+ $("sst").textContent=(s.slopCount||0)+" tagged by you"+(s.sharedSlopCount?" · "+s.sharedSlopCount+" from lists you follow":"");
  var e=s.essentials||[];
  $("pins").innerHTML=e.length?e.map(function(x,i){return'<div class="pin"><span title="'+h(x.url)+'">'+h(x.title)+'</span><button class="x" data-u="'+i+'" aria-label="Unpin '+h(x.title)+'">'+X+'</button></div>'}).join(""):'<p style="margin:0">Nothing pinned yet.</p>';
  var ic=window.__icons||[],cur=window.__icon||"sprout",custom=!ic.some(function(i){return i.name===cur});
@@ -232,6 +236,9 @@ $("tools").onclick=function(e){var b=e.target.closest("[data-t]");if(b)send({typ
 $("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type:"unpinEssential",index:+b.dataset.u})};
 $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
 $("cfg").onclick=function(){send({type:"openConfig"})};
+$("sexp").onclick=function(){send({type:"exportSlop"})};
+$("simp").onclick=function(){$("sfile").click()};
+$("sfile").onchange=function(){var f=this.files[0];this.value="";if(!f||f.size>2e6)return;var r=new FileReader();r.onload=function(){send({type:"importSlop",text:String(r.result)})};r.readAsText(f)};
 var baseRender=render;render=function(s){baseRender(s);if(document.body.classList.contains("settings"))renderSettings()};
 function toggleSettings(){$("gear").click()}
 // Find in page: Enter = next, Shift+Enter = previous, Esc closes.

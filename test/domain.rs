@@ -185,3 +185,19 @@ fn tracker_hosts_match_subdomains_but_not_lookalikes() {
     assert!(!list.blocks_host("ok.example"), "global exception");
     assert!(!list.blocks_host("p.example"), "path rules aren't host rules");
 }
+
+#[test]
+fn slop_lists_export_and_import_as_plain_text() {
+    use canbec_domain::slop::{SlopList, SlopScope};
+    let mut mine = SlopList::default();
+    mine.tag("https://www.slop.example/a", SlopScope::Domain, 1);
+    mine.tag("https://news.example/ai-article#top", SlopScope::Page, 1);
+    let text = mine.export();
+    assert!(text.contains("slop.example\n") && text.contains("https://news.example/ai-article\n"));
+
+    let mut theirs = SlopList::default();
+    assert_eq!(theirs.import(&format!("{text}\n! comment\nnot a host\njavascript:alert(1)\nslop.example\n"), 2), 2);
+    assert!(theirs.find("https://sub.slop.example/x").is_some());
+    assert!(theirs.find("https://news.example/ai-article").is_some());
+    assert!(theirs.find("https://news.example/other").is_none());
+}

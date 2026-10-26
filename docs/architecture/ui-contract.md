@@ -22,6 +22,7 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
   "workspaces":[ { "id": "personal", "name": "Personal", "color": "#ff7a45", "active": true } ],
   "feedLock":  { "locked": true, "unlockedUntil": null },  // News-feed blocker; unlock max 6 h, settings only
   "stayLoggedIn": ["mail.example"],     // sites whose cookies survive a restart; current.stayLoggedIn for this page
+  "slopCount": 12, "sharedSlopCount": 340, // own slop tags; entries from followed lists (slop-lists.txt)
   "notice":    null                     // one-line message, e.g. "Blocked: adult content"
 }
 ```
@@ -45,6 +46,7 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
 | `stayLoggedIn` | | Keep the current site's cookies across restarts (everything else starts fresh) |
 | `forgetLogin` | `domain` | Stop keeping that site's cookies (gone at the next start) |
 | `openTab` | `url` | New background tab (adult check + tab cap); loads when activated |
+| `importSlop` | `text` | Add a shared slop list (one host or URL per line) |
 | `find` | `text`, `backwards?` | Select the next/previous match in the page (wraps around) |
 | `zoom` | `step` (1, -1, 0) | Zoom in/out/reset; remembered per site |
 
@@ -55,6 +57,7 @@ App-level messages, handled in `src/app` (not browser state):
 | `window` | `action`: `drag` \| `minimize` \| `maximize` \| `close` | Own window buttons (Windows / Linux) |
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `openConfig` | | Shows the config folder in the file manager |
+| `exportSlop` | | Saves the user's slop tags to Downloads as `canbec-slop.txt` |
 
 The settings panel is part of the sidebar (the gear toggles it). The app also injects
 `window.__platform`, `window.__version`, `window.__icons` (built-in icons with previews) and

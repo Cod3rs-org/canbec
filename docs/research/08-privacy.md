@@ -22,11 +22,11 @@ comes back, landing and link URLs lose `utm_*`/`fbclid`.
 
 ## Limits (honest list)
 
-- **Within one session**, third-party cookies still work on WebView2 (WebKit's ITP blocks them on
-  macOS and Linux). They are gone on restart. Next: tracker *request* blocking.
-- **Tracker request blocking is macOS-only so far.** WebKitGTK accepts the same JSON
-  (`WebKitUserContentFilterStore`); WebView2 needs `WebResourceRequested` filters. Both slot into
-  `block_trackers` in `app` (macOS, Linux; Windows matches hosts in a WebView2 request filter).
+- **Third-party cookies on WebView2** are refused with Chromium's `--test-third-party-cookie-phaseout`
+  switch (#14, `browser_args` in `app/platform.rs`); WebKit's ITP already blocks them on macOS and
+  Linux. Not yet checked on a Windows machine. It's a test switch, so Edge may drop it one day.
+- **Tracker request blocking** is in `block_trackers` in `app`: a WebKit content blocker on macOS,
+  the same JSON in WebKitGTK's filter store on Linux, a host filter on WebView2 requests on Windows.
   EasyPrivacy path rules and site exceptions are compiled too (#21).
 - **Kept sites keep only cookies**, not localStorage/IndexedDB. Logins based on localStorage
   tokens need a re-login after restart; settings says so next to the list. Why not more: the

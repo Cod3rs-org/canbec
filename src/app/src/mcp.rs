@@ -73,7 +73,7 @@ pub fn run() -> wry::Result<()> {
     let content = {
         let (p1, p2) = (proxy.clone(), proxy.clone());
         let nav_adult = adult.clone();
-        crate::platform::user_agent(WebViewBuilder::new())
+        crate::platform::user_agent(crate::platform::browser_args(WebViewBuilder::new()))
             .with_incognito(true)
             .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
             .with_initialization_script(content_script(&random_token(), &ads.generic, &feeds))

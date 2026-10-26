@@ -31,7 +31,7 @@ Windows and Linux get everything macOS has (tracker blocking, rounded card, DNS 
 |--:|---|---|:-:|
 | [#12](https://github.com/Cod3rs-org/canbec/issues/12) | Tracker blocking on Linux (WebKitGTK) | privacy, linux | |
 | [#13](https://github.com/Cod3rs-org/canbec/issues/13) | Tracker blocking on Windows (WebView2) | privacy, windows | |
-| [#14](https://github.com/Cod3rs-org/canbec/issues/14) | Block third-party cookies within a session on Windows | privacy, windows | |
+| [#14](https://github.com/Cod3rs-org/canbec/issues/14) | Block third-party cookies within a session on Windows | privacy, windows | 🧪 |
 | [#15](https://github.com/Cod3rs-org/canbec/issues/15) | Rounded content card on Windows and Linux | ui, windows, linux | |
 | [#16](https://github.com/Cod3rs-org/canbec/issues/16) | Adult block: system DNS lock | blocking | ✅ |
 | [#17](https://github.com/Cod3rs-org/canbec/issues/17) | Benchmarks on Windows and Linux | release | |

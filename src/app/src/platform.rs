@@ -262,6 +262,21 @@ pub fn user_agent(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
     builder
 }
 
+/// Windows: WebView2 sends third-party cookies, WebKit doesn't. Chromium's 3PC-phaseout switch
+/// refuses them (#14). WebView2 needs the same arguments on every webview of the process, so this
+/// goes on each builder. Keeps wry's own defaults.
+/// ponytail: a test switch; if Edge drops it, strip `Cookie` in block_trackers' request handler.
+#[cfg(windows)]
+pub fn browser_args(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
+    use wry::WebViewBuilderExtWindows;
+    builder.with_additional_browser_args("--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --test-third-party-cookie-phaseout")
+}
+
+#[cfg(not(windows))]
+pub fn browser_args(builder: WebViewBuilder<'_>) -> WebViewBuilder<'_> {
+    builder
+}
+
 /// ponytail: macOS only; wry doesn't expose WebView2's ProcessFailed or WebKitGTK's
 /// web-process-terminated yet, so there a crashed page stays white until reload.
 #[cfg(target_os = "macos")]

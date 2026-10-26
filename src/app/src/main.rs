@@ -122,7 +122,7 @@ fn open_config_folder(dir: &std::path::Path) {
 mod mcp;
 mod platform;
 
-use platform::{block_trackers, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent};
+use platform::{block_trackers, browser_args, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent};
 
 fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
@@ -162,7 +162,7 @@ fn main() -> wry::Result<()> {
 
     let sidebar = {
         let (p1, p2) = (proxy.clone(), proxy.clone());
-        WebViewBuilder::new()
+        browser_args(WebViewBuilder::new())
             .with_html(SIDEBAR_HTML)
             .with_initialization_script(theme_script())
             .with_initialization_script(format!("window.__platform={:?};window.__version={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION")))
@@ -183,7 +183,7 @@ fn main() -> wry::Result<()> {
     let content = {
         let (p1, p2, p3, p4) = (proxy.clone(), proxy.clone(), proxy.clone(), proxy.clone());
         let adult = adult.clone();
-        on_crash(user_agent(WebViewBuilder::new()), { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) })
+        on_crash(user_agent(browser_args(WebViewBuilder::new())), { let p = proxy.clone(); move || send(&p, AppEvent::Crashed) })
             // No tracking across runs: a fresh, in-memory browser profile on every start.
             // Logins the user wants to keep are put back by cookie_jar.
             .with_incognito(true)

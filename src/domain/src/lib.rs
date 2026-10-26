@@ -5,6 +5,7 @@ pub mod blocklist;
 pub mod cosmetic;
 pub mod family_dns;
 pub mod feed_lock;
+pub mod match_pattern;
 pub mod first_seen;
 pub mod privacy;
 pub mod profiles;

@@ -249,3 +249,20 @@ fn family_dns_is_on_only_without_other_servers() {
     assert!(!is_family(&s(&["1.1.1.3", "8.8.8.8"])));
     assert!(!is_family(&s(&[])));
 }
+
+#[test]
+fn chrome_match_patterns() {
+    use canbec_domain::match_pattern::MatchPattern;
+    let m = |p: &str, u: &str| MatchPattern::parse(p).unwrap().matches(u);
+    assert!(m("<all_urls>", "https://a.example/x?y=1"));
+    assert!(m("*://*.example.com/*", "http://example.com/"));
+    assert!(m("*://*.example.com/*", "https://news.example.com/a/b"));
+    assert!(!m("*://*.example.com/*", "https://badexample.com/"));
+    assert!(m("https://a.example/docs/*", "https://a.example/docs/intro"));
+    assert!(!m("https://a.example/docs/*", "http://a.example/docs/intro"));
+    assert!(m("https://*/*q=*", "https://s.example/find?q=rust"));
+    assert!(!m("*://a.example/x", "https://a.example/xy"));
+    for bad in ["file:///*", "https://a.*.example/*", "*://*", "nonsense"] {
+        assert!(MatchPattern::parse(bad).is_none(), "{bad}");
+    }
+}

@@ -48,6 +48,8 @@ enum AppEvent {
     SidebarReady,
     AdultList(HostBlocklist),
     SharedSlop(canbec_domain::slop::SlopList),
+    /// First Wayback captures for search results (`None`: never archived).
+    FirstSeen(Vec<(String, Option<String>)>),
     Tick,
 }
 
@@ -272,6 +274,9 @@ fn main() -> wry::Result<()> {
         });
     }
 
+    // First-seen dates for search results. ponytail: in memory for this run only; writing them to
+    // disk would leave a trace of what you searched.
+    let first_seen: Arc<std::sync::Mutex<std::collections::HashMap<String, Option<String>>>> = Arc::default();
     let mut last_url = String::new();
     let mut downloading = String::new();
     event_loop.run(move |event, _, flow| {
@@ -416,6 +421,46 @@ fn main() -> wry::Result<()> {
                         service.notify("Tip: a throwaway email keeps this site out of your inbox (Settings → Privacy tools)");
                         true
                     }
+                    // Only from the search page, and only asks archive.org about those URLs.
+                    (Some("dateResults"), _)
+                        if msg["token"].as_str() == Some(&key_token)
+                            && host_of(&last_url).is_some_and(|h| canbec_domain::host_matches(&h, "duckduckgo.com")) =>
+                    {
+                        let urls: Vec<String> = msg["urls"]
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .filter_map(|u| u.as_str())
+                            .filter(|u| u.starts_with("http://") || u.starts_with("https://"))
+                            .take(30)
+                            .map(str::to_owned)
+                            .collect();
+                        let (p, cache) = (proxy.clone(), first_seen.clone());
+                        std::thread::spawn(move || {
+                            let answers = std::thread::scope(|s| {
+                                let jobs: Vec<_> = urls
+                                    .into_iter()
+                                    .map(|url| {
+                                        let cache = cache.clone();
+                                        s.spawn(move || {
+                                            let known = cache.lock().ok().and_then(|c| c.get(&url).cloned());
+                                            let seen = match known {
+                                                Some(seen) => Some(seen),
+                                                None => canbec_infrastructure::wayback::first_capture(&url).ok(),
+                                            };
+                                            if let (Some(seen), Ok(mut c)) = (&seen, cache.lock()) {
+                                                c.insert(url.clone(), seen.clone());
+                                            }
+                                            seen.map(|s| (url, s))
+                                        })
+                                    })
+                                    .collect();
+                                jobs.into_iter().filter_map(|j| j.join().ok().flatten()).collect::<Vec<_>>()
+                            });
+                            send(&p, AppEvent::FirstSeen(answers));
+                        });
+                        false
+                    }
                     (Some("openTab"), _) if msg["token"].as_str() == Some(&key_token) => {
                         let url = msg["url"].as_str().unwrap_or_default().to_owned();
                         service.handle(UiCommand::OpenTab { url }, now());
@@ -465,6 +510,23 @@ fn main() -> wry::Result<()> {
             Event::UserEvent(AppEvent::Blocked) => {
                 service.on_blocked();
                 true
+            }
+            Event::UserEvent(AppEvent::FirstSeen(answers)) => {
+                use canbec_domain::first_seen::{is_obsolete, year};
+                let map: serde_json::Map<String, serde_json::Value> = answers
+                    .into_iter()
+                    .map(|(url, seen)| {
+                        let info = serde_json::json!({
+                            "year": seen.as_deref().and_then(year),
+                            "obsolete": seen.as_deref().is_some_and(is_obsolete),
+                            "slop": service.is_slop(&url),
+                        });
+                        (url, info)
+                    })
+                    .collect();
+                let script = format!("window.__canbec && window.__canbec.dates({})", serde_json::Value::Object(map));
+                let _ = service.engine().view.evaluate_script(&script);
+                false
             }
             Event::UserEvent(AppEvent::SharedSlop(list)) => {
                 service.set_shared_slop(list);

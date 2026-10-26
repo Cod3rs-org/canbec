@@ -19,6 +19,10 @@ appeared after the AI boom** as *obsolete*.
 ## Recommended plan
 
 1. **Phase 1 (now):** the browser homepage opens `noai.duckduckgo.com`. No AI on day one, zero cost.
+   **Phase 1.5 (done, #23):** on DuckDuckGo result pages every result gets a badge from its first
+   Wayback capture: `AI era · 2024` (after 2022-11-30), `since 2011`, or `not archived`, plus
+   `⚠ slop` for sites on the user's slop lists. Lookups run in the browser core (archive.org has no
+   CORS), in parallel, cached in memory for the run only (no search trace on disk).
 2. **Phase 2:** our own **meta-search** page built into the browser. It combines Brave, Mojeek and
    Marginalia results, then:
    - **Obsolete badge:** checks the Wayback Machine CDX API for the URL's first capture

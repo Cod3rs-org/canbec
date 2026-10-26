@@ -229,3 +229,14 @@ fn agents_only_get_profiles_that_allow_them() {
     assert_eq!(p.for_agents(None).unwrap().id, agent);
     assert!(p.for_agents(Some("personal")).is_none());
 }
+
+#[test]
+fn results_first_seen_after_chatgpt_are_obsolete() {
+    use canbec_domain::first_seen::{is_obsolete, year};
+    assert!(!is_obsolete("20110904062405"));
+    assert!(!is_obsolete("20221129235959"));
+    assert!(is_obsolete("20221130000000"));
+    assert!(is_obsolete("20240301120000"));
+    assert!(!is_obsolete("garbage") && !is_obsolete(""));
+    assert_eq!(year("20240301120000"), Some("2024"));
+}

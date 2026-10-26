@@ -4,6 +4,7 @@
 pub mod blocklist;
 pub mod cosmetic;
 pub mod feed_lock;
+pub mod first_seen;
 pub mod privacy;
 pub mod profiles;
 pub mod slop;

@@ -140,6 +140,10 @@
       addRules(hide, AD_STYLE);
       addRules(allow, AD_UNDO);
     },
+    // Search result dates from the browser: { url: { year, obsolete, slop } }.
+    dates(map) {
+      for (const a of document.querySelectorAll(RESULT_LINKS)) if (map[a.href]) badge(a, map[a.href]);
+    },
     // For AI agents (canbec --mcp): the page as plain text and links, without ads, locked
     // feeds and AI-labelled images. ponytail: a page can still overwrite this hook (#20).
     readable() {
@@ -207,6 +211,38 @@
     img.classList.remove("canbec-ai");
     img.removeAttribute("title");
   }, true);
+
+  // Search results (DuckDuckGo): the browser looks up when each result first appeared on the web
+  // (Wayback Machine) and badges pages from the AI era (after 2022-11-30) as "obsolete".
+  const RESULT_LINKS = "a[data-testid='result-title-a'], a.result__a";
+  const asked = new Set();
+  let askTimer = 0;
+  function askDates() {
+    const urls = [...document.querySelectorAll(RESULT_LINKS)].map((a) => a.href).filter((u) => /^https?:/.test(u) && !asked.has(u)).slice(0, 30);
+    if (!urls.length) return;
+    urls.forEach((u) => asked.add(u));
+    send({ type: "dateResults", urls, token: KEY_TOKEN });
+  }
+  if (/(^|\.)duckduckgo\.com$/.test(location.hostname)) {
+    new MutationObserver(() => { clearTimeout(askTimer); askTimer = setTimeout(askDates, 400); })
+      .observe(document.documentElement, { childList: true, subtree: true });
+  }
+  function badge(a, info) {
+    if (a.parentNode.querySelector(":scope > .canbec-age")) return;
+    const b = document.createElement("span");
+    b.className = "canbec-age";
+    const tags = [];
+    if (info.slop) tags.push(["⚠ slop", "You marked this site as AI slop", "#d93025", "#fff"]);
+    if (info.year && info.obsolete) tags.push(["AI era · " + info.year, "First seen on the web in " + info.year + ", after ChatGPT came out", "#ff7a45", "#fff"]);
+    else if (info.year) tags.push(["since " + info.year, "On the web since " + info.year + ", before the AI boom", "#e8e1d3", "#1f2328"]);
+    else if (info.year === null) tags.push(["not archived", "The Wayback Machine has never seen this page", "#e8e1d3", "#6b6f76"]);
+    for (const [text, title, bg, fg] of tags) {
+      const t = Object.assign(document.createElement("span"), { textContent: text, title });
+      t.style.cssText = "display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font:600 11px/16px system-ui,sans-serif;vertical-align:middle;background:" + bg + ";color:" + fg;
+      b.append(t);
+    }
+    a.after(b);
+  }
 
   // A page asks for your email: the sidebar suggests a throwaway one (once per page).
   let emailTip = false;

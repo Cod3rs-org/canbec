@@ -104,11 +104,14 @@ fn cosmetic_rules_parse_generic_specific_and_exceptions() {
     let rules = CosmeticRules::parse(
         "! comment\n[Adblock Plus 2.0]\n##.ad-banner\n###sponsor\nnews.example,blog.example##.promo\n\
          shop.example#@#.ad-banner\n#@##sponsor\nsite.example##+js(noop)\nsite.example#?#div:-abp-has(.x)\n\
-         ~skip.example##.neg\nexample.org##div:has(> .ad)\n",
+         ~skip.example##.neg\nexample.org##div:has(> .ad)\nnews.example,~old.news.example##.nag\n~x.example#@#.neg\n",
     );
-    assert_eq!(rules.generic, [".ad-banner"]); // ##sponsor removed by the generic exception
-    assert_eq!(rules.len(), 3);
-    assert_eq!(rules.for_host("m.news.example"), SiteCosmetics { hide: vec![".promo".into()], allow: vec![] });
+    assert_eq!(rules.generic, [".ad-banner", ".neg"]); // ##sponsor removed by the generic exception
+    assert_eq!(rules.len(), 5);
+    assert_eq!(rules.for_host("skip.example").allow, [".neg"], "~site: everywhere but there");
+    assert_eq!(rules.for_host("old.news.example").hide, [".promo"], "excluded subdomain");
+    assert_eq!(rules.for_host("news.example").hide, [".promo", ".nag"]);
+    assert_eq!(rules.for_host("m.news.example"), SiteCosmetics { hide: vec![".promo".into(), ".nag".into()], allow: vec![] });
     assert_eq!(rules.for_host("shop.example").allow, [".ad-banner"]);
     assert_eq!(rules.for_host("example.org").hide, ["div:has(> .ad)"]);
     assert_eq!(rules.for_host("other.example"), SiteCosmetics::default());

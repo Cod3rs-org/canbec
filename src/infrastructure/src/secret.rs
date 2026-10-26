@@ -126,13 +126,12 @@ mod store {
     fn dpapi(data: &[u8], protect: bool) -> Option<Vec<u8>> {
         let input = CRYPT_INTEGER_BLOB { cbData: data.len() as u32, pbData: data.as_ptr() as *mut u8 };
         let mut output = CRYPT_INTEGER_BLOB { cbData: 0, pbData: std::ptr::null_mut() };
-        let null = std::ptr::null();
         // SAFETY: valid input blob; DPAPI allocates the output, freed with LocalFree below.
         unsafe {
             let ok = if protect {
-                CryptProtectData(&input, null, null, null, null, 0, &mut output)
+                CryptProtectData(&input, std::ptr::null(), std::ptr::null(), std::ptr::null(), std::ptr::null(), 0, &mut output)
             } else {
-                CryptUnprotectData(&input, std::ptr::null_mut(), null, null, null, 0, &mut output)
+                CryptUnprotectData(&input, std::ptr::null_mut(), std::ptr::null(), std::ptr::null(), std::ptr::null(), 0, &mut output)
             };
             if ok == 0 || output.pbData.is_null() {
                 return None;

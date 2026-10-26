@@ -64,7 +64,7 @@ Profiles, MCP for AI agents, Chrome extension subset, AI skills.
 | [#29](https://github.com/Cod3rs-org/canbec/issues/29) | Chrome extension subset (MV3) | extensibility | 🧪 |
 | [#30](https://github.com/Cod3rs-org/canbec/issues/30) | AI skill: port a Chrome extension to canbec | extensibility | ✅ |
 | [#31](https://github.com/Cod3rs-org/canbec/issues/31) | AI skill: restyle canbec | extensibility, ui | ✅ |
-| [#32](https://github.com/Cod3rs-org/canbec/issues/32) | Engine adapters: Servo and Chromium (CEF) | extensibility | |
+| [#32](https://github.com/Cod3rs-org/canbec/issues/32) | Engine adapters: Servo and Chromium (CEF) | extensibility | ✅ |
 
 ✅ done · 🧪 built, needs a hand test in the running app
 

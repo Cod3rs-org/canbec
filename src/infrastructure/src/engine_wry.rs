@@ -2,6 +2,8 @@
 
 use canbec_application::ports::Engine;
 
+use crate::content_calls;
+
 pub struct WryEngine {
     pub view: wry::WebView,
     /// Runs a script where content.js lives: the page world ([`page_world`]) or the app's
@@ -32,16 +34,13 @@ impl Engine for WryEngine {
         self.js("location.reload()");
     }
     fn page_flags(&self, slop: bool, feeds_locked: bool, read_text: bool) {
-        self.js(&format!("window.__canbec && window.__canbec.flags({slop}, {feeds_locked}, {read_text})"));
+        self.js(&content_calls::flags(slop, feeds_locked, read_text));
     }
     fn page_ads(&self, hide: &[String], allow: &[String]) {
-        let json = |list: &[String]| serde_json::to_string(list).unwrap_or_else(|_| "[]".into());
-        self.js(&format!("window.__canbec && window.__canbec.ads({}, {})", json(hide), json(allow)));
+        self.js(&content_calls::ads(hide, allow));
     }
     fn find(&self, text: &str, backwards: bool) {
-        // window.find is non-standard but built into WebKit and Chromium; it wraps around.
-        let text = serde_json::to_string(text).unwrap_or_else(|_| "''".into());
-        self.js(&format!("window.find({text}, false, {backwards}, true)"));
+        self.js(&content_calls::find(text, backwards));
     }
     fn zoom(&self, level: f64) {
         if let Err(e) = self.view.zoom(level) {

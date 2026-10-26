@@ -139,6 +139,7 @@ timeline
 | 34 | Cosmetic ad rules with `~site` exclusions are applied instead of skipped | ✅ | |
 | 35 | **Isolated world:** content script and extensions run in canbec's own JS world (macOS, Linux); pages can't see or call them | 🧪 | [#20](https://github.com/Cod3rs-org/canbec/issues/20) |
 | 36 | **AI text hints** (optional 88 MB download, off by default): a local model guesses "reads like AI" on a quiet chip | 🧪 | [#25](https://github.com/Cod3rs-org/canbec/issues/25) |
+| 37 | **Servo engine adapter** (`src/engines/servo`): the same core and filters on a pure-Rust engine, headless runner; notes for CEF | ✅ | [#32](https://github.com/Cod3rs-org/canbec/issues/32) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

@@ -65,3 +65,53 @@ Blitz is dropped as a page engine. It might later draw our own UI (sidebar, tabs
 - **macOS:** WKWebView. `with_proxy_config` needs macOS 14+.
 - **Linux:** WebKitGTK 4.1 from the distro.
 - Servo renders the same on every OS, because the engine ships inside our binary.
+
+## Servo adapter (#32)
+
+`src/engines/servo` (crate `canbec-servo`, outside the main workspace with its own lockfile, so the
+default build and CI stay small). `ServoEngine` implements the same `Engine` port as wry, and the
+filters use Servo's own hooks:
+
+| canbec needs | Servo hook |
+|---|---|
+| Adult block on every page and frame | `BrowserService` for typed URLs; `request_navigation` → `deny()` for links; main-frame loads in `load_web_resource` (loads the app starts skip `request_navigation`) |
+| Tracker requests | `WebViewDelegate::load_web_resource` → `TrackerList::blocks` → `intercept(..).cancel()` (same rules as the other engines; no resource type yet, so `$image`-style rules don't apply) |
+| privacy.js, content.js | `UserContentManager` user scripts (page world) |
+| Core → page (flags, ad rules, find) | `WebView::evaluate_javascript`, sharing `infrastructure::content_calls` with wry |
+| Zoom | `WebView::set_page_zoom` |
+
+Run it headless (software rendering, no window):
+
+```sh
+cd src/engines/servo
+cargo run --release -- https://example.com out.png   # ~8 min the first time
+```
+
+Checked on `test/fixtures/trackers`: the same five verdicts as WebKit (3 blocked, app.js and jQuery
+load), and an adult seed host is refused. Servo quirk: a load asked for while another is still
+pending is dropped, so the runner lets each one finish first.
+
+It drives `BrowserService` like the browser does, prints the page, blocked requests and canbec's
+agent view, and saves a screenshot. **Not yet:** a Servo window inside canbec (Servo needs the
+app to forward mouse, keyboard and scroll events and to composite its frames; servoshell shows how)
+and content → core messages (no `window.ipc`; Servo would need a message hook for embedders).
+
+## Notes for a CEF (Chromium) adapter
+
+Not built. What it would take, for whoever picks it up:
+
+- **Crate:** `cef` (tauri-apps/cef-rs), the Rust bindings Tauri uses for its experimental CEF
+  runtime. It downloads the CEF binary distribution (Chromium as a library), about 100+ MB per OS.
+- **Size and packaging:** the app grows from ~2 MB to a few hundred MB. On macOS CEF needs helper
+  apps inside the bundle (renderer, GPU, plugin) and its own framework, so `tools/bundle-macos.sh`
+  changes; on Windows and Linux the CEF files ship next to the binary.
+- **Filters map well:** `CefRequestHandler::OnBeforeBrowse` (adult block), the resource request
+  handler's `OnBeforeResourceLoad` → cancel (trackers, with the resource type, so typed rules work),
+  `CefFrame::ExecuteJavaScript` and a render-process handler for our scripts, and a process
+  message from the renderer for content → core messages (only our renderer code can send them,
+  so no token is needed).
+- **Privacy:** an in-memory `CefRequestContext` (empty cache path) matches the incognito profile;
+  `CefCookieManager` can restore the "stay logged in" cookies like `cookie_jar` does.
+- **Why it's last:** exact Chrome compatibility is the only gain over WebView2 (already Chromium on
+  Windows), at the cost of shipping and updating a whole browser engine ourselves. Worth it only if
+  a site we need breaks in WebKit.

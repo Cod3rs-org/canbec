@@ -17,6 +17,23 @@ pub mod wayback;
 /// Injected into every website at document start (ads, slop border, feed blocker, shortcuts).
 pub const CONTENT_SCRIPT: &str = include_str!("scripts/content.js");
 
+/// The calls every engine adapter makes into content.js (`window.__canbec`).
+pub mod content_calls {
+    pub fn flags(slop: bool, feeds_locked: bool, read_text: bool) -> String {
+        format!("window.__canbec && window.__canbec.flags({slop}, {feeds_locked}, {read_text})")
+    }
+
+    pub fn ads(hide: &[String], allow: &[String]) -> String {
+        let json = |list: &[String]| serde_json::to_string(list).unwrap_or_else(|_| "[]".into());
+        format!("window.__canbec && window.__canbec.ads({}, {})", json(hide), json(allow))
+    }
+
+    /// window.find is non-standard but built into WebKit and Chromium; it wraps around.
+    pub fn find(text: &str, backwards: bool) -> String {
+        format!("window.find({}, false, {backwards}, true)", serde_json::Value::from(text))
+    }
+}
+
 /// The content script with this run's shortcut token, the generic ad selectors and the user's
 /// extra feed rules filled in.
 pub fn content_script(key_token: &str, generic_ads: &[String], user_feeds: &str) -> String {

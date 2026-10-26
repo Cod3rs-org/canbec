@@ -24,6 +24,7 @@ src/infrastructure  adapters: wry engine, JSON store, blocklists, scripts/conten
 src/app             composition root: window, sidebar + content webviews, event loop;
                     platform.rs = per-OS glue, mcp.rs = `canbec --mcp` (agents)
 src/ui              sidebar chrome: plain HTML/CSS/JS, no build step
+src/engines/servo   optional Servo engine adapter (own workspace + lockfile; ~8 min build)
 src/prototypes      engine bake-off crates (excluded from the workspace; Servo is a 143 MB build)
 test/               Rust integration tests (wired via [[test]] path) + engine-probe Blazor app
 docs/research       numbered research/decision notes; docs/architecture/ui-contract.md

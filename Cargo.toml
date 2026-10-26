@@ -2,7 +2,7 @@
 resolver = "2"
 # Clean architecture: domain <- application <- infrastructure <- app (composition root).
 members = ["src/domain", "src/application", "src/infrastructure", "src/app"]
-exclude = ["src/prototypes"]
+exclude = ["src/prototypes", "src/engines"]
 
 [workspace.package]
 edition = "2021"

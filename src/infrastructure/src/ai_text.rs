@@ -28,26 +28,41 @@ pub fn installed(config: &Path) -> bool {
     FILES.iter().all(|(name, _, _, size)| dir(config).join(name).metadata().is_ok_and(|m| m.len() == *size))
 }
 
-/// Downloads every missing file; `progress` gets the percent done after each one.
-/// ponytail: no resume; a broken download starts that file over next time.
+/// Downloads every file that's missing or doesn't match its checksum; `progress` gets the percent
+/// done as bytes arrive. On failure the folder is deleted, so nothing half-done stays behind.
+/// ponytail: no resume; a broken download starts over.
 pub fn install(config: &Path, progress: impl Fn(u8)) -> Result<(), String> {
-    let dir = dir(config);
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let result = fetch_all(&dir(config), progress);
+    if result.is_err() {
+        remove(config);
+    }
+    result
+}
+
+fn fetch_all(dir: &Path, progress: impl Fn(u8)) -> Result<(), String> {
+    use std::io::Read;
+    std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let total: u64 = FILES.iter().map(|f| f.3).sum();
-    let mut done = 0;
+    let (mut done, mut shown) = (0, 0);
     let agent: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(std::time::Duration::from_secs(600))).build().into();
     for (name, base, sha, size) in FILES {
         let path = dir.join(name);
-        if !path.metadata().is_ok_and(|m| m.len() == size) {
-            let bytes = agent
-                .get(&format!("{base}/{name}"))
-                .call()
-                .map_err(|e| format!("{name}: {e}"))?
-                .body_mut()
-                .with_config()
-                .limit(size + 1)
-                .read_to_vec()
-                .map_err(|e| format!("{name}: {e}"))?;
+        if !std::fs::read(&path).is_ok_and(|b| sha256_is(&b, sha)) {
+            let mut response = agent.get(&format!("{base}/{name}")).call().map_err(|e| format!("{name}: {e}"))?;
+            let mut reader = response.body_mut().with_config().limit(size + 1).reader();
+            let (mut bytes, mut chunk) = (Vec::with_capacity(size as usize), vec![0; 1 << 20]);
+            loop {
+                let n = reader.read(&mut chunk).map_err(|e| format!("{name}: {e}"))?;
+                if n == 0 {
+                    break;
+                }
+                bytes.extend_from_slice(&chunk[..n]);
+                let pct = ((done + bytes.len() as u64) * 100 / total) as u8;
+                if pct != shown {
+                    shown = pct;
+                    progress(pct);
+                }
+            }
             if !sha256_is(&bytes, sha) {
                 return Err(format!("{name} doesn't match its checksum"));
             }
@@ -55,8 +70,8 @@ pub fn install(config: &Path, progress: impl Fn(u8)) -> Result<(), String> {
             std::fs::write(&part, &bytes).and_then(|_| std::fs::rename(&part, &path)).map_err(|e| e.to_string())?;
         }
         done += size;
-        progress((done * 100 / total) as u8);
     }
+    progress(100);
     Ok(())
 }
 

@@ -129,15 +129,20 @@
     document.body.append(frame, banner);
   }
 
-  // AI text hints (optional, off by default): the page's main text, once, for the local model.
-  let textSent = false;
+  // AI text hints (optional, off by default): the page's main text, once per URL (single-page
+  // apps change it without a new document), for the local model.
+  let textSentFor = "";
   function sendText() {
-    if (textSent || !document.body) return;
-    textSent = true;
-    const roots = [...document.querySelectorAll("article, main, [role='main']")];
-    const root = roots.sort((a, b) => b.innerText.length - a.innerText.length)[0] || document.body;
-    const text = root.innerText.replace(/\s+/g, " ").trim().slice(0, 4000);
-    if (text.split(" ").length >= 80) send({ type: "pageText", text }); // shorter guesses are mostly wrong
+    if (textSentFor === location.href || !document.body) return;
+    textSentFor = location.href;
+    let text = "";
+    for (const el of document.querySelectorAll("article, main, [role='main']")) {
+      const t = el.innerText;
+      if (t.length > text.length) text = t;
+    }
+    text = (text || document.body.innerText).replace(/\s+/g, " ").trim().slice(0, 4000);
+    // Shorter guesses are mostly wrong. The URL lets the browser drop text from a page you left.
+    if (text.split(" ").length >= 80) send({ type: "pageText", text, url: location.href, token: KEY_TOKEN });
   }
 
   let flags = { slop: false, feedsLocked: true };

@@ -9,10 +9,20 @@
   ort.env.wasm.wasmPaths = new URL("./", location.href).href;
   const ready = fetch("tokenizer.json").then((r) => r.json()).then((tok) => canbecAiText.detector(ort, "model.onnx", tok));
   const send = (msg) => window.ipc.postMessage(JSON.stringify(msg));
-  let queue = Promise.resolve();
-  // One page at a time; a slow page doesn't pile up behind itself.
+  // One page at a time, and only the newest one waits: pages you clicked past are skipped.
+  let busy = false, next = null;
+  async function run() {
+    busy = true;
+    while (next) {
+      const { url, text } = next;
+      next = null;
+      try { send({ url, p: await (await ready)(text) }); } catch (e) { send({ url, error: String(e) }); }
+    }
+    busy = false;
+  }
   window.classify = (url, text) => {
-    queue = queue.then(async () => send({ url, p: await (await ready)(text) })).catch((e) => send({ url, error: String(e) }));
+    next = { url, text };
+    if (!busy) run();
   };
   ready.then(() => send({ ready: true }), (e) => send({ error: String(e) }));
 </script>

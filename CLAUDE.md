@@ -36,7 +36,7 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
 - The sidebar ↔ core protocol is `docs/architecture/ui-contract.md`. Change the contract, Rust
   types (`application/src/ui.rs`) and `src/ui/sidebar.html` together.
 - Websites can call `window.ipc` too. Content IPC accepts only harmless messages (`adsHidden`,
-  `aiImages`, `emailField`, and `key` / `openTab` with the per-run token). Never act on content messages for anything
+  `aiImages`, `emailField`, and `key` / `openTab` / `pageText` with the per-run token). Never act on content messages for anything
   security-relevant. content.js and extensions run in canbec's own JS world on macOS/Linux
   (`isolate` in `platform.rs`; call them with `engine.js()`, not `evaluate_script`); privacy.js
   stays in the page world.

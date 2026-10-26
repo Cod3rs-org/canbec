@@ -490,7 +490,9 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"aiText""#) => {
                 let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
-                if msg["on"].as_bool() == Some(true) {
+                if matches!(service.ai_text_mode(), AiTextMode::Downloading(_)) {
+                    // a double click; the button is disabled after the next render
+                } else if msg["on"].as_bool() == Some(true) {
                     service.set_ai_text_mode(AiTextMode::Downloading(0), now());
                     let (p, dir) = (proxy.clone(), dir.clone());
                     std::thread::spawn(move || {
@@ -612,9 +614,13 @@ fn main() -> wry::Result<()> {
                         });
                         false
                     }
-                    // Text for the optional AI text hint. A page could send other text for itself:
-                    // the worst case is a wrong hint on its own page. Scored under our own URL.
-                    (Some("pageText"), _) if ai_text::installed(&dir) => {
+                    // Text for the optional AI text hint, from our content script (token) and only
+                    // for the page the tab is on now. Scored under the core's URL, not the page's.
+                    (Some("pageText"), _)
+                        if service.ai_text_mode() == AiTextMode::On
+                            && msg["token"].as_str() == Some(&key_token)
+                            && msg["url"].as_str() == Some(last_url.as_str()) =>
+                    {
                         let text: String = msg["text"].as_str().unwrap_or_default().chars().take(4000).collect();
                         let script = format!("classify({}, {})", serde_json::Value::from(last_url.as_str()), serde_json::Value::from(text));
                         ai_used = now();

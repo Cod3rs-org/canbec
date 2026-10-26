@@ -106,6 +106,10 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         self.push_flags(now);
     }
 
+    pub fn ai_text_mode(&self) -> AiTextMode {
+        self.ai_text_mode
+    }
+
     /// The detector's P(AI-generated) for `url`. Ignored when the tab has moved on since.
     pub fn on_ai_text(&mut self, url: &str, p: f64) {
         if self.snapshot.tabs.active_tab().is_some_and(|t| t.url == url) {
@@ -291,6 +295,9 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             }
         }
         self.loading = loading;
+        if self.snapshot.tabs.active_tab().is_some_and(|t| t.url != url) {
+            self.ai_text = None; // also single-page apps that change the URL without loading
+        }
         if let Some(id) = self.snapshot.tabs.active {
             self.snapshot.tabs.update(id, url, title, now);
             if !loading {

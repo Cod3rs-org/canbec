@@ -359,6 +359,9 @@ fn ai_text_hint_only_when_on_and_for_the_current_page() {
     assert_eq!(svc.state(2).current.ai_text, None, "too unsure to show");
     svc.on_ai_text("https://blog.example/post", 0.914);
     assert_eq!(svc.state(2).current.ai_text, Some(91));
+    svc.on_page("https://blog.example/post#comments", None, false, 2);
+    assert_eq!(svc.state(2).current.ai_text, None, "a single-page app moved on");
+    svc.on_ai_text("https://blog.example/post#comments", 0.914);
     svc.on_page("https://blog.example/next", None, true, 3);
     assert_eq!(svc.state(3).current.ai_text, None, "a new page starts without a hint");
 }

@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Reading time",
+  "version": "1.0",
+  "description": "Shows how long an article takes to read and counts articles read.",
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js" },
+  "options_page": "options.html",
+  "action": { "default_title": "Reading time" },
+  "content_scripts": [{ "matches": ["https://*/*"], "js": ["content.js"], "css": ["badge.css"] }]
+}

@@ -245,3 +245,18 @@ fn extensions_load_content_scripts_and_guard_storage() {
     assert!(!save_storage(&dir, &exts, &mut storage, "hello-ext", &big), "over the cap");
     assert_eq!(load_storage(&dir, &exts)["hello-ext"]["hi"], 1);
 }
+
+#[test]
+fn ported_example_extension_loads() {
+    let dir = temp_dir("ported-example");
+    let ext = dir.join("extensions").join("reading-time");
+    std::fs::create_dir_all(&ext).unwrap();
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs/examples/extensions/reading-time/canbec");
+    for file in ["manifest.json", "content.js", "badge.css"] {
+        std::fs::copy(src.join(file), ext.join(file)).unwrap();
+    }
+    let exts = canbec_infrastructure::extensions::load(&dir);
+    let js = canbec_infrastructure::extensions::script(&exts, &Default::default());
+    assert_eq!(exts[0].name, "Reading time");
+    assert!(js.contains("min read") && js.contains(".reading-time") && !js.contains("sendMessage"));
+}

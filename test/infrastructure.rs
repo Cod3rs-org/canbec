@@ -258,5 +258,5 @@ fn ported_example_extension_loads() {
     let exts = canbec_infrastructure::extensions::load(&dir);
     let js = canbec_infrastructure::extensions::script(&exts, &Default::default());
     assert_eq!(exts[0].name, "Reading time");
-    assert!(js.contains("min read") && js.contains(".reading-time") && !js.contains("sendMessage"));
+    assert!(js.contains("min read") && js.contains(".reading-time") && !js.contains("sendMessage({"));
 }

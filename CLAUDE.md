@@ -21,7 +21,8 @@ swift tools/winshot.swift <process-name> out.png          # screenshot one windo
 src/domain          pure rules, no I/O, time passed in (Timestamp = unix secs)
 src/application     BrowserService use cases + ports: Engine, StateStore; UI types (ui.rs)
 src/infrastructure  adapters: wry engine, JSON store, blocklists, scripts/content.js
-src/app             composition root: window, sidebar + content webviews, event loop
+src/app             composition root: window, sidebar + content webviews, event loop;
+                    platform.rs = per-OS glue, mcp.rs = `canbec --mcp` (agents)
 src/ui              sidebar chrome: plain HTML/CSS/JS, no build step
 src/prototypes      engine bake-off crates (excluded from the workspace; Servo is a 143 MB build)
 test/               Rust integration tests (wired via [[test]] path) + engine-probe Blazor app

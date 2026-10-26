@@ -21,7 +21,8 @@ use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
 use tao::window::WindowBuilder;
 use wry::{PageLoadEvent, WebViewBuilder};
 
-use crate::{block_trackers, now};
+use crate::now;
+use crate::platform::block_trackers;
 
 /// How long a page may take before the agent gets an error.
 const PAGE_TIMEOUT: Duration = Duration::from_secs(25);

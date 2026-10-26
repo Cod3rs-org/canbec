@@ -1,0 +1,2 @@
+// Windows resources: the sprout icon for Explorer, the taskbar and Alt+Tab (see build.rs).
+1 ICON "icons/canbec.ico"

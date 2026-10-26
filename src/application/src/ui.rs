@@ -68,6 +68,8 @@ pub struct Current {
     pub can_go_back: bool,
     pub can_go_forward: bool,
     pub ads_hidden: u32,
+    /// Images on this page whose metadata says they're AI-generated (blurred until clicked).
+    pub ai_images: u32,
     /// The current site keeps its cookies across restarts.
     pub stay_logged_in: bool,
 }

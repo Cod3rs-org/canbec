@@ -46,6 +46,7 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     notice: Option<String>,
     loading: bool,
     ads_hidden: u32,
+    ai_images: u32,
     last_crash: Option<Timestamp>,
     /// Slop lists the user subscribed to (read-only, refreshed weekly).
     shared_slop: SlopList,
@@ -56,7 +57,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, last_crash: None, shared_slop: SlopList::default() };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default() };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
@@ -226,6 +227,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         // A new document (also link clicks inside the page): fresh ad count, site ad rules.
         if loading {
             self.ads_hidden = 0;
+            self.ai_images = 0;
             if let Some(host) = host_of(url) {
                 self.engine.zoom(self.zoom_for(&host)); // the engine's zoom sticks across sites otherwise
                 let site = self.ads.for_host(&host);
@@ -250,6 +252,11 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     /// The content script reports how many ads it covered on the current page.
     pub fn on_ads_hidden(&mut self, count: u32) {
         self.ads_hidden = count;
+    }
+
+    /// The content script reports how many AI-labelled images it blurred on the current page.
+    pub fn on_ai_images(&mut self, count: u32) {
+        self.ai_images = count;
     }
 
     /// Whether a cookie for `domain` may be restored after a restart.
@@ -316,6 +323,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
                 can_go_back: active.is_some_and(|t| t.can_go_back()),
                 can_go_forward: active.is_some_and(|t| t.can_go_forward()),
                 ads_hidden: self.ads_hidden,
+                ai_images: self.ai_images,
                 stay_logged_in: active.and_then(|t| host_of(&t.url)).is_some_and(|h| self.snapshot.stay_logged_in.contains(&h)),
             },
             tabs: tabs

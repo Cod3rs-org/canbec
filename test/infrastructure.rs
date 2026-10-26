@@ -68,7 +68,7 @@ fn tracker_seed_works_offline() {
 
 #[test]
 fn content_script_exposes_the_hooks_the_engine_calls() {
-    for hook in ["window.__canbec", "flags(slop, feedsLocked)", "ads(hide, allow)", "adsHidden", "canbec-feeds-locked"] {
+    for hook in ["window.__canbec", "flags(slop, feedsLocked)", "ads(hide, allow)", "adsHidden", "aiImages", "trainedAlgorithmicMedia", "canbec-feeds-locked"] {
         assert!(CONTENT_SCRIPT.contains(hook), "content script lost `{hook}`");
     }
 }

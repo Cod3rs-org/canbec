@@ -21,7 +21,7 @@ No frameworks, no build step, no network. Plain HTML, CSS and JS, so it stays li
   "essentials":[ { "title": "Mail", "url": "https://mail.example/" } ],
   "workspaces":[ { "id": "personal", "name": "Personal", "color": "#ff7a45", "active": true } ],
   "feedLock":  { "locked": true, "unlockedUntil": null },  // News-feed blocker; unlock max 6 h, settings only
-  "stayLoggedIn": ["mail.example"],     // sites whose cookies survive a restart; current.stayLoggedIn for this page
+  "stayLoggedIn": ["mail.example"],  // (current.aiImages: AI-labelled images blurred on this page)     // sites whose cookies survive a restart; current.stayLoggedIn for this page
   "slopCount": 12, "sharedSlopCount": 340, // own slop tags; entries from followed lists (slop-lists.txt)
   "notice":    null                     // one-line message, e.g. "Blocked: adult content"
 }

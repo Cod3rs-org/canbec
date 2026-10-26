@@ -370,6 +370,10 @@ fn main() -> wry::Result<()> {
                         service.on_ads_hidden(n.min(10_000) as u32);
                         true
                     }
+                    (Some("aiImages"), Some(n)) => {
+                        service.on_ai_images(n.min(10_000) as u32);
+                        true
+                    }
                     // Worst case a page shows this tip when it shouldn't.
                     (Some("emailField"), _) => {
                         service.notify("Tip: a throwaway email keeps this site out of your inbox (Settings → Privacy tools)");

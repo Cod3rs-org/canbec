@@ -171,6 +171,7 @@ function render(s){
  sh.setAttribute("aria-label",c.slop?"Remove AI slop tag":"Tag this site as AI slop");sh.title=sh.getAttribute("aria-label");
  var ch="";
  if(c.adsHidden>0)ch+='<span class="chip"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/></svg>'+c.adsHidden+' ads hidden</span>';
+ if(c.aiImages>0)ch+='<span class="chip" title="Blurred because their metadata says AI-generated. Click one to see it."><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 3-3 6 6"/></svg>'+c.aiImages+' AI image'+(c.aiImages>1?"s":"")+' blurred</span>';
  if(s.feedLock&&s.feedLock.locked)ch+='<span class="chip" title="News feeds are locked"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Feeds locked</span>';
  if(s.notice)ch+='<span class="chip notice" role="status">'+h(s.notice)+'</span>';
  $("chips").innerHTML=ch;

@@ -44,6 +44,7 @@
   const css = `
     @keyframes canbec-ad-seen { from { outline-color: transparent } to { outline-color: transparent } }
     html.canbec-feeds-locked :is(${feedSelectors.join(",") || "#canbec-none"}) { display: none !important; }
+    img.canbec-ai { filter: blur(24px) saturate(.6) !important; clip-path: inset(0) !important; cursor: pointer !important; }
     #canbec-slop { position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
       box-shadow: inset 0 0 0 6px #ff7a45, inset 0 0 0 8px #1f2328, inset 0 0 40px rgba(255,122,69,.35); }
     #canbec-slop-banner { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
@@ -146,6 +147,45 @@
   addRules(GENERIC_ADS, AD_STYLE);
 
   addEventListener("DOMContentLoaded", () => setSlop(flags.slop));
+
+  // AI images: pictures whose metadata says "made by a generative model" (IPTC digital source
+  // type, also used inside C2PA manifests) get a spoiler blur; one click shows them.
+  // Only images the page lets scripts read (same origin or CORS); first 256 KB, 40 per page.
+  // ponytail: metadata only, most AI images carry none; content-based hints are #25.
+  const AI_MARK = "trainedAlgorithmicMedia";
+  const checked = new WeakSet();
+  let aiChecks = 0, aiCount = 0;
+  async function checkImage(img) {
+    const src = img.currentSrc || img.src;
+    if (checked.has(img) || !/^https?:/.test(src) || img.naturalWidth * img.naturalHeight < 150 * 150 || aiChecks >= 40) return;
+    checked.add(img);
+    aiChecks++;
+    try {
+      const reader = (await fetch(src, { mode: "cors", credentials: "omit" })).body.getReader();
+      let head = "";
+      while (head.length < 262144) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        head += new TextDecoder("latin1").decode(value);
+      }
+      reader.cancel().catch(() => {});
+      if (!head.includes(AI_MARK)) return;
+      img.classList.add("canbec-ai");
+      img.title = "AI-generated, says the image itself. Click to show";
+      send({ type: "aiImages", count: ++aiCount });
+    } catch {} // not readable cross-origin: skipped
+  }
+  // Element load events skip window (spec), so listen on the document.
+  document.addEventListener("load", (e) => { if (e.target.tagName === "IMG") checkImage(e.target); }, true);
+  addEventListener("DOMContentLoaded", () => { for (const img of document.images) if (img.complete) checkImage(img); });
+  addEventListener("click", (e) => {
+    const img = e.target.closest && e.target.closest("img.canbec-ai");
+    if (!img) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    img.classList.remove("canbec-ai");
+    img.removeAttribute("title");
+  }, true);
 
   // A page asks for your email: the sidebar suggests a throwaway one (once per page).
   let emailTip = false;

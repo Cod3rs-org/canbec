@@ -76,7 +76,7 @@ pub fn run() -> wry::Result<()> {
         crate::platform::user_agent(WebViewBuilder::new())
             .with_incognito(true)
             .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
-            .with_initialization_script(&content_script(&random_token(), &ads.generic, &feeds))
+            .with_initialization_script(content_script(&random_token(), &ads.generic, &feeds))
             .with_permission_handler(|_| wry::PermissionResponse::Deny) // no camera/mic for agents
             .with_navigation_handler(move |url| {
                 let blocked = host_of(&url).is_some_and(|h| nav_adult.is_blocked(&h));

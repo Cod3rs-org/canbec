@@ -3,6 +3,7 @@
 pub mod blocklists;
 pub mod cookie_jar;
 pub mod engine_wry;
+pub mod extensions;
 pub mod icon;
 pub mod mcp;
 pub mod profiles;

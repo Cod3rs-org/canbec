@@ -56,6 +56,7 @@ pub struct BrowserService<E: Engine, S: StateStore> {
     family_dns: Option<bool>,
     /// A newer release the user can install.
     update: Option<String>,
+    extensions: Vec<String>,
 }
 
 impl<E: Engine, S: StateStore> BrowserService<E, S> {
@@ -63,7 +64,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
     pub fn start(engine: E, store: S, adult: HostBlocklist, now: Timestamp) -> Self {
         let snapshot = store.load().unwrap_or_default();
         let mut service =
-            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default(), workspaces: Vec::new(), family_dns: None, update: None };
+            Self { engine, store, snapshot, policy: TabPolicy::default(), adult, ads: CosmeticRules::default(), notice: None, loading: false, ads_hidden: 0, ai_images: 0, last_crash: None, shared_slop: SlopList::default(), workspaces: Vec::new(), family_dns: None, update: None, extensions: Vec::new() };
         service.snapshot.tabs.sweep(&service.policy, now);
         if service.snapshot.tabs.active_tab().is_none() {
             let _ = service.snapshot.tabs.open(HOME_URL, &service.policy, now);
@@ -87,6 +88,10 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
 
     pub fn set_update(&mut self, version: Option<String>) {
         self.update = version;
+    }
+
+    pub fn set_extensions(&mut self, names: Vec<String>) {
+        self.extensions = names;
     }
 
     pub fn set_family_dns(&mut self, on: bool) {
@@ -380,6 +385,7 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
             shared_slop_count: self.shared_slop.tags.len(),
             family_dns: self.family_dns,
             update: self.update.clone(),
+            extensions: self.extensions.clone(),
             notice: self.notice.clone(),
         }
     }

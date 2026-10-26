@@ -209,3 +209,39 @@ fn update_downloads_must_match_the_release_checksum() {
     assert!(!checksum_ok(sums, "canbec-0.2.0-macos-arm64.zip", b"hellO"));
     assert!(!checksum_ok(sums, "other.zip", b"hello"));
 }
+
+#[test]
+fn extensions_load_content_scripts_and_guard_storage() {
+    use canbec_infrastructure::extensions::{load, load_storage, save_storage, script, STORAGE_LIMIT};
+    let dir = temp_dir("extensions");
+    let ext = dir.join("extensions").join("hello-ext");
+    std::fs::create_dir_all(&ext).unwrap();
+    std::fs::write(
+        ext.join("manifest.json"),
+        r#"{"manifest_version":3,"name":"Hello","content_scripts":[
+            {"matches":["*://*.example.com/*","file:///*"],"js":["a.js","../secret.js"],"css":["s.css"],"run_at":"document_end"},
+            {"matches":["nonsense"],"js":["a.js"]}]}"#,
+    )
+    .unwrap();
+    std::fs::write(ext.join("a.js"), "chrome.storage.local.set({hi: 1});").unwrap();
+    std::fs::write(ext.join("s.css"), "body{color:red}").unwrap();
+    std::fs::write(dir.join("extensions").join("secret.js"), "LEAKED").unwrap();
+    std::fs::create_dir_all(dir.join("extensions").join("bad name")).unwrap();
+
+    let exts = load(&dir);
+    assert_eq!(exts.len(), 1);
+    assert_eq!((exts[0].id.as_str(), exts[0].name.as_str()), ("hello-ext", "Hello"));
+    let js = script(&exts, &Default::default());
+    assert!(js.contains("chrome.storage.local.set({hi: 1});") && js.contains("body{color:red}") && js.contains("document_end"));
+    assert!(js.contains(r"example\\.com") && !js.contains("LEAKED") && !js.contains("__CANBEC_"));
+    assert_eq!(js.matches("__canbecExt(\"hello-ext\"").count(), 1, "entry without valid matches is dropped");
+    assert!(script(&[], &Default::default()).is_empty());
+
+    let mut storage = load_storage(&dir, &exts);
+    assert!(save_storage(&dir, &exts, &mut storage, "hello-ext", &serde_json::json!({"hi": 1})));
+    assert!(!save_storage(&dir, &exts, &mut storage, "other", &serde_json::json!({})), "unknown extension");
+    assert!(!save_storage(&dir, &exts, &mut storage, "hello-ext", &serde_json::json!([1])), "not an object");
+    let big = serde_json::json!({ "x": "a".repeat(STORAGE_LIMIT) });
+    assert!(!save_storage(&dir, &exts, &mut storage, "hello-ext", &big), "over the cap");
+    assert_eq!(load_storage(&dir, &exts)["hello-ext"]["hi"], 1);
+}

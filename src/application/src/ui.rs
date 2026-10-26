@@ -57,6 +57,8 @@ pub struct UiState {
     pub family_dns: Option<bool>,
     /// Version of a newer release, if there is one.
     pub update: Option<String>,
+    /// Names of the installed extensions (`<config>/extensions/`).
+    pub extensions: Vec<String>,
     /// One-line message for the user (e.g. "20 tabs open — close or archive one first").
     pub notice: Option<String>,
 }

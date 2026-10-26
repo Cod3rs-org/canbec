@@ -24,12 +24,20 @@ Goal: port most "content tweak" Chrome extensions without carrying a full WebExt
 
 | MV3 key / API | Supported | Notes |
 |---|---|---|
-| `content_scripts` (`matches`, `js`, `css`, `run_at`) | ✅ | Injected through the engine's init-script hook |
-| `chrome.storage.local` / `.sync` | ✅ | Backed by a per-extension JSON file (sync = local) |
-| `chrome.runtime.sendMessage` / `onMessage` | ✅ | Bridged over IPC to a tiny background JS context |
-| `declarativeNetRequest` (block rules) | ✅ | Translated into our filter engine (adblock-rust) |
+| `content_scripts` (`matches`, `exclude_matches`, `js`, `css`, `run_at`, `all_frames`) | ✅ | One init script for all pages and frames; match patterns compiled to regexes in the domain (`match_pattern::to_regex`) |
+| `chrome.storage.local` / `.sync` | ✅ | `get/set/remove/clear` (callbacks and promises), `onChanged` in the same page. Saved by the core in `<config>/extension-storage/<id>.json` (sync = local, 1 MB cap) |
+| `chrome.runtime.sendMessage` / `onMessage`, background service worker | ⏳ later | Needs a hidden background webview |
+| `declarativeNetRequest` (block rules) | ⏳ later | Translate into the tracker content-blocker list |
 | `action` popup | ⏳ later | Rendered in the sidebar |
 | `webRequest` (blocking), `debugger`, `tabs.executeScript` everywhere | ❌ | Too heavy, or a privacy risk |
+
+**Install:** unpack the extension into `<config>/extensions/<name>/` (folder name = id: letters,
+digits, `-`, `_`) and restart. Settings → Extensions lists what loaded.
+
+**Limits (v1):** scripts run in the page's own JavaScript world (isolated world is #20), so a page
+can see and change an extension's storage; that's why the core only accepts storage for installed
+extensions, as JSON objects, up to 1 MB. Storage changes reach other open pages on their next
+load, not live. Storage is shared by all profiles.
 
 **Porting skill:** a Claude Code skill (`.claude/skills/port-chrome-extension/`). It reads a Chrome
 extension, maps each API it uses onto the subset above, rewrites what isn't supported, and writes

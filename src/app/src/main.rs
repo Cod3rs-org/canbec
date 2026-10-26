@@ -157,14 +157,16 @@ fn main() -> wry::Result<()> {
     let adult = Arc::new(RwLock::new(blocklists::load_adult(&adult_cache)));
     let ads_cache = dir.join("blocklists").join("ads.txt");
     let ads = blocklists::load_ads(&ads_cache);
+    let extensions = canbec_infrastructure::extensions::load(&dir);
+    let mut ext_storage = canbec_infrastructure::extensions::load_storage(&dir, &extensions);
 
     let sidebar = {
         let (p1, p2) = (proxy.clone(), proxy.clone());
         WebViewBuilder::new()
             .with_html(SIDEBAR_HTML)
-            .with_initialization_script(&theme_script())
-            .with_initialization_script(&format!("window.__platform={:?};window.__version={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION")))
-            .with_initialization_script(&icons_script(&icon.source))
+            .with_initialization_script(theme_script())
+            .with_initialization_script(format!("window.__platform={:?};window.__version={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION")))
+            .with_initialization_script(icons_script(&icon.source))
             .with_bounds(bounds(&window, true))
             // The sidebar has the trusted IPC channel, so it may never load anything else.
             .with_navigation_handler(|url| url.starts_with("about:") || url.starts_with("data:"))
@@ -186,7 +188,8 @@ fn main() -> wry::Result<()> {
             // Logins the user wants to keep are put back by cookie_jar.
             .with_incognito(true)
             .with_initialization_script_for_main_only(privacy_script(&random_token()), false)
-            .with_initialization_script(&content_script(&key_token, &ads.generic, &std::fs::read_to_string(dir.join("feeds.txt")).unwrap_or_default()))
+            .with_initialization_script_for_main_only(canbec_infrastructure::extensions::script(&extensions, &ext_storage), false)
+            .with_initialization_script(content_script(&key_token, &ads.generic, &std::fs::read_to_string(dir.join("feeds.txt")).unwrap_or_default()))
             .with_bounds(bounds(&window, false))
             .with_permission_handler(permission)
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
@@ -241,6 +244,7 @@ fn main() -> wry::Result<()> {
     service.set_ad_rules(ads);
     service.set_shared_slop(blocklists::load_shared_slop(&dir));
     service.set_workspaces(workspaces(&profiles));
+    service.set_extensions(extensions.iter().map(|e| e.name.clone()).collect());
     if let Some(url) = std::env::args().nth(1) {
         service.handle(UiCommand::Navigate { url }, now());
     }
@@ -509,6 +513,18 @@ fn main() -> wry::Result<()> {
                             });
                             send(&p, AppEvent::FirstSeen(answers));
                         });
+                        false
+                    }
+                    // Extension storage: pages can send these too, so they're limited to known
+                    // extensions and a size cap (see extensions::save_storage).
+                    (Some("extStorageGet"), _) => {
+                        let all = serde_json::Value::Object(ext_storage.clone());
+                        let _ = service.engine().view.evaluate_script(&format!("window.__canbecExtStorage && window.__canbecExtStorage({all})"));
+                        false
+                    }
+                    (Some("extStorageSet"), _) => {
+                        let id = msg["id"].as_str().unwrap_or_default();
+                        canbec_infrastructure::extensions::save_storage(&dir, &extensions, &mut ext_storage, id, &msg["items"]);
                         false
                     }
                     (Some("openTab"), _) if msg["token"].as_str() == Some(&key_token) => {

@@ -46,6 +46,20 @@ impl MatchPattern {
         };
         scheme_ok && host_ok && glob(&self.path, &path)
     }
+
+    /// The same rule as a JavaScript regex source, for scripts that match `location.href`
+    /// (without its `#fragment`) in the page. Any port matches, as in Chrome.
+    pub fn to_regex(&self) -> String {
+        let esc = |s: &str| s.chars().map(|c| if "\\^$.|?*+()[]{}/".contains(c) { format!("\\{c}") } else { c.to_string() }).collect::<String>();
+        let scheme = if self.scheme == "*" { "https?".to_owned() } else { self.scheme.clone() };
+        let host = match self.host.strip_prefix("*.") {
+            _ if self.host == "*" => "[^/:]+".to_owned(),
+            Some(domain) => format!("([^/:]+\\.)?{}", esc(domain)),
+            None => esc(&self.host),
+        };
+        let path = self.path.split('*').map(esc).collect::<Vec<_>>().join(".*");
+        format!("^{scheme}:\\/\\/{host}(:\\d+)?{path}$")
+    }
 }
 
 /// `*` matches any run of characters, everything else literally.

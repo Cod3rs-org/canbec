@@ -262,6 +262,9 @@ fn chrome_match_patterns() {
     assert!(!m("https://a.example/docs/*", "http://a.example/docs/intro"));
     assert!(m("https://*/*q=*", "https://s.example/find?q=rust"));
     assert!(!m("*://a.example/x", "https://a.example/xy"));
+    let re = |p: &str| MatchPattern::parse(p).unwrap().to_regex();
+    assert_eq!(re("*://*.example.com/*"), r"^https?:\/\/([^/:]+\.)?example\.com(:\d+)?\/.*$");
+    assert_eq!(re("<all_urls>"), r"^https?:\/\/[^/:]+(:\d+)?\/.*$");
     for bad in ["file:///*", "https://a.*.example/*", "*://*", "nonsense"] {
         assert!(MatchPattern::parse(bad).is_none(), "{bad}");
     }

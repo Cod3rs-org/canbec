@@ -145,6 +145,8 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
  <div class="sec"><div class="st">Always blocked</div><p>There is no switch for this, on purpose. The list updates every week and works offline too.</p>
   <div class="st" id="dnst"></div><p id="dnsp" style="margin:0 0 6px">Family DNS blocks adult sites in every app on this computer, not only here.</p>
   <div class="btns"><button class="btn" id="dnson">Turn on for this computer…</button><button class="lnk" id="dnsg">How it works and how to undo</button></div></div>
+ <h2>Extensions</h2>
+ <div class="sec"><div class="st" id="xst"></div><p>Chrome extensions that only change pages (content scripts and storage) run here. Unpack one into the <b>extensions</b> folder in the config folder and restart.</p><div class="btns"><button class="btn" id="xcfg">Open config folder</button></div></div>
  <h2>Pinned sites</h2>
  <div class="sec"><div id="pins"></div><div class="btns" style="margin-top:6px"><button class="btn" id="pin">Pin this page</button></div></div>
  <h2>App icon</h2>
@@ -228,6 +230,7 @@ function renderSettings(){
  $("kept").innerHTML=kept.length?'<p style="margin:0 0 4px">Staying logged in on:</p>'+kept.map(function(d){return'<div class="pin"><span>'+h(d)+'</span><button class="x" data-f="'+h(d)+'" aria-label="Forget login on '+h(d)+'" title="Forget at next start">'+X+'</button></div>'}).join("")+'<p style="margin:4px 0 0;font-size:11px">Only cookies are kept, encrypted. A few sites keep logins in their own storage and will still ask again after a restart.</p>':"";
  var kb=$("keep");kb.style.display=host&&!c.stayLoggedIn?"":"none";kb.textContent="Stay logged in on "+host;
  $("tools").innerHTML=TOOLS.map(function(t,i){return'<div style="padding:3px 0"><button class="lnk" data-t="'+i+'">'+t[0]+'</button><div style="color:var(--mut);font-size:11px">'+t[2]+'</div></div>'}).join("");
+ $("xst").textContent=(s.extensions||[]).length?s.extensions.join(", "):"None installed";
  $("sst").textContent=(s.slopCount||0)+" tagged by you"+(s.sharedSlopCount?" · "+s.sharedSlopCount+" from lists you follow":"");
  $("profs").innerHTML=(s.workspaces||[]).map(function(w){return'<div class="pin"><i style="width:10px;height:10px;border-radius:50%;flex:none;background:'+h(w.color)+'"></i><span>'+h(w.name)+'</span>'+'<label style="font-size:11px;color:var(--mut);display:flex;gap:3px;align-items:center" title="Let AI agents browse as this profile (canbec --mcp)"><input type="checkbox" data-ag="'+h(w.id)+'"'+(w.agents?" checked":"")+'>AI agents</label>'+(w.active?'<small style="color:var(--mut)">active</small>':'<button class="lnk" data-w="'+h(w.id)+'">switch</button>')+'</div>'}).join("");
  var dns=s.familyDns,linux=window.__platform==="linux";
@@ -249,7 +252,7 @@ $("kept").onclick=function(e){var b=e.target.closest("[data-f]");if(b)send({type
 $("tools").onclick=function(e){var b=e.target.closest("[data-t]");if(b)send({type:"navigate",url:TOOLS[+b.dataset.t][1]})};
 $("pins").onclick=function(e){var b=e.target.closest("[data-u]");if(b)send({type:"unpinEssential",index:+b.dataset.u})};
 $("icons").onclick=function(e){var b=e.target.closest("[data-ic]");if(b)send({type:"setIcon",name:b.dataset.ic})};
-$("cfg").onclick=function(){send({type:"openConfig"})};
+$("cfg").onclick=$("xcfg").onclick=function(){send({type:"openConfig"})};
 $("profs").onclick=function(e){var b=e.target.closest("[data-w]");if(b)send({type:"switchWorkspace",id:b.dataset.w})};
 $("profs").onchange=function(e){var c=e.target.closest("[data-ag]");if(c)send({type:"setAgents",id:c.dataset.ag,on:c.checked})};
 $("padd").onsubmit=function(e){e.preventDefault();var n=$("pname").value.trim();if(n){send({type:"addProfile",name:n});$("pname").value=""}};

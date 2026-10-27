@@ -145,6 +145,8 @@ kbd{font:12px ui-monospace,monospace;background:var(--act);box-shadow:var(--sh);
  <section id="s-profiles"><h2>Profiles</h2>
   <div class="sec"><p>Each profile has its own tabs, slop tags and logins. Switch with the dots at the bottom. <b>AI agents</b> lets tools like Claude browse as that profile through canbec's filters: add <code>canbec --mcp</code> as an MCP server. Best on its own profile without your logins.</p><div id="profs"></div>
   <form id="padd" class="btns" style="margin-top:6px" autocomplete="off"><input id="pname" class="inp" maxlength="24" placeholder="New profile, e.g. Work" aria-label="New profile name"><button class="btn">Add</button></form></div></section>
+ <section id="s-default"><h2>Default browser</h2>
+  <div class="sec"><div class="st" id="dbst"></div><p id="dbp"></p><div class="btns"><button class="btn" id="dbon">Make canbec your default browser</button></div></div></section>
  <section id="s-feeds"><h2>News feeds</h2>
   <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div></section>
  <section id="s-privacy"><h2>Privacy</h2>
@@ -277,8 +279,12 @@ function renderSettings(){
  $("icons").innerHTML=ic.map(function(i){return'<button class="ico'+(i.name===cur?" act":"")+'" data-ic="'+h(i.name)+'" title="'+h(i.meaning)+'" aria-pressed="'+(i.name===cur)+'"><img src="'+i.src+'" alt=""><span>'+h(i.name)+'</span></button>'}).join("");
  $("icustom").textContent=custom?"Using your own image: "+cur:"Or put a path to your own PNG into the icon file in the config folder.";
  $("ver").textContent="canbec "+(window.__version||"")+" · no telemetry, no accounts";
+ var db=window.__defaultBrowser,mac=(window.__platform||"macos")==="macos";
+ $("dbst").textContent=db?"canbec is your default browser":db===false?"Not your default browser":"Set it in your system settings";
+ $("dbp").textContent=db?"Links from mail, chat and other apps open here in a new tab, through the same filters.":db===false?"Links from mail, chat and other apps would open here in a new tab, through the same filters.":mac?"Works from the canbec app, not from a development build.":"canbec can't register itself as a browser on Windows and Linux yet.";
+ $("dbon").hidden=db!==false;
  $("upst").textContent=s.update?"canbec "+s.update+" is available.":"";$("upi").hidden=!s.update;
- var mac=(window.__platform||"macos")==="macos",kb=function(k,sh){return"<kbd>"+(mac?(sh?"⇧":"")+"⌘"+k:"Ctrl+"+(sh?"Shift+":"")+k)+"</kbd>"};
+ var kb=function(k,sh){return"<kbd>"+(mac?(sh?"⇧":"")+"⌘"+k:"Ctrl+"+(sh?"Shift+":"")+k)+"</kbd>"};
  $("keys").innerHTML=KEYS.map(function(x){return'<div class="key"><span>'+x[0]+"</span><span>"+x[1].split(" ").map(function(k){return kb(k,x[2])}).join(" ")+"</span></div>"}).join("");
 }
 // The same map as the key handler below (and scripts/content.js).
@@ -299,6 +305,7 @@ $("sbody").onscroll=markNav;
 function filterSettings(){var q=$("sq").value.trim().toLowerCase();secs.forEach(function(x){var hit=!q||x.textContent.toLowerCase().indexOf(q)>=0;x.hidden=!hit;document.querySelector('[data-s="'+x.id+'"]').hidden=!hit});markNav()}
 $("sq").oninput=filterSettings;
 $("sbody").addEventListener("click",function(e){var b=e.target.closest("[data-go]");if(b)send({type:"navigate",url:b.dataset.go})});
+$("dbon").onclick=function(){send({type:"makeDefaultBrowser"})};
 $("dlo").onclick=function(){send({type:"openDownloads"})};
 $("upi").onclick=function(){send({type:"installUpdate"})};
 $("fbt").onclick=function(e){var b=e.target.closest("button");if(!b||b.disabled)return;if(b.dataset.lock)send({type:"relockFeeds"});else if(b.dataset.h)send({type:"unlockFeeds",hours:+b.dataset.h})};
@@ -326,7 +333,7 @@ $("findbar").onsubmit=function(e){e.preventDefault()};
 $("fq").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();find(e.shiftKey)}else if(e.key==="Escape"){$("findbar").hidden=true}};
 $("fnext").onclick=function(){find(false)};$("fprev").onclick=function(){find(true)};
 $("fx").onclick=function(){$("findbar").hidden=true};
-window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},toggleSettings:toggleSettings,find:openFind,
+window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},setDefaultBrowser:function(v){window.__defaultBrowser=v;if(document.body.classList.contains("settings"))renderSettings()},toggleSettings:toggleSettings,find:openFind,
  focusUrl:function(){$("url").focus();$("url").select()}};
 // Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,

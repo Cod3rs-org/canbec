@@ -150,7 +150,7 @@ fn open_folder(dir: &std::path::Path) {
 mod mcp;
 mod platform;
 
-use platform::{block_trackers, browser_args, evaluate_in_world, isolate, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
+use platform::{block_trackers, browser_args, evaluate_in_world, is_default_browser, isolate, make_default_browser, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
 
 fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
@@ -195,6 +195,7 @@ fn main() -> wry::Result<()> {
             .with_initialization_script(theme_script())
             .with_initialization_script(format!("window.__platform={:?};window.__version={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION")))
             .with_initialization_script(icons_script(&icon.source))
+            .with_initialization_script(format!("window.__defaultBrowser={}", serde_json::json!(is_default_browser())))
             .with_bounds(bounds(&window, true))
             // The sidebar has the trusted IPC channel, so it may never load anything else.
             .with_navigation_handler(|url| url.starts_with("about:") || url.starts_with("data:"))
@@ -364,6 +365,23 @@ fn main() -> wry::Result<()> {
             }
             Event::LoopDestroyed => {
                 save_logins(&service, &cookie_file);
+                false
+            }
+            // macOS hands over links clicked in other apps (canbec is the default browser).
+            Event::Opened { urls } => {
+                for url in urls.into_iter().filter(|u| matches!(u.scheme(), "http" | "https")) {
+                    service.handle(UiCommand::OpenTab { url: url.into() }, now());
+                }
+                window.set_focus();
+                true
+            }
+            // Back from the system's "change default browser?" prompt (or any app): fresh status.
+            Event::WindowEvent { event: WindowEvent::Focused(true), .. } => {
+                let _ = sidebar.evaluate_script(&format!("window.canbec.setDefaultBrowser({})", serde_json::json!(is_default_browser())));
+                false
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"makeDefaultBrowser""#) => {
+                make_default_browser();
                 false
             }
             Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {

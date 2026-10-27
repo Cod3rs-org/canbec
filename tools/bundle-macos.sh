@@ -28,6 +28,10 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>CFBundleURLTypes</key><array><dict>
+    <key>CFBundleURLName</key><string>Web site URL</string>
+    <key>CFBundleURLSchemes</key><array><string>http</string><string>https</string></array>
+  </dict></array>
   <key>NSCameraUsageDescription</key><string>A website you opened asks to use the camera.</string>
   <key>NSMicrophoneUsageDescription</key><string>A website you opened asks to use the microphone.</string>
 </dict></plist>

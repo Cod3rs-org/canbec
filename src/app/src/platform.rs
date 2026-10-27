@@ -516,3 +516,52 @@ pub fn round_corners(view: &wry::WebView) {
 
 #[cfg(not(any(target_os = "macos", windows)))]
 pub fn round_corners(_view: &wry::WebView) {}
+
+/// macOS: whether canbec opens http(s) links from other apps. `None` outside the app bundle (a
+/// dev build has no bundle id, so Launch Services can't pick it).
+#[cfg(target_os = "macos")]
+pub fn is_default_browser() -> Option<bool> {
+    use objc2::rc::Retained;
+    use objc2_foundation::{NSBundle, NSString};
+    let id = NSBundle::mainBundle().bundleIdentifier()?;
+    // SAFETY: CFString and NSString are toll-free bridged; "Copy" returns a +1 reference (or null).
+    let current = unsafe { Retained::from_raw(ls::LSCopyDefaultHandlerForURLScheme(&*NSString::from_str("http"))) };
+    Some(current.is_some_and(|c| c.to_string().eq_ignore_ascii_case(&id.to_string())))
+}
+
+/// Asks macOS to make canbec the default browser (it shows its own confirmation).
+#[cfg(target_os = "macos")]
+pub fn make_default_browser() {
+    use objc2_foundation::{NSBundle, NSString};
+    let Some(id) = NSBundle::mainBundle().bundleIdentifier() else { return };
+    for scheme in ["http", "https"] {
+        // SAFETY: both arguments are valid NSStrings (toll-free bridged CFStrings).
+        let status = unsafe { ls::LSSetDefaultHandlerForURLScheme(&*NSString::from_str(scheme), &*id) };
+        if status != 0 {
+            eprintln!("canbec: could not become the default browser for {scheme}: OSStatus {status}");
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+mod ls {
+    use objc2_foundation::NSString;
+    // ponytail: deprecated since macOS 12 but still works (with the system's confirmation);
+    // NSWorkspace.setDefaultApplication once the minimum is macOS 12.
+    #[link(name = "CoreServices", kind = "framework")]
+    unsafe extern "C" {
+        pub fn LSCopyDefaultHandlerForURLScheme(scheme: *const NSString) -> *mut NSString;
+        pub fn LSSetDefaultHandlerForURLScheme(scheme: *const NSString, handler: *const NSString) -> i32;
+    }
+}
+
+/// ponytail: Windows and Linux can't become the default yet. They need registration (registry
+/// keys / a .desktop file) plus a single-instance handoff, so a clicked link opens a tab in the
+/// running canbec instead of starting a second one.
+#[cfg(not(target_os = "macos"))]
+pub fn is_default_browser() -> Option<bool> {
+    None
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn make_default_browser() {}

@@ -61,6 +61,7 @@ App-level messages, handled in `src/app` (not browser state):
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `openConfig` | | Shows the config folder in the file manager |
 | `openDownloads` | | Shows the Downloads folder in the file manager |
+| `makeDefaultBrowser` | | macOS: asks the system to make canbec the default browser (it confirms); the app pushes `window.canbec.setDefaultBrowser(bool \| null)` when the window gets focus |
 | `settingsView` | `open` | Settings fill the window: the core hides the website card while `open` is true |
 | `aiText` | `on` | `true` downloads the AI text model (~90 MB) and turns hints on; `false` turns them off and deletes it |
 | `switchWorkspace` | `id` | Switch profile: saves logins, clears site data, loads that profile's tabs and logins |
@@ -73,7 +74,7 @@ App-level messages, handled in `src/app` (not browser state):
 The settings page is part of the sidebar webview, which spans the window: the gear (or Cmd/Ctrl+,)
 opens it full-window with a category menu and a search box; Done, Esc, any browser shortcut or a
 link that navigates closes it. The app also injects
-`window.__platform`, `window.__version`, `window.__icons` (built-in icons with previews) and
+`window.__platform`, `window.__version`, `window.__defaultBrowser` (`null` = can't tell / not supported), `window.__icons` (built-in icons with previews) and
 `window.__icon` (the active one).
 
 ## Rules

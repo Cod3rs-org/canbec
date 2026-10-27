@@ -143,6 +143,7 @@ timeline
 | 36 | **AI text hints** (optional 88 MB download, off by default): a local model guesses "reads like AI" on a quiet chip | 🧪 | [#25](https://github.com/Cod3rs-org/canbec/issues/25) |
 | 37 | **Servo engine adapter** (`src/engines/servo`): the same core and filters on a pure-Rust engine, headless runner; notes for CEF. No window or content IPC yet | 🧪 | [#32](https://github.com/Cod3rs-org/canbec/issues/32) |
 | 38 | **Full-window settings**: category menu, search, new Default browser / Search / Downloads / Keyboard shortcuts / About sections; compared with Chrome, Firefox, Safari | ✅ | [11](docs/research/11-settings.md) |
+| 39 | **One canbec at a time** (a second start hands its link to the running one) and **default browser** on macOS, Windows and Linux; Linux benchmarks on a CI VM | ✅ / 🧪 | [11](docs/research/11-settings.md) [#17](https://github.com/Cod3rs-org/canbec/issues/17) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

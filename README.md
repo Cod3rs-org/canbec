@@ -174,13 +174,11 @@ Linux (Ubuntu 26.04 on GitHub's GPU-less runner VM), median of 5 runs
 
 | Browser | Size | Time to window | Memory (Wikipedia) | Processes |
 |---|--:|--:|--:|--:|
-| **canbec** | **6.5 MB** + WebKitGTK (from the distro) | not comparable yet¹ | 637 MB | **4** |
-| Google Chrome | 441 MB | 0.44 s | **544 MB** | 14 |
-| Firefox | 304 MB | 1.33 s | 767 MB | 16 |
+| **canbec** | **6.5 MB** + WebKitGTK (from the distro) | **0.10 s** | 617 MB | **4** |
+| Google Chrome | 441 MB | 0.36 s | **543 MB** | 14 |
+| Firefox | 304 MB | 1.26 s | 770 MB | 16 |
 
-On a VM without a GPU, canbec uses about 17% more memory than Chrome and 17% less than Firefox.
-¹ canbec waited 25 s for a D-Bus session bus the runner doesn't have; a rerun under
-`dbus-run-session` will replace this.
+On a VM without a GPU, canbec uses about 14% more memory than Chrome and 20% less than Firefox.
 
 ## 🧪 Engine bake-off
 

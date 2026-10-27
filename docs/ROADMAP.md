@@ -34,7 +34,7 @@ Windows and Linux get everything macOS has (tracker blocking, rounded card, DNS 
 | [#14](https://github.com/Cod3rs-org/canbec/issues/14) | Block third-party cookies within a session on Windows | privacy, windows | 🧪 |
 | [#15](https://github.com/Cod3rs-org/canbec/issues/15) | Rounded content card on Windows and Linux | ui, windows, linux | 🧪 Windows; Linux square |
 | [#16](https://github.com/Cod3rs-org/canbec/issues/16) | Adult block: system DNS lock | blocking | ✅ |
-| [#17](https://github.com/Cod3rs-org/canbec/issues/17) | Benchmarks on Windows and Linux | release | |
+| [#17](https://github.com/Cod3rs-org/canbec/issues/17) | Benchmarks on Windows and Linux | release | ✅ Linux on a CI VM |
 | [#18](https://github.com/Cod3rs-org/canbec/issues/18) | Encrypt the saved logins with the OS keychain | privacy | ✅ |
 | [#19](https://github.com/Cod3rs-org/canbec/issues/19) | Stay-logged-in sites: keep localStorage/IndexedDB too | privacy | ✅ |
 | [#20](https://github.com/Cod3rs-org/canbec/issues/20) | Content scripts in an isolated world | privacy, blocking | 🧪 |

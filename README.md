@@ -168,6 +168,19 @@ Memory is private memory, so shared pages aren't counted twice:
 On Windows canbec runs Chrome's engine (WebView2), so it saves less than on macOS. The
 "time to window" for canbec is before WebView2 has started, so it's not first paint.
 
+Linux (Ubuntu 26.04 on GitHub's GPU-less runner VM), median of 5 runs
+([details and caveats](docs/benchmarks/2026-10-27-linux.md)). Memory is PSS (shared pages split fairly):
+
+| Browser | Size | Time to window | Memory (Wikipedia) | Processes |
+|---|--:|--:|--:|--:|
+| **canbec** | **6.5 MB** + WebKitGTK (from the distro) | not comparable yet¹ | 637 MB | **4** |
+| Google Chrome | 441 MB | 0.44 s | **544 MB** | 14 |
+| Firefox | 304 MB | 1.33 s | 767 MB | 16 |
+
+On a VM without a GPU, canbec uses about 17% more memory than Chrome and 17% less than Firefox.
+¹ canbec waited 25 s for a D-Bus session bus the runner doesn't have; a rerun under
+`dbus-run-session` will replace this.
+
 ## 🧪 Engine bake-off
 
 I ran the same local Blazor WebAssembly probe ([`test/engine-probe`](test/engine-probe)) in every engine:

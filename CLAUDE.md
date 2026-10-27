@@ -41,6 +41,8 @@ docs/research       numbered research/decision notes; docs/architecture/ui-contr
   security-relevant. content.js and extensions run in canbec's own JS world on macOS/Linux
   (`isolate` in `platform.rs`; call them with `engine.js()`, not `evaluate_script`); privacy.js
   stays in the page world.
+- One canbec at a time: a second start hands its URL to the running one (`infrastructure/src/instance.rs`,
+  token in `<config>/instance`) and quits; that's also how clicked links arrive on Windows/Linux.
 - macOS needs a main menu for Cmd+C/V/Q (`set_main_menu` in `app`). Browser shortcuts are JS
   key handlers in `content.js` and `sidebar.html` (keep the two maps in sync).
 

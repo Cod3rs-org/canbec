@@ -281,7 +281,7 @@ function renderSettings(){
  $("ver").textContent="canbec "+(window.__version||"")+" · no telemetry, no accounts";
  var db=window.__defaultBrowser,mac=(window.__platform||"macos")==="macos";
  $("dbst").textContent=db?"canbec is your default browser":db===false?"Not your default browser":"Set it in your system settings";
- $("dbp").textContent=db?"Links from mail, chat and other apps open here in a new tab, through the same filters.":db===false?"Links from mail, chat and other apps would open here in a new tab, through the same filters.":mac?"Works from the canbec app, not from a development build.":"canbec can't register itself as a browser on Windows and Linux yet.";
+ $("dbp").textContent=db?"Links from mail, chat and other apps open here in a new tab, through the same filters.":db===false?"Links from mail, chat and other apps would open here in a new tab, through the same filters.":mac?"Works from the canbec app, not from a development build.":"Couldn't read the system's default browser (on Linux this needs xdg-settings).";
  $("dbon").hidden=db!==false;
  $("upst").textContent=s.update?"canbec "+s.update+" is available.":"";$("upi").hidden=!s.update;
  var kb=function(k,sh){return"<kbd>"+(mac?(sh?"⇧":"")+"⌘"+k:"Ctrl+"+(sh?"Shift+":"")+k)+"</kbd>"};

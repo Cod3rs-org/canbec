@@ -61,7 +61,7 @@ App-level messages, handled in `src/app` (not browser state):
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `openConfig` | | Shows the config folder in the file manager |
 | `openDownloads` | | Shows the Downloads folder in the file manager |
-| `makeDefaultBrowser` | | macOS: asks the system to make canbec the default browser (it confirms); the app pushes `window.canbec.setDefaultBrowser(bool \| null)` when the window gets focus |
+| `makeDefaultBrowser` | | Registers canbec as a browser and asks the OS to make it the default (macOS confirms, Windows opens Default apps, Linux runs `xdg-settings`); the app pushes `window.canbec.setDefaultBrowser(bool \| null)` when the window gets focus |
 | `settingsView` | `open` | Settings fill the window: the core hides the website card while `open` is true |
 | `aiText` | `on` | `true` downloads the AI text model (~90 MB) and turns hints on; `false` turns them off and deletes it |
 | `switchWorkspace` | `id` | Switch profile: saves logins, clears site data, loads that profile's tabs and logins |

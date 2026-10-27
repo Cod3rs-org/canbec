@@ -272,3 +272,19 @@ fn ai_text_page_serves_only_its_own_files() {
     assert!(file(&config, "/../state.json").is_none() && file(&config, "/state.json").is_none());
     assert!(FILES.iter().all(|(_, url, sha, _)| url.starts_with("https://") && sha.len() == 64));
 }
+
+#[test]
+fn a_second_start_hands_its_url_to_the_running_instance() {
+    use canbec_infrastructure::instance::{hand_over, listen};
+    let dir = temp_dir("instance");
+    assert!(!hand_over(&dir, "https://a.example/"), "nobody running yet");
+    let (tx, rx) = std::sync::mpsc::channel();
+    listen(&dir, "s3cret", move |url| tx.send(url).unwrap()).unwrap();
+    assert!(hand_over(&dir, "https://a.example/\nx"));
+    assert_eq!(rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(), "https://a.example/x");
+    // A caller without the token (a website poking localhost) is ignored.
+    let port = std::fs::read_to_string(dir.join("instance")).unwrap().split(' ').next().unwrap().to_owned();
+    let mut s = std::net::TcpStream::connect(format!("127.0.0.1:{port}")).unwrap();
+    std::io::Write::write_all(&mut s, b"GET / HTTP/1.1\nhttps://evil.example/\n").unwrap();
+    assert!(rx.recv_timeout(std::time::Duration::from_millis(300)).is_err());
+}

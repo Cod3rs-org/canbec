@@ -555,13 +555,73 @@ mod ls {
     }
 }
 
-/// ponytail: Windows and Linux can't become the default yet. They need registration (registry
-/// keys / a .desktop file) plus a single-instance handoff, so a clicked link opens a tab in the
-/// running canbec instead of starting a second one.
-#[cfg(not(target_os = "macos"))]
+/// Windows: canbec is the default when the user's http choice is our ProgId.
+#[cfg(windows)]
 pub fn is_default_browser() -> Option<bool> {
-    None
+    let key = r"HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice";
+    let out = std::process::Command::new("reg").args(["query", key, "/v", "ProgId"]).output().ok()?;
+    Some(String::from_utf8_lossy(&out.stdout).contains("canbecURL"))
 }
 
-#[cfg(not(target_os = "macos"))]
-pub fn make_default_browser() {}
+/// Windows: registers canbec as a browser for this user (no admin), then opens Default apps,
+/// where the user picks it (Windows doesn't let apps switch it themselves).
+/// ponytail: `reg.exe` instead of registry FFI; the keys follow Microsoft's "registering a browser".
+#[cfg(windows)]
+pub fn make_default_browser() {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let exe = exe.display().to_string();
+    let app = r"HKCU\Software\Clients\StartMenuInternet\canbec";
+    let caps = format!(r"{app}\Capabilities");
+    let values = [
+        (app.to_owned(), "", "canbec".to_owned()),
+        (format!(r"{app}\DefaultIcon"), "", format!("{exe},0")),
+        (format!(r"{app}\shell\open\command"), "", format!("\"{exe}\"")),
+        (caps.clone(), "ApplicationName", "canbec".to_owned()),
+        (caps.clone(), "ApplicationDescription", "Browser without AI slop, ads and feeds".to_owned()),
+        (format!(r"{caps}\URLAssociations"), "http", "canbecURL".to_owned()),
+        (format!(r"{caps}\URLAssociations"), "https", "canbecURL".to_owned()),
+        (r"HKCU\Software\RegisteredApplications".to_owned(), "canbec", r"Software\Clients\StartMenuInternet\canbec\Capabilities".to_owned()),
+        (r"HKCU\Software\Classes\canbecURL".to_owned(), "", "canbec URL".to_owned()),
+        (r"HKCU\Software\Classes\canbecURL".to_owned(), "URL Protocol", String::new()),
+        (r"HKCU\Software\Classes\canbecURL\shell\open\command".to_owned(), "", format!("\"{exe}\" \"%1\"")),
+    ];
+    for (key, name, data) in values {
+        let mut reg = std::process::Command::new("reg");
+        reg.args(["add", &key, "/f", "/d", &data]);
+        if name.is_empty() { reg.arg("/ve") } else { reg.args(["/v", name]) };
+        if !reg.output().is_ok_and(|o| o.status.success()) {
+            eprintln!("canbec: could not register as a browser ({key} {name})");
+            return;
+        }
+    }
+    let _ = std::process::Command::new("explorer").arg("ms-settings:defaultapps?registeredAppUser=canbec").spawn();
+}
+
+/// Linux: the desktop's default browser is canbec's .desktop file.
+#[cfg(target_os = "linux")]
+pub fn is_default_browser() -> Option<bool> {
+    let out = std::process::Command::new("xdg-settings").args(["get", "default-web-browser"]).output().ok()?;
+    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).trim() == "canbec.desktop")
+}
+
+/// Linux: writes `~/.local/share/applications/canbec.desktop` (http/https handler) and asks
+/// `xdg-settings` to make it the default browser.
+#[cfg(target_os = "linux")]
+pub fn make_default_browser() {
+    use std::path::PathBuf;
+    let data = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from).or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/share")));
+    let (Ok(exe), Some(data)) = (std::env::current_exe(), data) else { return };
+    let apps = data.join("applications");
+    let entry = format!(
+        "[Desktop Entry]\nType=Application\nName=canbec\nComment=Browser without AI slop, ads and feeds\nExec=\"{}\" %u\nTerminal=false\nCategories=Network;WebBrowser;\nMimeType=x-scheme-handler/http;x-scheme-handler/https;\n",
+        exe.display()
+    );
+    if let Err(e) = std::fs::create_dir_all(&apps).and_then(|_| std::fs::write(apps.join("canbec.desktop"), entry)) {
+        eprintln!("canbec: could not write canbec.desktop: {e}");
+        return;
+    }
+    match std::process::Command::new("xdg-settings").args(["set", "default-web-browser", "canbec.desktop"]).status() {
+        Ok(s) if s.success() => {}
+        other => eprintln!("canbec: xdg-settings could not set the default browser: {other:?}"),
+    }
+}

@@ -18,7 +18,7 @@ use canbec_infrastructure::updater;
 use canbec_infrastructure::store::JsonFileStore;
 use canbec_domain::profiles::Profiles;
 use canbec_infrastructure::icon::{load_icon, BUILT_IN};
-use canbec_infrastructure::{ai_text, blocklists, config_dir, content_script, cookie_jar, privacy_script, random_token, save_to_downloads};
+use canbec_infrastructure::{ai_text, blocklists, config_dir, content_script, cookie_jar, instance, privacy_script, random_token, save_to_downloads};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
@@ -59,6 +59,8 @@ enum AppEvent {
     /// Model download: percent done, `Ok(None)` when finished.
     AiTextDownload(Result<Option<u8>, String>),
     Tick,
+    /// A URL from a later start or another app (empty: just come to the front).
+    Open(String),
 }
 
 fn now() -> u64 {
@@ -156,9 +158,14 @@ fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
         return mcp::run();
     }
+    let dir = config_dir();
+    // A link clicked elsewhere (or a second start) goes to the canbec that's already running.
+    let start_url = std::env::args().nth(1).filter(|a| !a.starts_with('-')).unwrap_or_default();
+    if instance::hand_over(&dir, &start_url) {
+        return Ok(());
+    }
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
-    let dir = config_dir();
     let mut profiles = profile_files::load(&dir);
     let profile_dir = profile_files::dir(&dir, &profiles.active);
     let icon = load_icon(&dir);
@@ -301,8 +308,12 @@ fn main() -> wry::Result<()> {
     if ai_text::installed(&dir) {
         service.set_ai_text_mode(AiTextMode::On, now());
     }
-    if let Some(url) = std::env::args().nth(1) {
-        service.handle(UiCommand::Navigate { url }, now());
+    if !start_url.is_empty() {
+        service.handle(UiCommand::Navigate { url: start_url }, now());
+    }
+    let p = proxy.clone();
+    if let Err(e) = instance::listen(&dir, &random_token(), move |url| send(&p, AppEvent::Open(url))) {
+        eprintln!("canbec: a second start can't hand over to this one: {e}");
     }
 
     // Background: weekly list refreshes and a once-a-minute housekeeping tick.
@@ -369,9 +380,19 @@ fn main() -> wry::Result<()> {
             }
             // macOS hands over links clicked in other apps (canbec is the default browser).
             Event::Opened { urls } => {
-                for url in urls.into_iter().filter(|u| matches!(u.scheme(), "http" | "https")) {
-                    service.handle(UiCommand::OpenTab { url: url.into() }, now());
+                urls.into_iter().filter(|u| matches!(u.scheme(), "http" | "https")).for_each(|u| send(&proxy, AppEvent::Open(u.into())));
+                false
+            }
+            Event::UserEvent(AppEvent::Open(url)) => {
+                if !url.is_empty() {
+                    let before = service.state(now()).tabs.iter().map(|t| t.id).max();
+                    service.handle(UiCommand::OpenTab { url }, now()); // opens in the background
+                    let after = service.state(now()).tabs.iter().map(|t| t.id).max();
+                    if let Some(id) = after.filter(|_| after != before) {
+                        service.handle(UiCommand::ActivateTab { id }, now());
+                    }
                 }
+                window.set_minimized(false);
                 window.set_focus();
                 true
             }

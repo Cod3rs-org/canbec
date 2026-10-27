@@ -6,6 +6,7 @@ pub mod ai_text;
 pub mod engine_wry;
 pub mod extensions;
 pub mod icon;
+pub mod instance;
 pub mod mcp;
 pub mod profiles;
 pub mod secret;

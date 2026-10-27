@@ -307,7 +307,7 @@ $("sq").oninput=filterSettings;
 $("sbody").addEventListener("click",function(e){var b=e.target.closest("[data-go]");if(b)send({type:"navigate",url:b.dataset.go})});
 $("dbon").onclick=function(){send({type:"makeDefaultBrowser"})};
 $("dlo").onclick=function(){send({type:"openDownloads"})};
-$("upi").onclick=function(){send({type:"installUpdate"})};
+$("upi").onclick=function(){setSettings(false);send({type:"installUpdate"})}; // may open the release page
 $("fbt").onclick=function(e){var b=e.target.closest("button");if(!b||b.disabled)return;if(b.dataset.lock)send({type:"relockFeeds"});else if(b.dataset.h)send({type:"unlockFeeds",hours:+b.dataset.h})};
 $("pin").onclick=function(){send({type:"pinPage"})};
 $("keep").onclick=function(){send({type:"stayLoggedIn"})};

@@ -555,11 +555,21 @@ mod ls {
     }
 }
 
+/// A console tool without a console window flashing up (canbec is a GUI app on Windows).
+#[cfg(windows)]
+fn hidden(program: &str) -> std::process::Command {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let mut command = std::process::Command::new(program);
+    command.creation_flags(CREATE_NO_WINDOW);
+    command
+}
+
 /// Windows: canbec is the default when the user's http choice is our ProgId.
 #[cfg(windows)]
 pub fn is_default_browser() -> Option<bool> {
     let key = r"HKCU\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice";
-    let out = std::process::Command::new("reg").args(["query", key, "/v", "ProgId"]).output().ok()?;
+    let out = hidden("reg").args(["query", key, "/v", "ProgId"]).output().ok()?;
     Some(String::from_utf8_lossy(&out.stdout).contains("canbecURL"))
 }
 
@@ -586,7 +596,7 @@ pub fn make_default_browser() {
         (r"HKCU\Software\Classes\canbecURL\shell\open\command".to_owned(), "", format!("\"{exe}\" \"%1\"")),
     ];
     for (key, name, data) in values {
-        let mut reg = std::process::Command::new("reg");
+        let mut reg = hidden("reg");
         reg.args(["add", &key, "/f", "/d", &data]);
         if name.is_empty() { reg.arg("/ve") } else { reg.args(["/v", name]) };
         if !reg.output().is_ok_and(|o| o.status.success()) {

@@ -279,6 +279,17 @@ impl<E: Engine, S: StateStore> BrowserService<E, S> {
         self.store.save(&self.snapshot);
     }
 
+    /// A link from another app (or a second start): a new tab in front, with the usual checks.
+    pub fn open_in_front(&mut self, url: &str, now: Timestamp) {
+        self.notice = None;
+        let Some(url) = self.checked(url) else { return };
+        match self.snapshot.tabs.open(&url, &self.policy, now) {
+            Ok(_) => self.load_active(),
+            Err(e) => self.notice = Some(e.to_string()),
+        }
+        self.store.save(&self.snapshot);
+    }
+
     /// Called by the engine adapter when a page finished loading (or changed URL/title).
     pub fn on_page(&mut self, url: &str, title: Option<&str>, loading: bool, now: Timestamp) {
         // A new document (also link clicks inside the page): fresh ad count, site ad rules.

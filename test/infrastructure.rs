@@ -275,16 +275,18 @@ fn ai_text_page_serves_only_its_own_files() {
 
 #[test]
 fn a_second_start_hands_its_url_to_the_running_instance() {
-    use canbec_infrastructure::instance::{hand_over, listen};
+    use canbec_infrastructure::instance::{hand_over, listen, release};
     let dir = temp_dir("instance");
     assert!(!hand_over(&dir, "https://a.example/"), "nobody running yet");
     let (tx, rx) = std::sync::mpsc::channel();
-    listen(&dir, "s3cret", move |url| tx.send(url).unwrap()).unwrap();
+    listen(&dir, move |url| tx.send(url).unwrap()).unwrap();
     assert!(hand_over(&dir, "https://a.example/\nx"));
     assert_eq!(rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(), "https://a.example/x");
-    // A caller without the token (a website poking localhost) is ignored.
-    let port = std::fs::read_to_string(dir.join("instance")).unwrap().split(' ').next().unwrap().to_owned();
-    let mut s = std::net::TcpStream::connect(format!("127.0.0.1:{port}")).unwrap();
-    std::io::Write::write_all(&mut s, b"GET / HTTP/1.1\nhttps://evil.example/\n").unwrap();
-    assert!(rx.recv_timeout(std::time::Duration::from_millis(300)).is_err());
+    // A silent caller doesn't hold up the next one.
+    #[cfg(unix)]
+    let _silent = std::os::unix::net::UnixStream::connect(dir.join("instance.sock")).unwrap();
+    assert!(hand_over(&dir, ""), "an empty URL just brings canbec to the front");
+    assert_eq!(rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(), "");
+    release(&dir);
+    assert!(!hand_over(&dir, "https://b.example/"), "after quit (or before an update relaunch) nobody takes it");
 }

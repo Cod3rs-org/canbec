@@ -282,6 +282,19 @@ fn open_tab_adds_a_background_tab_with_the_usual_checks() {
 }
 
 #[test]
+fn links_from_other_apps_open_in_a_new_tab_in_front() {
+    let (mut svc, engine, _) = service();
+    svc.open_in_front("https://a.example/?utm_source=x", 0);
+    let state = svc.state(0);
+    assert_eq!(state.tabs.len(), 2, "the tab you were on stays");
+    assert!(state.tabs[1].active && state.tabs[1].url == "https://a.example/");
+    assert_eq!(engine.log.borrow().last().map(String::as_str), Some("nav https://a.example/"));
+    svc.open_in_front("https://adult.example/", 0);
+    assert_eq!(svc.state(0).tabs.len(), 2);
+    assert_eq!(svc.state(0).notice.as_deref(), Some("Blocked: adult content"));
+}
+
+#[test]
 fn a_crashed_page_reloads_once_then_waits_for_the_user() {
     let (mut svc, engine, _) = service();
     let loads = || engine.log.borrow().iter().filter(|l| l.starts_with("nav")).count();

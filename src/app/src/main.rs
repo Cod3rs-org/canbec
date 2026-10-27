@@ -310,10 +310,10 @@ fn main() -> wry::Result<()> {
         service.set_ai_text_mode(AiTextMode::On, now());
     }
     if !start_url.is_empty() {
-        service.handle(UiCommand::Navigate { url: start_url }, now());
+        send(&proxy, AppEvent::Open(start_url)); // a new tab, like links that arrive later
     }
     let p = proxy.clone();
-    if let Err(e) = instance::listen(&dir, &random_token(), move |url| send(&p, AppEvent::Open(url))) {
+    if let Err(e) = instance::listen(&dir, move |url| send(&p, AppEvent::Open(url))) {
         eprintln!("canbec: a second start can't hand over to this one: {e}");
     }
 
@@ -382,6 +382,7 @@ fn main() -> wry::Result<()> {
                 false
             }
             Event::LoopDestroyed => {
+                instance::release(&dir);
                 save_logins(&service, &cookie_file);
                 false
             }
@@ -392,12 +393,7 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Open(url)) => {
                 if !url.is_empty() {
-                    let before = service.state(now()).tabs.iter().map(|t| t.id).max();
-                    service.handle(UiCommand::OpenTab { url }, now()); // opens in the background
-                    let after = service.state(now()).tabs.iter().map(|t| t.id).max();
-                    if let Some(id) = after.filter(|_| after != before) {
-                        service.handle(UiCommand::ActivateTab { id }, now());
-                    }
+                    service.open_in_front(&url, now());
                 }
                 if settings_open {
                     let _ = sidebar.evaluate_script("window.canbec.closeSettings()"); // the new tab must show
@@ -418,7 +414,7 @@ fn main() -> wry::Result<()> {
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"makeDefaultBrowser""#) => {
-                make_default_browser();
+                std::thread::spawn(make_default_browser); // `reg` / `xdg-settings` take a while
                 false
             }
             Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {
@@ -536,6 +532,7 @@ fn main() -> wry::Result<()> {
             Event::UserEvent(AppEvent::UpdateInstalled(result)) => {
                 match result {
                     Ok(bundle) => {
+                        instance::release(&dir); // the new version must not hand over to this one
                         updater::relaunch(&bundle);
                         *flow = ControlFlow::Exit; // logins are saved on the way out
                     }

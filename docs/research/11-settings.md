@@ -41,7 +41,7 @@ Sources: [Chrome settings overview](https://www.customguide.com/google-chrome/ac
 | Performance, memory saver | left out | 20-tab cap and auto-archive already do this |
 | On startup | left out | canbec always reopens your tabs |
 | Languages, accessibility, fonts, reset | left out for now | The OS settings apply; add when someone asks |
-| Default browser | **Default browser**: macOS asks Launch Services (the bundle declares http/https; links arrive as tao `Opened` events). Windows registers under `HKCU` and opens Default apps, where the user picks canbec. Linux writes `canbec.desktop` and runs `xdg-settings` | One canbec at a time: a second start (a clicked link on Windows/Linux) hands its URL to the running one over `127.0.0.1` with a token from `<config>/instance`, then quits |
+| Default browser | **Default browser**: macOS asks Launch Services (the bundle declares http/https; links arrive as tao `Opened` events). Windows registers under `HKCU` and opens Default apps, where the user picks canbec. Linux writes `canbec.desktop` and runs `xdg-settings` | One canbec at a time: a second start (a clicked link on Windows/Linux) hands its URL to the running one and quits: a Unix socket `<config>/instance.sock` (owner-only, websites can't reach it) on macOS/Linux, 127.0.0.1 + a token from `<config>/instance` on Windows |
 
 ## How it works
 

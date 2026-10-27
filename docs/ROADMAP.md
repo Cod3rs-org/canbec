@@ -10,7 +10,7 @@ Downloadable, works on macOS end to end, Windows and Linux verified by hand.
 
 | # | Issue | Area | Done |
 |--:|---|---|:-:|
-| [#1](https://github.com/Cod3rs-org/canbec/issues/1) | Publish v0.1.0 release | release | |
+| [#1](https://github.com/Cod3rs-org/canbec/issues/1) | Publish v0.1.0 release | release | ✅ |
 | [#2](https://github.com/Cod3rs-org/canbec/issues/2) | Test Windows and Linux by hand | release, windows, linux | |
 | [#3](https://github.com/Cod3rs-org/canbec/issues/3) | Sign and notarize the macOS app | release, macos | |
 | [#4](https://github.com/Cod3rs-org/canbec/issues/4) | Windows: icon in the .exe (and maybe an installer) | release, windows | ✅ |
@@ -29,7 +29,7 @@ Windows and Linux get everything macOS has (tracker blocking, rounded card, DNS 
 
 | # | Issue | Area | Done |
 |--:|---|---|:-:|
-| [#12](https://github.com/Cod3rs-org/canbec/issues/12) | Tracker blocking on Linux (WebKitGTK) | privacy, linux | |
+| [#12](https://github.com/Cod3rs-org/canbec/issues/12) | Tracker blocking on Linux (WebKitGTK) | privacy, linux | 🧪 |
 | [#13](https://github.com/Cod3rs-org/canbec/issues/13) | Tracker blocking on Windows (WebView2) | privacy, windows | 🧪 |
 | [#14](https://github.com/Cod3rs-org/canbec/issues/14) | Block third-party cookies within a session on Windows | privacy, windows | 🧪 |
 | [#15](https://github.com/Cod3rs-org/canbec/issues/15) | Rounded content card on Windows and Linux | ui, windows, linux | |

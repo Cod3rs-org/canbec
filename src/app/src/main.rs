@@ -139,7 +139,7 @@ fn ai_text_view(window: &Window, dir: &std::path::Path, proxy: &EventLoopProxy<A
 }
 
 /// Shows the config folder (theme.css, icon, state) in the OS file manager.
-fn open_config_folder(dir: &std::path::Path) {
+fn open_folder(dir: &std::path::Path) {
     let _ = std::fs::create_dir_all(dir);
     let opener = if cfg!(target_os = "macos") { "open" } else if cfg!(windows) { "explorer" } else { "xdg-open" };
     if let Err(e) = std::process::Command::new(opener).arg(dir).spawn() {
@@ -543,7 +543,17 @@ fn main() -> wry::Result<()> {
                 true
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"openConfig""#) => {
-                open_config_folder(&dir);
+                open_folder(&dir);
+                false
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"openDownloads""#) => {
+                open_folder(&canbec_infrastructure::downloads_dir());
+                false
+            }
+            // Settings fill the window: the website card hides while they're open.
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"settingsView""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                let _ = service.engine().view.set_visible(msg["open"].as_bool() != Some(true));
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) => match serde_json::from_str::<UiCommand>(&json) {

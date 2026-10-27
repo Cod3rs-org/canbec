@@ -56,7 +56,7 @@ a weak moment.
 | <img src="docs/img/canbec-probe.png" width="420" alt="Engine probe page with an ad covered by grey hatching"> | <img src="docs/img/real-hn.png" width="420" alt="Hacker News in canbec"> |
 | 🚫 **Ads become grey hatching.** About 24k EasyList rules, updated every week. The layout stays the same, the ad just doesn't get your attention. | 🧘 **Calm by default.** Vertical tabs, max 20 open, idle tabs move to folders by themselves. |
 | <img src="docs/img/ads-easylist.png" width="420" alt="A test page where three ads became blurred grey stripes"> | <img src="docs/img/ui-settings.png" width="160" alt="The settings panel: feed lock with a 10 second wait, privacy, privacy tools, adult content, pinned sites, app icon"> |
-| 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Settings in the sidebar.** Feeds unlock only after a 10 s wait, privacy tools like 10 Minute Mail, pinned sites, app icon. |
+| 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Full-window settings** with search. Feeds unlock only after a 10 s wait, privacy tools like 10 Minute Mail, pinned sites, app icon. |
 
 And under the hood:
 - ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), F (find), +/-/0 (zoom, kept per site), `[` `]` (back/forward per tab),
@@ -99,6 +99,8 @@ timeline
              : Trackers on all 3 OSes
              : Fake device persona, Chrome extensions
              : Self-update, recently closed tabs
+    v0.1.0   : Isolated world, AI text hints
+             : Servo adapter, full-window settings
 ```
 
 | # | Step | Status | Read more |
@@ -140,6 +142,7 @@ timeline
 | 35 | **Isolated world:** content script and extensions run in canbec's own JS world (macOS, Linux); pages can't see or call them | 🧪 | [#20](https://github.com/Cod3rs-org/canbec/issues/20) |
 | 36 | **AI text hints** (optional 88 MB download, off by default): a local model guesses "reads like AI" on a quiet chip | 🧪 | [#25](https://github.com/Cod3rs-org/canbec/issues/25) |
 | 37 | **Servo engine adapter** (`src/engines/servo`): the same core and filters on a pure-Rust engine, headless runner; notes for CEF. No window or content IPC yet | 🧪 | [#32](https://github.com/Cod3rs-org/canbec/issues/32) |
+| 38 | **Full-window settings**: category menu, search, new Search / Downloads / Keyboard shortcuts / About sections; compared with Chrome, Firefox, Safari | ✅ | [11](docs/research/11-settings.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 
@@ -181,20 +184,21 @@ pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 
 | Feature | Idea | Progress |
 |---|---|---|
-| 🧱 **Engine** | Real web apps (WASM, WebGL, Canvas) on 3 OSes, pluggable engines | `▓▓▓▓▓▓░░░░` wry works |
-| 🗂️ **Tab discipline** | At most 20 open, auto-archive into folders, soft delete after 2 months | `▓▓▓▓▓▓░░░░` core + UI |
-| ⚠️ **Slop tagging** | One click, orange frame on every next visit | `▓▓▓▓▓▓░░░░` works |
-| 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓▓▓▓░░` works, settings with a 10 s wait |
+| 🧱 **Engine** | Real web apps (WASM, WebGL, Canvas) on 3 OSes, pluggable engines | `▓▓▓▓▓▓▓░░░` wry works; Servo adapter runs headless |
+| 🗂️ **Tab discipline** | At most 20 open, auto-archive into folders, soft delete after 2 months | `▓▓▓▓▓▓▓▓░░` works, recently closed tabs |
+| ⚠️ **Slop tagging** | One click, orange frame on every next visit | `▓▓▓▓▓▓▓▓░░` works, shared lists |
+| 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓▓▓▓░░` works, 10 s wait, own site list |
 | 🚫 **No ads** | Ads blurred + grey hatching | `▓▓▓▓▓▓▓░░░` EasyList cosmetic rules, updated weekly |
-| 🔞 **Adult lock** | Every navigation checked + system DNS lock | `▓▓▓▓░░░░░░` browser part done |
-| 🕵️ **No tracking** | Fresh profile every start, fingerprint noise, tracker blocking, clean links | `▓▓▓▓▓▓▓░░░` done; tracker blocking macOS only |
-| ⚙️ **Settings** | Feeds, privacy, pinned sites, icon, all in the sidebar | `▓▓▓▓▓▓▓░░░` works |
-| 👤 **Profiles** | Separate identities, MCP access per profile | `▓░░░░░░░░░` designed |
-| 🔎 **Human search** | "Obsolete" badge for results first seen after 2023 | `▓▓░░░░░░░░` designed |
-| 🫥 **AI spoilers** | AI images behind a click-to-reveal overlay | `▓░░░░░░░░░` researched |
-| 🧩 **Extensions** | Chrome MV3 subset + an AI skill that ports extensions | `▓░░░░░░░░░` designed |
-| 🤖 **MCP** | Opt-in local server, agents browse through the same filters | `▓░░░░░░░░░` designed |
-| 🎨 **Customization** | `theme.css` tokens (works now) + an AI skill to restyle | `▓▓▓░░░░░░░` theme.css |
+| 🔞 **Adult lock** | Every navigation checked + system DNS lock | `▓▓▓▓▓▓▓▓░░` browser + family DNS |
+| 🕵️ **No tracking** | Fresh profile every start, fingerprint noise, tracker blocking, clean links | `▓▓▓▓▓▓▓▓░░` done; trackers on Linux/Windows need a hand test |
+| ⚙️ **Settings** | Full-window page with search: feeds, privacy, profiles, AI, downloads, shortcuts | `▓▓▓▓▓▓▓▓░░` works |
+| 👤 **Profiles** | Separate identities, MCP access per profile | `▓▓▓▓▓▓▓▓░░` works |
+| 🔎 **Human search** | "Obsolete" badge for results first seen after 2023 | `▓▓▓▓▓░░░░░` badge on DuckDuckGo; own search later |
+| 🫥 **AI spoilers** | AI images behind a click-to-reveal overlay | `▓▓▓▓▓▓░░░░` works from image metadata |
+| 🧩 **Extensions** | Chrome MV3 subset + an AI skill that ports extensions | `▓▓▓▓▓░░░░░` subset + skill; needs a hand test |
+| 🤖 **MCP** | Opt-in local server, agents browse through the same filters | `▓▓▓▓▓▓▓░░░` works, per profile |
+| 🧠 **AI text hints** | A small local model flags text that reads like AI, opt-in | `▓▓▓▓▓░░░░░` built; needs a hand test |
+| 🎨 **Customization** | `theme.css` tokens + an AI skill to restyle, app icons | `▓▓▓▓▓▓░░░░` theme.css, skill, 7 icons |
 
 ## 🚀 Try it
 

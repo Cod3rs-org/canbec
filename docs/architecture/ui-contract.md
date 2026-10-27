@@ -60,6 +60,8 @@ App-level messages, handled in `src/app` (not browser state):
 | `window` | `action`: `drag` \| `minimize` \| `maximize` \| `close` | Own window buttons (Windows / Linux) |
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `openConfig` | | Shows the config folder in the file manager |
+| `openDownloads` | | Shows the Downloads folder in the file manager |
+| `settingsView` | `open` | Settings fill the window: the core hides the website card while `open` is true |
 | `aiText` | `on` | `true` downloads the AI text model (~90 MB) and turns hints on; `false` turns them off and deletes it |
 | `switchWorkspace` | `id` | Switch profile: saves logins, clears site data, loads that profile's tabs and logins |
 | `addProfile` | `name` | New profile (max 6) and switch to it |
@@ -68,7 +70,9 @@ App-level messages, handled in `src/app` (not browser state):
 | `enableFamilyDns` | | Switch the computer's DNS to Cloudflare for Families (OS admin prompt); state `familyDns` |
 | `exportSlop` | | Saves the user's slop tags to Downloads as `canbec-slop.txt` |
 
-The settings panel is part of the sidebar (the gear toggles it). The app also injects
+The settings page is part of the sidebar webview, which spans the window: the gear (or Cmd/Ctrl+,)
+opens it full-window with a category menu and a search box; Done, Esc, any browser shortcut or a
+link that navigates closes it. The app also injects
 `window.__platform`, `window.__version`, `window.__icons` (built-in icons with previews) and
 `window.__icon` (the active one).
 

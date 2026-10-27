@@ -76,14 +76,24 @@ summary svg{width:12px;height:12px;transition:transform .15s}details[open]>summa
 .wd{width:18px;height:18px;padding:0;border-radius:50%;border:2px solid transparent}
 .wd i{width:10px;height:10px;border-radius:50%;display:block}
 .wd.act{border-color:var(--fg)}
-/* Settings panel: replaces the tab list while open. */
-#set{display:none;flex:1;overflow-y:auto;padding:0 12px 12px}
-body.settings #set{display:block}
-body.settings #main,body.settings #ess,body.settings #ws{display:none}
-#gear.on{background:var(--act);box-shadow:var(--sh)}
-#set h2{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:14px 0 6px}
-#set h2:first-child{margin-top:4px}
-#set p{color:var(--mut);font-size:12px;margin:0 0 8px}
+/* Settings: a full-window page. The core hides the website card while it's open. */
+#set{display:none;flex:1;min-height:0}
+body.settings{width:100%;font-size:14px}
+body.settings>:not(#top):not(#set){display:none}
+body.settings #set{display:grid;grid-template-columns:220px minmax(0,1fr)}
+#snav{overflow-y:auto;padding:4px 12px 16px}
+#snav h1{font-size:20px;font-weight:650;margin:4px 10px 12px}
+.nl{width:100%;justify-content:flex-start;height:32px;padding:0 10px;color:var(--mut)}
+.nl.act{background:var(--act);color:var(--fg);box-shadow:var(--sh)}
+#sbody{position:relative;overflow-y:auto;padding:0 32px 48px}
+#sbody section{max-width:680px;margin:0 auto}
+#shead{position:sticky;top:0;z-index:1;display:flex;gap:8px;max-width:680px;margin:0 auto;padding:4px 0 8px;background:var(--bg)}
+.key{display:flex;justify-content:space-between;padding:3px 0}
+kbd{font:12px ui-monospace,monospace;background:var(--act);box-shadow:var(--sh);border-radius:6px;padding:1px 6px}
+#set h2{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:20px 0 8px}
+[hidden]{display:none!important}
+#set section{scroll-margin-top:52px}
+#set p{color:var(--mut);font-size:13px;margin:0 0 8px}
 .sec{background:var(--card);border-radius:12px;padding:10px}
 .btns{display:flex;gap:6px;flex-wrap:wrap}
 .btn{height:28px;padding:0 10px;background:var(--act);box-shadow:var(--sh);font-size:12px}
@@ -93,7 +103,7 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
 .pin{display:flex;align-items:center;gap:6px;height:28px}
 .pin span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pin .x{width:22px;height:22px;color:var(--mut)}.pin .x svg{width:12px;height:12px}
-#icons{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
 .ico{flex-direction:column;gap:3px;padding:6px 2px;font-size:10px;color:var(--mut);border:2px solid transparent}
 .ico img{width:36px;height:36px;border-radius:9px}
 .ico.act{border-color:var(--acc);color:var(--fg)}
@@ -129,34 +139,45 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
  <details id="clo"><summary><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>Recently closed</summary><input id="clq" class="inp" placeholder="Search closed tabs" aria-label="Search closed tabs" autocomplete="off" style="margin:4px 0"><div id="cl"></div></details>
 </div>
 <div id="set" aria-label="Settings">
- <h2>Profiles</h2>
- <div class="sec"><p>Each profile has its own tabs, slop tags and logins. Switch with the dots at the bottom. <b>AI agents</b> lets tools like Claude browse as that profile through canbec's filters: add <code>canbec --mcp</code> as an MCP server. Best on its own profile without your logins.</p><div id="profs"></div>
-  <form id="padd" class="btns" style="margin-top:6px" autocomplete="off"><input id="pname" class="inp" maxlength="24" placeholder="New profile, e.g. Work" aria-label="New profile name"><button class="btn">Add</button></form></div>
- <h2>News feeds</h2>
- <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div>
- <h2>Privacy</h2>
- <div class="sec"><div class="st">Fresh browser on every start</div><p>Cookies, storage and cache are forgotten when you quit, and every site sees a slightly different fingerprint. Trackers can't recognise you next time.</p>
-  <div id="kept"></div><div class="btns" style="margin-top:6px"><button class="btn" id="keep"></button></div></div>
- <h2>Privacy tools</h2>
- <div class="sec" id="tools"></div>
- <h2>AI slop</h2>
- <div class="sec"><div class="st" id="sst"></div><p>Share your tags as a text file, or import someone else's. To follow a list, put its link into <b>slop-lists.txt</b> in the config folder.</p>
-  <div class="btns"><button class="btn" id="sexp">Export list</button><button class="btn" id="simp">Import list</button></div><input type="file" id="sfile" accept=".txt,text/plain" hidden></div>
- <h2>AI text hints</h2>
- <div class="sec"><div class="st" id="ast"></div><p>Optional: a small model on this computer guesses whether a page's text reads like AI. Off by default, and a ~90 MB download. Pages never leave your computer. It's often wrong on short or edited text, so it only shows a quiet hint when it's fairly sure.</p><div class="btns"><button class="btn" id="aon"></button></div></div>
- <h2>Adult content</h2>
- <div class="sec"><div class="st">Always blocked</div><p>There is no switch for this, on purpose. The list updates every week and works offline too.</p>
+ <nav id="snav"><h1>Settings</h1><div id="slinks"></div></nav>
+ <div id="sbody">
+ <div id="shead"><input id="sq" class="inp" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off"><button class="btn" id="sdone">Done</button></div>
+ <section id="s-profiles"><h2>Profiles</h2>
+  <div class="sec"><p>Each profile has its own tabs, slop tags and logins. Switch with the dots at the bottom. <b>AI agents</b> lets tools like Claude browse as that profile through canbec's filters: add <code>canbec --mcp</code> as an MCP server. Best on its own profile without your logins.</p><div id="profs"></div>
+  <form id="padd" class="btns" style="margin-top:6px" autocomplete="off"><input id="pname" class="inp" maxlength="24" placeholder="New profile, e.g. Work" aria-label="New profile name"><button class="btn">Add</button></form></div></section>
+ <section id="s-feeds"><h2>News feeds</h2>
+  <div class="sec"><div class="st" id="fst"></div><p id="fhelp"></p><div class="btns" id="fbt"></div></div></section>
+ <section id="s-privacy"><h2>Privacy</h2>
+  <div class="sec"><div class="st">Fresh browser on every start</div><p>Cookies, storage and cache are forgotten when you quit, and every site sees a slightly different fingerprint. Trackers can't recognise you next time.</p>
+  <p>Sites ask before they use your camera or microphone; canbec doesn't save the answers.</p>
+  <div id="kept"></div><div class="btns" style="margin-top:6px"><button class="btn" id="keep"></button></div></div></section>
+ <section id="s-tools"><h2>Privacy tools</h2>
+  <div class="sec" id="tools"></div></section>
+ <section id="s-adult"><h2>Adult content</h2>
+  <div class="sec"><div class="st">Always blocked</div><p>There is no switch for this, on purpose. The list updates every week and works offline too.</p>
   <div class="st" id="dnst"></div><p id="dnsp" style="margin:0 0 6px">Family DNS blocks adult sites in every app on this computer, not only here.</p>
-  <div class="btns"><button class="btn" id="dnson">Turn on for this computer…</button><button class="lnk" id="dnsg">How it works and how to undo</button></div></div>
- <h2>Extensions</h2>
- <div class="sec"><div class="st" id="xst"></div><p>Chrome extensions that only change pages (content scripts and storage) run here. Unpack one into the <b>extensions</b> folder in the config folder and restart.</p><div class="btns"><button class="btn" id="xcfg">Open config folder</button></div></div>
- <h2>Pinned sites</h2>
- <div class="sec"><div id="pins"></div><div class="btns" style="margin-top:6px"><button class="btn" id="pin">Pin this page</button></div></div>
- <h2>App icon</h2>
- <div class="sec"><div id="icons"></div><p id="icustom" style="margin:6px 0 0"></p></div>
- <h2>Look</h2>
- <div class="sec"><p>Colours come from <b>theme.css</b> in the config folder. Changes show after a restart.</p><div class="btns"><button class="btn" id="cfg">Open config folder</button></div></div>
- <p style="margin-top:14px;text-align:center" id="ver"></p>
+  <div class="btns"><button class="btn" id="dnson">Turn on for this computer…</button><button class="lnk" id="dnsg">How it works and how to undo</button></div></div></section>
+ <section id="s-slop"><h2>AI slop</h2>
+  <div class="sec"><div class="st" id="sst"></div><p>Share your tags as a text file, or import someone else's. To follow a list, put its link into <b>slop-lists.txt</b> in the config folder.</p>
+  <div class="btns"><button class="btn" id="sexp">Export list</button><button class="btn" id="simp">Import list</button></div><input type="file" id="sfile" accept=".txt,text/plain" hidden></div></section>
+ <section id="s-aitext"><h2>AI text hints</h2>
+  <div class="sec"><div class="st" id="ast"></div><p>Optional: a small model on this computer guesses whether a page's text reads like AI. Off by default, and a ~90 MB download. Pages never leave your computer. It's often wrong on short or edited text, so it only shows a quiet hint when it's fairly sure.</p><div class="btns"><button class="btn" id="aon"></button></div></div></section>
+ <section id="s-search"><h2>Search</h2>
+  <div class="sec"><div class="st">DuckDuckGo, AI features off</div><p>New tabs and searches use <b>noai.duckduckgo.com</b>. Results first seen after 2023 get an <b>obsolete</b> badge, so human-written pages are easy to pick.</p></div></section>
+ <section id="s-downloads"><h2>Downloads</h2>
+  <div class="sec"><p>Files go to your Downloads folder. canbec keeps no download history.</p><div class="btns"><button class="btn" id="dlo">Open Downloads folder</button></div></div></section>
+ <section id="s-pins"><h2>Pinned sites</h2>
+  <div class="sec"><div id="pins"></div><div class="btns" style="margin-top:6px"><button class="btn" id="pin">Pin this page</button></div></div></section>
+ <section id="s-look"><h2>Appearance</h2>
+  <div class="sec"><div class="st">App icon</div><div id="icons"></div><p id="icustom" style="margin:6px 0 0"></p></div>
+  <div class="sec" style="margin-top:8px"><div class="st">Colours</div><p>Colours come from <b>theme.css</b> in the config folder. Changes show after a restart.</p><div class="btns"><button class="btn" id="cfg">Open config folder</button></div></div></section>
+ <section id="s-extensions"><h2>Extensions</h2>
+  <div class="sec"><div class="st" id="xst"></div><p>Chrome extensions that only change pages (content scripts and storage) run here. Unpack one into the <b>extensions</b> folder in the config folder and restart.</p><div class="btns"><button class="btn" id="xcfg">Open config folder</button></div></div></section>
+ <section id="s-keys"><h2>Keyboard shortcuts</h2>
+  <div class="sec" id="keys"></div></section>
+ <section id="s-about"><h2>About canbec</h2>
+  <div class="sec"><div class="st" id="ver"></div><p id="upst"></p><div class="btns"><button class="btn" id="upi" hidden>Install update</button><button class="lnk" data-go="https://github.com/Cod3rs-org/canbec/releases">What's new</button><button class="lnk" data-go="https://github.com/Cod3rs-org/canbec/issues">Report a problem</button><button class="lnk" data-go="https://github.com/Cod3rs-org/canbec">Source code</button></div></div></section>
+ </div>
 </div>
 <div id="foot">
  <span id="cnt" role="status"></span>
@@ -167,7 +188,7 @@ body.settings #main,body.settings #ess,body.settings #ws{display:none}
 (function(){
 var $=function(i){return document.getElementById(i)},S={tabs:[],current:{}};
 var X='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-function send(c){var m=JSON.stringify(c);if(window.ipc&&window.ipc.postMessage)window.ipc.postMessage(m);else console.log("[canbec ipc]",m)}
+function send(c){if(c.type==="navigate"&&document.body.classList.contains("settings"))setSettings(false);var m=JSON.stringify(c);if(window.ipc&&window.ipc.postMessage)window.ipc.postMessage(m);else console.log("[canbec ipc]",m)}
 // ponytail: dev harness hook, only active with ?mock (mock.html drives it via postMessage)
 if(/[?&]mock/.test(location.search)){window.ipc={postMessage:function(m){parent.postMessage({canbecCmd:m},"*")}};
  addEventListener("message",function(e){if(e.data&&e.data.canbecState)window.canbec.render(e.data.canbecState)});
@@ -256,9 +277,30 @@ function renderSettings(){
  $("icons").innerHTML=ic.map(function(i){return'<button class="ico'+(i.name===cur?" act":"")+'" data-ic="'+h(i.name)+'" title="'+h(i.meaning)+'" aria-pressed="'+(i.name===cur)+'"><img src="'+i.src+'" alt=""><span>'+h(i.name)+'</span></button>'}).join("");
  $("icustom").textContent=custom?"Using your own image: "+cur:"Or put a path to your own PNG into the icon file in the config folder.";
  $("ver").textContent="canbec "+(window.__version||"")+" · no telemetry, no accounts";
+ $("upst").textContent=s.update?"canbec "+s.update+" is available.":"";$("upi").hidden=!s.update;
+ var mac=(window.__platform||"macos")==="macos",kb=function(k,sh){return"<kbd>"+(mac?(sh?"⇧":"")+"⌘"+k:"Ctrl+"+(sh?"Shift+":"")+k)+"</kbd>"};
+ $("keys").innerHTML=KEYS.map(function(x){return'<div class="key"><span>'+x[0]+"</span><span>"+x[1].split(" ").map(function(k){return kb(k,x[2])}).join(" ")+"</span></div>"}).join("");
 }
+// The same map as the key handler below (and scripts/content.js).
+var KEYS=[["New tab","T"],["Close tab","W"],["Reopen closed tab","T",1],["Address bar","L"],["Reload","R"],["Back / forward","[ ]"],["Find in page","F"],["Pin this page","D"],["Zoom in / out / reset","= - 0"],["Settings",","]];
 function startWait(){clearInterval(waitT);waitLeft=WAIT;renderSettings();waitT=setInterval(function(){waitLeft--;if(waitLeft<=0)clearInterval(waitT);if(document.body.classList.contains("settings"))renderSettings()},1000)}
-$("gear").onclick=function(){var on=document.body.classList.toggle("settings");this.classList.toggle("on",on);this.setAttribute("aria-pressed",on);if(on)startWait();else clearInterval(waitT)};
+// Opening settings hides the website card (settingsView) so the page gets the whole window.
+function setSettings(on){document.body.classList.toggle("settings",on);$("gear").setAttribute("aria-pressed",on);send({type:"settingsView",open:on});
+ if(on){$("sq").value="";filterSettings();startWait();$("sbody").scrollTop=0;markNav()}else clearInterval(waitT)}
+function toggleSettings(){setSettings(!document.body.classList.contains("settings"))}
+$("gear").onclick=toggleSettings;$("sdone").onclick=function(){setSettings(false)};
+var secs=[].slice.call(document.querySelectorAll("#sbody section"));
+$("slinks").innerHTML=secs.map(function(x){return'<button class="nl" data-s="'+x.id+'">'+x.querySelector("h2").textContent+"</button>"}).join("");
+$("slinks").onclick=function(e){var b=e.target.closest("[data-s]");if(b)$(b.dataset.s).scrollIntoView({block:"start"})};
+function markNav(){var b=$("sbody"),vis=secs.filter(function(x){return!x.hidden}),end=b.scrollTop+b.clientHeight>=b.scrollHeight-2,
+ cur=(end?vis:vis.filter(function(x){return x.offsetTop<=b.scrollTop+60})).pop()||secs[0];
+ [].forEach.call(document.querySelectorAll(".nl"),function(b){b.classList.toggle("act",b.dataset.s===cur.id)})}
+$("sbody").onscroll=markNav;
+function filterSettings(){var q=$("sq").value.trim().toLowerCase();secs.forEach(function(x){var hit=!q||x.textContent.toLowerCase().indexOf(q)>=0;x.hidden=!hit;document.querySelector('[data-s="'+x.id+'"]').hidden=!hit});markNav()}
+$("sq").oninput=filterSettings;
+$("sbody").addEventListener("click",function(e){var b=e.target.closest("[data-go]");if(b)send({type:"navigate",url:b.dataset.go})});
+$("dlo").onclick=function(){send({type:"openDownloads"})};
+$("upi").onclick=function(){send({type:"installUpdate"})};
 $("fbt").onclick=function(e){var b=e.target.closest("button");if(!b||b.disabled)return;if(b.dataset.lock)send({type:"relockFeeds"});else if(b.dataset.h)send({type:"unlockFeeds",hours:+b.dataset.h})};
 $("pin").onclick=function(){send({type:"pinPage"})};
 $("keep").onclick=function(){send({type:"stayLoggedIn"})};
@@ -277,7 +319,6 @@ $("sexp").onclick=function(){send({type:"exportSlop"})};
 $("simp").onclick=function(){$("sfile").click()};
 $("sfile").onchange=function(){var f=this.files[0];this.value="";if(!f||f.size>2e6)return;var r=new FileReader();r.onload=function(){send({type:"importSlop",text:String(r.result)})};r.readAsText(f)};
 var baseRender=render;render=function(s){baseRender(s);if(document.body.classList.contains("settings"))renderSettings()};
-function toggleSettings(){$("gear").click()}
 // Find in page: Enter = next, Shift+Enter = previous, Esc closes.
 function openFind(){$("findbar").hidden=false;$("fq").focus();$("fq").select()}
 function find(back){var t=$("fq").value;if(t)send({type:"find",text:t,backwards:!!back})}
@@ -289,10 +330,12 @@ window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings(
  focusUrl:function(){$("url").focus();$("url").select()}};
 // Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,
- k=e.key.length===1?e.key.toLowerCase():e.key,a;
+ k=e.key.length===1?e.key.toLowerCase():e.key,a,inSet=document.body.classList.contains("settings");
+ if(inSet&&k==="Escape"&&!(e.target.id==="sq"&&e.target.value)){e.preventDefault();setSettings(false);return}
  if(k==="F5")a="reload";else if(e.altKey&&!mod)a={ArrowLeft:"back",ArrowRight:"forward"}[k];
  else if(mod&&!e.altKey)a=e.shiftKey&&k==="t"?"reopenTab":{t:"newTab",w:"closeTab",l:"focusAddress",r:"reload","[":"back","]":"forward",",":"settings",d:"pinPage",f:"find","=":"zoomIn","+":"zoomIn","-":"zoomOut","0":"zoomReset"}[k];
  if(!a)return;e.preventDefault();
+ if(inSet&&a!=="settings")setSettings(false); // any browser shortcut goes back to the page
  if(a==="focusAddress")window.canbec.focusUrl();else if(a==="find")openFind();else if(a==="settings")toggleSettings();else send({type:"key",key:a})},true);
 // Window chrome: macOS draws traffic lights itself; Windows/Linux get our own buttons.
 (function(){var top=$("top"),mac=(window.__platform||"macos")==="macos";

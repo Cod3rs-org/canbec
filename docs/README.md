@@ -24,6 +24,8 @@ Everything we've learned and decided, in reading order. These files are the sour
 | 07 | [Roadmap notes](research/07-roadmap-notes.md) | Simplicity rule, UI customization, benchmarks, Hacker News launch |
 | 08 | [No tracking](research/08-privacy.md) | Fresh browser every start, stay-logged-in sites, fingerprint noise, tracking params, privacy tools |
 | 09 | [Local AI text hints](research/09-local-ai-text-hints.md) | Small offline detectors: sizes, catch rates, false positives; why it stays opt-in |
+| 10 | [Isolated world](research/10-isolated-world.md) | content.js and extensions in canbec's own JS world on macOS/Linux; page-world IPC ignored |
+| 11 | [Settings](research/11-settings.md) | Chrome / Firefox / Safari settings compared; what canbec shows and leaves out |
 
 ## Benchmarks
 

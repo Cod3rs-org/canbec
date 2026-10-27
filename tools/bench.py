@@ -1,4 +1,4 @@
-"""Benchmark canbec against other installed browsers (macOS, Windows).
+"""Benchmark canbec against other installed browsers (macOS, Windows, Linux).
 
     swiftc -O tools/firstwindow.swift -o target/firstwindow
     cargo build --release -p canbec
@@ -7,6 +7,10 @@
 
 Windows: no Swift helper; windows are found with EnumWindows, and memory is the launched
 process's whole tree (canbec's msedgewebview2 children included). Results go to latest-windows.json.
+
+Linux (X11, e.g. `xvfb-run -a python3 tools/bench.py 5`): windows are found with xdotool, and
+memory is the launched process tree's PSS (shared pages split fairly) and RSS. Results go to
+latest-linux.json. The `bench` workflow runs it on GitHub's Ubuntu runner.
 
 Per browser x page: time to first window, RSS of all processes it spawned (after settling),
 process count. Each run uses a throwaway profile where the browser allows it. Never touches
@@ -20,6 +24,7 @@ SETTLE = 15  # seconds after the window appears before measuring memory
 PAGES = {"probe": "http://127.0.0.1:5080/", "wikipedia": "https://en.wikipedia.org/wiki/Web_browser"}
 EDGE = "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"
 WIN = sys.platform == "win32"
+LINUX = sys.platform.startswith("linux")
 
 
 def processes():
@@ -30,6 +35,13 @@ def processes():
         for line in out.splitlines():
             pid, ppid, ws, priv, name = line.split(None, 4)
             procs[int(pid)] = (int(ws), name, int(ppid), int(priv))
+        return procs
+    if LINUX:  # pid -> (RSS KB, name, parent pid)
+        out = subprocess.run(["ps", "-eo", "pid=,ppid=,rss=,comm="], capture_output=True, text=True).stdout
+        procs = {}
+        for line in out.splitlines():
+            pid, ppid, rss, comm = line.split(None, 3)
+            procs[int(pid)] = (int(rss), comm, int(ppid))
         return procs
     out = subprocess.run(["ps", "-axo", "pid=,rss=,comm="], capture_output=True, text=True).stdout
     procs = {}
@@ -104,6 +116,53 @@ def run_once_win(b, url):
     return result
 
 
+def pss_kb(pid):
+    try:
+        with open(f"/proc/{pid}/smaps_rollup") as f:
+            return next(int(l.split()[1]) for l in f if l.startswith("Pss:"))
+    except (OSError, StopIteration):
+        return 0
+
+
+def run_once_linux(b, url):
+    with tempfile.TemporaryDirectory() as prof:
+        t0 = time.time()
+        proc = b["launch"](url, prof)
+        shown, end = None, time.time() + 30
+        while not shown and time.time() < end:
+            for pid in tree(processes(), proc.pid):
+                if subprocess.run(["xdotool", "search", "--onlyvisible", "--pid", str(pid)], capture_output=True, text=True).stdout.strip():
+                    shown = time.time()
+                    break
+            else:
+                time.sleep(0.02)
+        mine = set()
+        if shown:
+            time.sleep(SETTLE)
+            procs = processes()
+            mine = tree(procs, proc.pid)
+            result = {"window_s": round(shown - t0, 3),
+                      "pss_mb": round(sum(pss_kb(p) for p in mine) / 1024, 1),
+                      "rss_mb": round(sum(procs[p][0] for p in mine) / 1024, 1),
+                      "procs": len(mine)}
+        for pid in mine | {proc.pid}:
+            try:
+                os.kill(pid, 9)
+            except ProcessLookupError:
+                pass
+        time.sleep(3)
+    return result if shown else None
+
+
+BROWSERS_LINUX = {
+    "canbec": {"size": "target/release/canbec", "launch": lambda url, prof: canbec(url, prof)},
+    "Chrome": {"size": "/opt/google/chrome",
+               "launch": lambda url, prof: subprocess.Popen(["/opt/google/chrome/chrome", f"--user-data-dir={prof}", "--no-first-run", "--no-default-browser-check", "--new-window", url], stderr=subprocess.DEVNULL)},
+    "Firefox": {"size": "/usr/lib/firefox",
+                "launch": lambda url, prof: subprocess.Popen(["firefox", "-profile", prof, "-no-remote", "-new-instance", url], stderr=subprocess.DEVNULL)},
+}
+
+
 def chromium_win(exe):
     return lambda url, prof: subprocess.Popen([exe, f"--user-data-dir={prof}", "--no-first-run", "--no-default-browser-check", "--new-window", url], stderr=subprocess.DEVNULL)
 
@@ -173,14 +232,15 @@ def size_mb(path):
     return round(sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(path) for f in fs) / 2**20, 1)
 
 
-path = "docs/benchmarks/latest-windows.json" if WIN else "docs/benchmarks/latest.json"
+path = f"docs/benchmarks/latest-{'windows' if WIN else 'linux'}.json" if WIN or LINUX else "docs/benchmarks/latest.json"
 results = json.load(open(path)) if ONLY and os.path.exists(path) else {}
-for name, b in (BROWSERS_WIN if WIN else BROWSERS).items():
+for name, b in (BROWSERS_WIN if WIN else BROWSERS_LINUX if LINUX else BROWSERS).items():
     if ONLY and name not in ONLY:
         continue
     results[name] = {"size_mb": size_mb(b["size"]), "pages": {}}
     for page, url in PAGES.items():
-        runs = [r for r in ((run_once_win(b, url) if WIN else run_once(name, b, url)) for _ in range(RUNS)) if r]
+        once = run_once_win if WIN else run_once_linux if LINUX else (lambda b, url: run_once(name, b, url))
+        runs = [r for r in (once(b, url) for _ in range(RUNS)) if r]
         print(name, page, runs, flush=True)
         if runs:
             results[name]["pages"][page] = {k: statistics.median(r[k] for r in runs) for k in runs[0]} | {"runs": len(runs)}

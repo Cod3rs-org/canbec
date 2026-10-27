@@ -61,6 +61,8 @@ enum AppEvent {
     Tick,
     /// A URL from a later start or another app (empty: just come to the front).
     Open(String),
+    /// Whether canbec is the OS default browser (`None`: can't tell).
+    DefaultBrowser(Option<bool>),
 }
 
 fn now() -> u64 {
@@ -202,7 +204,6 @@ fn main() -> wry::Result<()> {
             .with_initialization_script(theme_script())
             .with_initialization_script(format!("window.__platform={:?};window.__version={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION")))
             .with_initialization_script(icons_script(&icon.source))
-            .with_initialization_script(format!("window.__defaultBrowser={}", serde_json::json!(is_default_browser())))
             .with_bounds(bounds(&window, true))
             // The sidebar has the trusted IPC channel, so it may never load anything else.
             .with_navigation_handler(|url| url.starts_with("about:") || url.starts_with("data:"))
@@ -367,6 +368,12 @@ fn main() -> wry::Result<()> {
     let mut release: Option<updater::Release> = None;
     let mut last_url = String::new();
     let mut downloading = String::new();
+    let mut settings_open = false;
+    // `reg` / `xdg-settings` are processes: ask off the UI thread, only while settings show.
+    let check_default = |p: &EventLoopProxy<AppEvent>| {
+        let p = p.clone();
+        std::thread::spawn(move || send(&p, AppEvent::DefaultBrowser(is_default_browser())));
+    };
     event_loop.run(move |event, _, flow| {
         *flow = ControlFlow::Wait;
         let render = match event {
@@ -392,13 +399,22 @@ fn main() -> wry::Result<()> {
                         service.handle(UiCommand::ActivateTab { id }, now());
                     }
                 }
+                if settings_open {
+                    let _ = sidebar.evaluate_script("window.canbec.closeSettings()"); // the new tab must show
+                }
                 window.set_minimized(false);
                 window.set_focus();
                 true
             }
             // Back from the system's "change default browser?" prompt (or any app): fresh status.
             Event::WindowEvent { event: WindowEvent::Focused(true), .. } => {
-                let _ = sidebar.evaluate_script(&format!("window.canbec.setDefaultBrowser({})", serde_json::json!(is_default_browser())));
+                if settings_open {
+                    check_default(&proxy);
+                }
+                false
+            }
+            Event::UserEvent(AppEvent::DefaultBrowser(on)) => {
+                let _ = sidebar.evaluate_script(&format!("window.canbec.setDefaultBrowser({})", serde_json::json!(on)));
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"makeDefaultBrowser""#) => {
@@ -592,7 +608,11 @@ fn main() -> wry::Result<()> {
             // Settings fill the window: the website card hides while they're open.
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"settingsView""#) => {
                 let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
-                let _ = service.engine().view.set_visible(msg["open"].as_bool() != Some(true));
+                settings_open = msg["open"].as_bool() == Some(true);
+                let _ = service.engine().view.set_visible(!settings_open);
+                if settings_open {
+                    check_default(&proxy);
+                }
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) => match serde_json::from_str::<UiCommand>(&json) {

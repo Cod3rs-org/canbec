@@ -280,8 +280,8 @@ function renderSettings(){
  $("icustom").textContent=custom?"Using your own image: "+cur:"Or put a path to your own PNG into the icon file in the config folder.";
  $("ver").textContent="canbec "+(window.__version||"")+" · no telemetry, no accounts";
  var db=window.__defaultBrowser,mac=(window.__platform||"macos")==="macos";
- $("dbst").textContent=db?"canbec is your default browser":db===false?"Not your default browser":"Set it in your system settings";
- $("dbp").textContent=db?"Links from mail, chat and other apps open here in a new tab, through the same filters.":db===false?"Links from mail, chat and other apps would open here in a new tab, through the same filters.":mac?"Works from the canbec app, not from a development build.":"Couldn't read the system's default browser (on Linux this needs xdg-settings).";
+ $("dbst").textContent=db===undefined?"Checking…":db?"canbec is your default browser":db===false?"Not your default browser":"Set it in your system settings";
+ $("dbp").textContent=db?"Links from mail, chat and other apps open here in a new tab, through the same filters.":db===false?"Links from mail, chat and other apps would open here in a new tab, through the same filters.":db===undefined?"":mac?"Works from the canbec app, not from a development build.":"Couldn't read the system's default browser (on Linux this needs xdg-settings).";
  $("dbon").hidden=db!==false;
  $("upst").textContent=s.update?"canbec "+s.update+" is available.":"";$("upi").hidden=!s.update;
  var kb=function(k,sh){return"<kbd>"+(mac?(sh?"⇧":"")+"⌘"+k:"Ctrl+"+(sh?"Shift+":"")+k)+"</kbd>"};
@@ -333,7 +333,7 @@ $("findbar").onsubmit=function(e){e.preventDefault()};
 $("fq").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();find(e.shiftKey)}else if(e.key==="Escape"){$("findbar").hidden=true}};
 $("fnext").onclick=function(){find(false)};$("fprev").onclick=function(){find(true)};
 $("fx").onclick=function(){$("findbar").hidden=true};
-window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},setDefaultBrowser:function(v){window.__defaultBrowser=v;if(document.body.classList.contains("settings"))renderSettings()},toggleSettings:toggleSettings,find:openFind,
+window.canbec={render:render,setIcon:function(n){window.__icon=n;renderSettings()},setDefaultBrowser:function(v){window.__defaultBrowser=v;if(document.body.classList.contains("settings"))renderSettings()},toggleSettings:toggleSettings,closeSettings:function(){if(document.body.classList.contains("settings"))setSettings(false)},find:openFind,
  focusUrl:function(){$("url").focus();$("url").select()}};
 // Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,

@@ -1,28 +1,50 @@
+<a id="readme-top"></a>
+
 <div align="center">
+  <a href="https://github.com/Cod3rs-org/canbec">
+    <img src="docs/img/logos/05-sprout-cursor.svg" alt="canbec logo" width="96" height="96">
+  </a>
 
-<img src="docs/img/logos/05-sprout-cursor.svg" width="128" alt="canbec logo: a mouse pointer with a green sprout growing from its tip">
+  <h3 align="center">canbec</h3>
 
-# canbec
+  <p align="center"><strong>C</strong>ontrol <strong>A</strong>I, <strong>N</strong>ot <strong>B</strong>e <strong>C</strong>ontrolled. A lightweight browser that hides AI slop, ads and infinite feeds</p>
 
-### **C**ontrol **A**I, **N**ot **B**e **C**ontrolled
+[![CI](https://img.shields.io/github/actions/workflow/status/Cod3rs-org/canbec/ci.yml?style=for-the-badge&label=CI)](https://github.com/Cod3rs-org/canbec/actions/workflows/ci.yml) [![Last commit](https://img.shields.io/github/last-commit/Cod3rs-org/canbec?style=for-the-badge)](https://github.com/Cod3rs-org/canbec/commits)<br>
+![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)
 
-**De-AI your life. Un-addict your life.**
-
-*A lightweight, cross-platform browser written in Rust that hides AI slop, ads, adult content and
-infinite feeds, so you browse the web as a human, not a parrot.*
-
-![status](https://img.shields.io/badge/status-early%20alpha-orange)
-![rust](https://img.shields.io/badge/built%20with-Rust-b7410e?logo=rust)
-![platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-blue)
-![tests](https://img.shields.io/badge/tests-64%20passing-brightgreen)
-![binary](https://img.shields.io/badge/binary-~4%20MB-lightgrey)
-![license](https://img.shields.io/badge/license-Unlicense-lightgrey)
-
-<img src="docs/img/real-wikipedia.png" width="860" alt="canbec showing Wikipedia: a cream vertical sidebar with tabs on the left, the page as a rounded card on the right">
-
+  <p align="center">
+    <a href="#-try-it"><strong>Try it</strong></a>
+    &middot;
+    <a href="#-benchmarks">Benchmarks</a>
+    &middot;
+    <a href="https://github.com/Cod3rs-org/canbec/issues/new?labels=bug">Report Bug</a>
+    &middot;
+    <a href="https://github.com/Cod3rs-org/canbec/issues/new?labels=enhancement">Request Feature</a>
+  </p>
 </div>
 
----
+<hr>
+
+<table>
+  <tr>
+    <td nowrap><img src="docs/images/icons/monitor.svg" width="16" height="16" alt="">&nbsp;<strong>Runs&nbsp;on</strong></td>
+    <td>Windows, Linux and macOS</td>
+  </tr>
+  <tr>
+    <td nowrap><img src="docs/images/icons/star.svg" width="16" height="16" alt="">&nbsp;<strong>Highlights</strong></td>
+    <td>Hard limits on feeds, ads become grey hatching, max 20 tabs, about 4 MB</td>
+  </tr>
+  <tr>
+    <td nowrap><img src="docs/images/icons/terminal.svg" width="16" height="16" alt="">&nbsp;<strong>Run</strong></td>
+    <td><code>cargo run --release -p canbec</code></td>
+  </tr>
+  <tr>
+    <td nowrap><img src="docs/images/icons/progress.svg" width="16" height="16" alt="">&nbsp;<strong>Status</strong></td>
+    <td>Early alpha, see <a href="#️-what-is-done-so-far">What is done so far</a><img align="right" src="docs/images/icons/spacer.svg" width="2000" height="1" alt=""></td>
+  </tr>
+</table>
+
+<img src="docs/img/real-wikipedia.png" alt="canbec screenshot">
 
 ## Why I made this
 

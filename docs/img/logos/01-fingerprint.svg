@@ -1,8 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a fingerprint whose ridges form the letter C">
-<rect width="256" height="256" rx="56" fill="#1f2328"/>
-<g fill="none" stroke-linecap="round" stroke-width="15">
-<path d="M170 86A60 60 0 1 0 170 170" stroke="#f6f1e7"/>
-<path d="M155 100A38 38 0 1 0 155 156" stroke="#f6f1e7"/>
-<path d="M141 114A17 17 0 1 0 141 142" stroke="#ff7a45"/>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec icon fingerprint: fingerprint ridges forming the C of canbec">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<path d="M190 92 A70 70 0 1 0 190 164" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M166 102 A46 46 0 1 0 166 154" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M144 112 A22 22 0 1 0 144 144" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="128" cy="128" r="8" fill="#5ee08f"/>
 </svg>

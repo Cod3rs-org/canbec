@@ -1,77 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1144 624" width="1144" height="624"><rect width="1144" height="624" fill="#f6f1e7"/><svg x="24" y="24" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: cut puppet strings above a free human">
-  <rect width="256" height="256" rx="56" fill="#1f2328"/>
-  <!-- puppeteer control bar -->
-  <g stroke="#f6f1e7" stroke-linecap="round" fill="none">
-    <path d="M70 60 H186" stroke-width="12"/>
-    <path d="M128 38 V82" stroke-width="12"/>
-    <!-- strings, cut short -->
-    <path d="M84 66 V104 M128 82 V104 M172 66 V104" stroke-width="5"/>
-  </g>
-  <!-- snip marks where the strings were cut -->
-  <g stroke="#ff7a45" stroke-width="5" stroke-linecap="round">
-    <path d="M76 116 L92 108 M120 116 L136 108 M164 116 L180 108"/>
-  </g>
-  <!-- the free human -->
-  <g stroke="#ff7a45" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="M128 184 V214"/>
-    <path d="M128 192 L98 166 M128 192 L158 166"/>
-    <path d="M128 214 L108 232 M128 214 L148 232" stroke-width="11"/>
-  </g>
-  <circle cx="128" cy="160" r="15" fill="#ff7a45"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1144 644" width="1144" height="644"><rect width="1144" height="644" fill="#f4f5f7"/><svg x="24" y="24" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon sprout: a mouse pointer with a green sprout growing from its tip">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<g transform="translate(128 128) scale(1.04) translate(-118 -127)"><path d="M92 92 L92 206 L120 180 L140 222 L162 212 L142 171 L182 168 Z" fill="#ffffff" stroke="#ffffff" stroke-width="10" stroke-linejoin="round"/>
+<path d="M92 92 C92 74 94 64 102 54" fill="none" stroke="#5ee08f" stroke-width="10" stroke-linecap="round"/>
+<path d="M102 56 C120 32 152 34 160 58 C136 70 114 68 102 56Z" fill="#5ee08f"/>
+<path d="M98 66 C80 46 56 50 50 70 C70 82 88 80 98 66Z" fill="#2fbf68"/></g>
 </svg>
-<text x="152" y="306" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">logo</text><svg x="304" y="24" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a fingerprint whose ridges form the letter C">
-<rect width="256" height="256" rx="56" fill="#1f2328"/>
-<g fill="none" stroke-linecap="round" stroke-width="15">
-<path d="M170 86A60 60 0 1 0 170 170" stroke="#f6f1e7"/>
-<path d="M155 100A38 38 0 1 0 155 156" stroke="#f6f1e7"/>
-<path d="M141 114A17 17 0 1 0 141 142" stroke="#ff7a45"/>
-</g>
+<text x="152" y="308" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">sprout</text><svg x="304" y="24" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon strings: a puppet cross with its strings cut above a free person">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<path d="M70 52 H186 M128 40 V64" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M84 52 V92 M172 52 V92 M128 64 V86" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 0"/>
+<path d="M84 104 V112 M172 104 V112 M128 100 V108" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity=".55"/>
+<circle cx="128" cy="140" r="18" fill="#5ee08f"/>
+<path d="M128 162 V196 M100 172 L128 162 L156 172 M110 222 L128 196 L146 222" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-<text x="432" y="306" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">01-fingerprint</text><svg x="584" y="24" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a friendly parrot with a slash through it, meaning browse as a human, not a parrot">
-<rect width="256" height="256" rx="56" fill="#f6f1e7"/>
-<path d="M96 120C80 160 90 200 104 226H156C176 190 180 150 172 120Z" fill="#1f2328"/>
-<path d="M104 226C96 196 100 170 112 150C132 170 138 200 128 226Z" fill="#ff7a45"/>
-<circle cx="134" cy="92" r="46" fill="#1f2328"/>
-<path d="M170 76C206 70 216 102 192 124C194 108 184 100 168 100Z" fill="#ff7a45"/>
-<path d="M112 52C106 36 118 26 132 30C124 36 124 44 128 50Z" fill="#ff7a45"/>
-<circle cx="140" cy="84" r="11" fill="#f6f1e7"/><circle cx="142" cy="85" r="5" fill="#1f2328"/>
-<path d="M44 44L212 212" stroke="#f6f1e7" stroke-width="32" stroke-linecap="round"/>
-<path d="M44 44L212 212" stroke="#ff7a45" stroke-width="16" stroke-linecap="round"/>
+<text x="432" y="308" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">strings</text><svg x="584" y="24" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon fingerprint: fingerprint ridges forming the C of canbec">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<path d="M190 92 A70 70 0 1 0 190 164" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M166 102 A46 46 0 1 0 166 154" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M144 112 A22 22 0 1 0 144 144" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="128" cy="128" r="8" fill="#5ee08f"/>
 </svg>
-<text x="712" y="306" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">02-not-a-parrot</text><svg x="864" y="24" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec logo: a chain link breaking open, with a cursor arrow in the gap">
-<rect width="256" height="256" rx="56" fill="#1f2328"/>
-<g fill="none" stroke="#f6f1e7" stroke-width="20" stroke-linecap="round">
-<path d="M84 92H68a36 36 0 0 0 0 72H84"/>
-<path d="M172 92H188a36 36 0 0 1 0 72H172"/>
-</g>
-<path d="M112 76L112 172L134 150L152 190L170 182L152 142L184 140Z" fill="#ff7a45" transform="translate(-10 -4)"/>
+<text x="712" y="308" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">fingerprint</text><svg x="864" y="24" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon parrot: a speech bubble with a check: your own words, not repeated ones">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<path d="M64 76 Q64 58 82 58 H174 Q192 58 192 76 V142 Q192 160 174 160 H116 L84 192 V160 H82 Q64 160 64 142 Z" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M100 110 L120 130 L158 92" fill="none" stroke="#5ee08f" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-<text x="992" y="306" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">03-broken-link</text><svg x="24" y="324" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec: a browser window with AI content hidden under a hatched spoiler strip, one human dot left visible">
-<defs><pattern id="l4h" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="14" height="14" fill="#3a4048"/><rect width="6" height="14" fill="#8a8f96"/></pattern>
-<clipPath id="l4w"><rect x="36" y="48" width="184" height="160" rx="22"/></clipPath></defs>
-<rect width="256" height="256" rx="56" fill="#1f2328"/>
-<rect x="36" y="48" width="184" height="160" rx="22" fill="#f6f1e7"/>
-<g clip-path="url(#l4w)"><rect x="36" y="48" width="184" height="36" fill="#ff7a45"/></g>
-<circle cx="56" cy="66" r="7" fill="#f6f1e7"/>
-<rect x="56" y="100" width="144" height="22" rx="11" fill="#1f2328"/>
-<rect x="56" y="134" width="144" height="26" rx="13" fill="url(#l4h)"/>
-<rect x="56" y="134" width="144" height="26" rx="13" fill="none" stroke="#1f2328" stroke-width="4"/>
-<circle cx="70" cy="187" r="10" fill="#ff7a45"/>
-<rect x="90" y="181" width="70" height="12" rx="6" fill="#1f2328"/>
+<text x="992" y="308" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">parrot</text><svg x="24" y="334" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon broken-link: a chain link broken in two: the scroll habit, cut">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<path d="M114 84 L96 66 A26 26 0 0 0 60 66 L58 68 A26 26 0 0 0 58 104 L84 130" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M142 172 L160 190 A26 26 0 0 0 196 190 L198 188 A26 26 0 0 0 198 152 L172 126" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M128 70 V52 M150 84 L164 70 M106 186 L92 200 M128 186 V204" fill="none" stroke="#5ee08f" stroke-width="10" stroke-linecap="round"/>
 </svg>
-<text x="152" y="606" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">04-spoiler</text><svg x="304" y="324" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec: a mouse pointer with a green sprout growing from its tip">
-<rect width="256" height="256" rx="56" fill="#1f2328"/>
-<path d="M82 60 L82 196 L118 164 L142 214 L168 202 L144 154 L192 150 Z" fill="#f6f1e7" stroke="#f6f1e7" stroke-width="10" stroke-linejoin="round"/>
-<path d="M82 60 C82 40 82 34 86 28" stroke="#4fae6b" stroke-width="10" stroke-linecap="round" fill="none"/>
-<path d="M86 30 C108 8 138 14 142 38 C116 46 96 42 86 30Z" fill="#4fae6b"/>
-<path d="M84 44 C62 22 38 30 36 52 C58 60 76 56 84 44Z" fill="#ff7a45"/>
+<text x="152" y="618" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">broken-link</text><svg x="304" y="334" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon spoiler: an AI sparkle hidden under hatching, a human dot kept">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<clipPath id="c"><rect x="56" y="56" width="144" height="144" rx="20"/></clipPath>
+<path d="M128 74 C134 112 144 122 182 128 C144 134 134 144 128 182 C122 144 112 134 74 128 C112 122 122 112 128 74Z" fill="#ffffff" opacity=".35"/>
+<g clip-path="url(#c)" stroke="#ffffff" stroke-width="9"><path d="M80 56 L-64 200"/><path d="M106 56 L-38 200"/><path d="M132 56 L-12 200"/><path d="M158 56 L14 200"/><path d="M184 56 L40 200"/><path d="M210 56 L66 200"/><path d="M236 56 L92 200"/><path d="M262 56 L118 200"/><path d="M288 56 L144 200"/><path d="M314 56 L170 200"/><path d="M340 56 L196 200"/></g>
+<rect x="56" y="56" width="144" height="144" rx="20" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="186" cy="186" r="20" fill="#5ee08f" stroke="#0a5be0" stroke-width="8"/>
 </svg>
-<text x="432" y="606" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">05-sprout-cursor</text><svg x="584" y="324" width="256" height="256" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="canbec: a calm half-closed eye whose eyelid is a shield">
-<defs><clipPath id="l6e"><path d="M22 150 Q128 70 234 150 Q128 214 22 150Z"/></clipPath></defs>
-<rect width="256" height="256" rx="56" fill="#1f2328"/>
-<path d="M22 150 Q128 70 234 150 Q128 214 22 150Z" fill="#f6f1e7"/>
-<g clip-path="url(#l6e)"><circle cx="128" cy="160" r="42" fill="#ff7a45"/><circle cx="128" cy="164" r="17" fill="#1f2328"/></g>
-<path d="M128 36 L190 54 V96 C190 118 160 134 128 142 C96 134 66 118 66 96 V54Z" fill="#f6f1e7" stroke="#1f2328" stroke-width="8" stroke-linejoin="round"/>
-<path d="M100 92 Q128 108 156 92" stroke="#1f2328" stroke-width="9" stroke-linecap="round" fill="none"/>
+<text x="432" y="618" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">spoiler</text><svg x="584" y="334" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="canbec icon calm-eye: a calm open eye with a green iris">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f8fff"/><stop offset="1" stop-color="#0050d8"/></linearGradient>
+<linearGradient id="hi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect width="256" height="256" rx="58" fill="url(#bg)"/><rect width="256" height="256" rx="58" fill="url(#hi)"/>
+<path d="M44 128 Q128 50 212 128 Q128 206 44 128 Z" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="128" cy="128" r="30" fill="#5ee08f"/>
+<circle cx="128" cy="128" r="12" fill="#0a3f9e"/>
+<circle cx="138" cy="118" r="6" fill="#ffffff"/>
 </svg>
-<text x="712" y="606" text-anchor="middle" font-family="system-ui" font-size="18" fill="#1f2328">06-calm-eye</text></svg>
+<text x="712" y="618" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" fill="#212327">calm-eye</text></svg>

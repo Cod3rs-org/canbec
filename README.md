@@ -125,6 +125,7 @@ timeline
              : Servo adapter, full-window settings
     Look     : UniFi-style cards and status dots
              : Sidebar, compact, rail or top bar
+             : Servo in a window, rounded card on Linux
 ```
 
 | # | Step | Status | Read more |
@@ -171,6 +172,7 @@ timeline
 | 40 | **UniFi-style look**: grey frame, bordered cards, blue accent; site status card, segmented tab-budget meter, profile switch, settings overview grid with menu icons | ✅ | [12](docs/research/12-unifi-look.md) |
 | 41 | **Layouts**: Sidebar, Compact, icon Rail (peeks open to type) or a slim Top bar with a ▾ panel for site status, archive and profiles, so the page gets more of the window | ✅ | [12](docs/research/12-unifi-look.md) |
 | 42 | **Rounded website card on Linux** (X11): the WebKit widget and wry's container X window get a rounded shape (XFixes), like the Windows GDI region | ✅ | [#15](https://github.com/Cod3rs-org/canbec/issues/15) [12](docs/research/12-unifi-look.md) |
+| 43 | **Servo window** (`canbec-servo --window`): the same sidebar, layouts, settings and core on Servo, with mouse, keyboard, scrolling and sidebar ↔ core messages; shortcuts now shared between engines | 🧪 | [05](docs/research/05-engine-bakeoff.md) [#32](https://github.com/Cod3rs-org/canbec/issues/32) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

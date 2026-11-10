@@ -143,3 +143,32 @@ pub struct FeedLockView {
     pub locked: bool,
     pub unlocked_until: Option<u64>,
 }
+
+/// A browser shortcut (from the content script or the sidebar) as a core command. Keys the
+/// chrome handles itself (`focusAddress`, `settings`, `find`) give `None`; every app calls those
+/// in its sidebar. Shared by all engines so the shortcuts stay the same everywhere.
+pub fn key_command(key: &str, state: &UiState) -> Option<UiCommand> {
+    Some(match key {
+        "newTab" => UiCommand::NewTab,
+        "reload" => UiCommand::Reload,
+        "back" => UiCommand::Back,
+        "forward" => UiCommand::Forward,
+        "pinPage" => UiCommand::PinPage,
+        "zoomIn" => UiCommand::Zoom { step: 1 },
+        "zoomOut" => UiCommand::Zoom { step: -1 },
+        "zoomReset" => UiCommand::Zoom { step: 0 },
+        "closeTab" => UiCommand::CloseTab { id: state.tabs.iter().find(|t| t.active)?.id },
+        "reopenTab" => UiCommand::RestoreTab { id: state.closed.first()?.id },
+        _ => return None,
+    })
+}
+
+/// The sidebar function a chrome shortcut calls (`window.canbec.<name>()`).
+pub fn key_sidebar_call(key: &str) -> Option<&'static str> {
+    match key {
+        "focusAddress" => Some("focusUrl"),
+        "settings" => Some("toggleSettings"),
+        "find" => Some("find"),
+        _ => None,
+    }
+}

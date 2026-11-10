@@ -92,9 +92,42 @@ load), and an adult seed host is refused. Servo quirk: a load asked for while an
 pending is dropped, so the runner lets each one finish first.
 
 It drives `BrowserService` like the browser does, prints the page, blocked requests and canbec's
-agent view, and saves a screenshot. **Not yet:** a Servo window inside canbec (Servo needs the
-app to forward mouse, keyboard and scroll events and to composite its frames; servoshell shows how)
-and content → core messages (no `window.ipc`; Servo would need a message hook for embedders).
+agent view, and saves a screenshot.
+
+### A Servo window: `canbec-servo --window [url]`
+
+```sh
+cd src/engines/servo
+cargo run --release -- --window https://example.com
+```
+
+The same sidebar and core as the wry app, drawn by Servo (`src/engines/servo/src/window.rs`):
+
+| Piece | How |
+|---|---|
+| Window and input | winit 0.30 (as in Servo's own example). Mouse, wheel and keys go to the webview under the cursor / with focus; focus follows clicks |
+| Two webviews in one window | Each paints into an `OffscreenRenderingContext`; every frame both are blitted into the `WindowRenderingContext`: sidebar full-window, website at `domain::layout`'s card (layouts and peek included) |
+| Sidebar → core | Servo has no `window.ipc`, so a shim posts each message as `fetch("https://canbec-ipc.invalid/?m=…")`; `load_web_resource` catches and cancels it. Only the sidebar webview's messages are commands |
+| Website → core | Same shim and the same filter as wry: ad and AI-image counters, shortcuts only with this run's token |
+| Core → sidebar | `evaluate_javascript("window.canbec.render(state)")` |
+| Shortcuts | `application::ui::key_command` / `key_sidebar_call`, now shared with the wry app |
+| Settings | Full window, page hidden. Needs `layout_grid_enabled` (CSS grid is off by default in Servo 0.1) |
+
+Checked under Xvfb: sidebar with live state, clicking New tab, typing an address and Enter,
+Top bar layout, and the settings overview.
+
+| Browsing | Settings |
+|---|---|
+| ![Servo window](../img/servo-window.png) | ![Servo settings](../img/servo-window-settings.png) |
+
+ponytail, in order of annoyance:
+- Servo 0.1 draws the sidebar's inline stroke-only SVG icons as filled blocks.
+- The card is square (the blit has no rounded clip) and there are no own window buttons beyond the sidebar's.
+- Its own tabs (`<config>/servo/state.json`), no profiles, logins, downloads, default browser,
+  AI text model or update install yet: those settings say "Not in the Servo build yet".
+- Content scripts run in the page world, and a site's CSP `connect-src` can block the IPC fetch
+  (that only loses counters and in-page shortcuts on that site).
+- Key mapping covers what forms and the chrome need (characters, arrows, Enter, Tab, Backspace…).
 
 ## Notes for a CEF (Chromium) adapter
 

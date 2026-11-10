@@ -378,3 +378,18 @@ fn ai_text_hint_only_when_on_and_for_the_current_page() {
     svc.on_page("https://blog.example/next", None, true, 3);
     assert_eq!(svc.state(3).current.ai_text, None, "a new page starts without a hint");
 }
+
+#[test]
+fn shortcuts_map_to_the_same_commands_on_every_engine() {
+    use canbec_application::ui::{key_command, key_sidebar_call};
+    let (mut svc, _, _) = service();
+    svc.handle(UiCommand::NewTab, 1);
+    let state = svc.state(1);
+    let active = state.tabs.iter().find(|t| t.active).unwrap().id;
+    assert_eq!(key_command("closeTab", &state), Some(UiCommand::CloseTab { id: active }));
+    assert_eq!(key_command("zoomOut", &state), Some(UiCommand::Zoom { step: -1 }));
+    assert_eq!(key_command("reopenTab", &state), None, "nothing closed yet");
+    assert_eq!(key_command("focusAddress", &state), None);
+    assert_eq!(key_sidebar_call("focusAddress"), Some("focusUrl"));
+    assert_eq!(key_sidebar_call("reload"), None);
+}

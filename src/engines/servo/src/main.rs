@@ -1,3 +1,5 @@
+//! `canbec-servo --window [url]`: canbec in a window on Servo (see `window.rs`).
+//!
 //! `canbec-servo <url> [out.png]`: loads a page through canbec's core and filters on Servo,
 //! headless (software rendering, no window), saves a screenshot and prints what canbec's
 //! agent view (`readable()`) sees. It proves the Engine port works on a second engine; a windowed
@@ -14,7 +16,7 @@ use canbec_domain::blocklist::HostBlocklist;
 use canbec_domain::tabs::TabPolicy;
 use canbec_domain::trackers::TrackerList;
 use canbec_infrastructure::{blocklists, config_dir, content_script, privacy_script, random_token};
-use canbec_servo::{blocks_resource, ServoEngine};
+use canbec_servo::{blocks_resource, now, ServoEngine};
 use dpi::PhysicalSize;
 use euclid::{Box2D, Point2D};
 use servo::{
@@ -95,14 +97,14 @@ impl WebViewDelegate for Delegate {
     }
 }
 
-fn now() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
-}
-
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("--window") {
+        let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+        return canbec_servo::window::run(args.get(2).cloned());
+    }
     let Some(url) = args.get(1).cloned() else {
-        eprintln!("usage: canbec-servo <url> [out.png]");
+        eprintln!("usage: canbec-servo <url> [out.png] | canbec-servo --window [url]");
         std::process::exit(2);
     };
     let out = args.get(2).cloned().unwrap_or_else(|| "canbec-servo.png".into());

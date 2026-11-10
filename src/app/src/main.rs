@@ -476,25 +476,11 @@ fn main() -> wry::Result<()> {
                 false
             }
             Event::UserEvent(AppEvent::Key(key)) => {
-                let cmd = match key.as_str() {
-                    "newTab" => Some(UiCommand::NewTab),
-                    "reload" => Some(UiCommand::Reload),
-                    "back" => Some(UiCommand::Back),
-                    "forward" => Some(UiCommand::Forward),
-                    "pinPage" => Some(UiCommand::PinPage),
-                    "zoomIn" => Some(UiCommand::Zoom { step: 1 }),
-                    "zoomOut" => Some(UiCommand::Zoom { step: -1 }),
-                    "zoomReset" => Some(UiCommand::Zoom { step: 0 }),
-                    "closeTab" => service.state(now()).tabs.iter().find(|t| t.active).map(|t| UiCommand::CloseTab { id: t.id }),
-                    "reopenTab" => service.state(now()).closed.first().map(|t| UiCommand::RestoreTab { id: t.id }),
-                    "focusAddress" | "settings" | "find" => {
-                        let _ = sidebar.focus();
-                        let call = match key.as_str() { "settings" => "toggleSettings", "find" => "find", _ => "focusUrl" };
-                        let _ = sidebar.evaluate_script(&format!("window.canbec.{call}()"));
-                        None
-                    }
-                    _ => None,
-                };
+                if let Some(call) = canbec_application::ui::key_sidebar_call(&key) {
+                    let _ = sidebar.focus();
+                    let _ = sidebar.evaluate_script(&format!("window.canbec.{call}()"));
+                }
+                let cmd = canbec_application::ui::key_command(&key, &service.state(now()));
                 match cmd {
                     Some(cmd) => {
                         service.handle(cmd, now());

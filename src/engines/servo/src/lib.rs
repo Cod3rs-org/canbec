@@ -9,6 +9,13 @@ use canbec_infrastructure::content_calls;
 use servo::WebView;
 use url::Url;
 
+pub mod window;
+
+/// Unix time in seconds, for the core's rules.
+pub fn now() -> u64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
+}
+
 pub struct ServoEngine {
     pub webview: WebView,
 }

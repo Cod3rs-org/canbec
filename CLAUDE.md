@@ -9,6 +9,7 @@ content and infinite feeds. Mission: **de-AI and un-addict your life**. Public r
 ```sh
 cargo test --workspace                 # all tests (test/*.rs)
 cargo run --release -p canbec [url]    # the browser
+(cd src/engines/servo && cargo run --release -- --window [url])   # the same UI on Servo (~8 min first build)
 # Engine probe (local Blazor WASM test page):
 dotnet publish test/engine-probe -c Release -o target/engine-probe
 python3 tools/serve.py target/engine-probe/wwwroot 5080   # then open http://127.0.0.1:5080

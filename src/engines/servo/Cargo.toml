@@ -18,6 +18,9 @@ servo = "0.1"
 url = "2"
 dpi = "0.1"
 euclid = "0.22"
+serde_json = "1"
+# The window for `--window` (the same version Servo's own example uses).
+winit = "0.30"
 image = { version = "0.25", default-features = false, features = ["png"] }
 # Servo uses aws-lc-rs, our downloads use ring: with both in the tree rustls needs to be told.
 rustls = { version = "0.23", default-features = false, features = ["aws-lc-rs"] }

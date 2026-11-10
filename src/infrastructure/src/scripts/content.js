@@ -46,9 +46,9 @@
     html.canbec-feeds-locked :is(${feedSelectors.join(",") || "#canbec-none"}) { display: none !important; }
     img.canbec-ai { filter: blur(24px) saturate(.6) !important; clip-path: inset(0) !important; cursor: pointer !important; }
     #canbec-slop { position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
-      box-shadow: inset 0 0 0 6px #ff7a45, inset 0 0 0 8px #1f2328, inset 0 0 40px rgba(255,122,69,.35); }
+      box-shadow: inset 0 0 0 6px #e5484d, inset 0 0 0 8px #131417, inset 0 0 40px rgba(229,72,77,.32); }
     #canbec-slop-banner { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
-      background: #1f2328; color: #f6f1e7; font: 600 13px system-ui, sans-serif; padding: 6px 12px; border-radius: 999px;
+      background: #212327; color: #fff; font: 600 13px system-ui, sans-serif; padding: 6px 12px; border-radius: 999px;
       box-shadow: 0 2px 10px rgba(0,0,0,.25); cursor: pointer; }`;
 
   // Captured before any page script runs, so a page can't wrap it to steal the shortcut token
@@ -253,8 +253,8 @@
     b.className = "canbec-age";
     const tags = [];
     if (info.slop) tags.push(["⚠ slop", "You marked this site as AI slop", "#d93025", "#fff"]);
-    if (info.year && info.obsolete) tags.push(["AI era · " + info.year, "First seen on the web in " + info.year + ", after ChatGPT came out", "#ff7a45", "#fff"]);
-    else if (info.year) tags.push(["since " + info.year, "On the web since " + info.year + ", before the AI boom", "#e8e1d3", "#1f2328"]);
+    if (info.year && info.obsolete) tags.push(["AI era · " + info.year, "First seen on the web in " + info.year + ", after ChatGPT came out", "#e5484d", "#fff"]);
+    else if (info.year) tags.push(["since " + info.year, "On the web since " + info.year + ", before the AI boom", "#eef0f3", "#212327"]);
     else if (info.year === null) tags.push(["not archived", "The Wayback Machine has never seen this page", "#e8e1d3", "#6b6f76"]);
     for (const [text, title, bg, fg] of tags) {
       const t = Object.assign(document.createElement("span"), { textContent: text, title });

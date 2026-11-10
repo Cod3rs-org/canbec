@@ -172,32 +172,32 @@ body.l-top.peek:not(.settings) #drop{display:block;position:fixed;top:48px;left:
 body.l-top:not(.settings) #more{display:inline-flex}
 body.l-top.peek #more{color:var(--acc);background:var(--hov)}body.l-top.peek #more svg{transform:rotate(180deg)}
 /* Compact: same sidebar, 240 px. */
-body.l-compact{width:240px}
-body.l-compact #ess{grid-template-columns:repeat(3,1fr)}
-body.l-compact .wd span{display:none}
-body.l-compact .wd{flex:0 0 28px;padding:0}
-body.l-compact .stat{padding:0 4px}
+body.l-compact:not(.settings){width:240px}
+body.l-compact:not(.settings) #ess{grid-template-columns:repeat(3,1fr)}
+body.l-compact:not(.settings) .wd span{display:none}
+body.l-compact:not(.settings) .wd{flex:0 0 28px;padding:0}
+body.l-compact:not(.settings) .stat{padding:0 4px}
 /* Rail: 64 px of icons. Search / Cmd+L / Cmd+F "peek" back to the full sidebar. */
-body.l-rail:not(.peek){width:64px}
-body.l-rail:not(.peek) #nav{flex-direction:column;align-items:center;padding:0 0 8px;gap:2px}
-body.l-rail:not(.peek) #nav .sp{display:none}
-body.l-rail:not(.peek) #srch{display:inline-flex}
-body.l-rail:not(.peek) :is(#chips,#bar,#findbar,#site,#tabhead,#meter,#hint,#arch,#clo){display:none}
-body.l-rail:not(.peek) #ess{grid-template-columns:1fr;padding:0 12px 8px;gap:6px}
-body.l-rail:not(.peek) .ess{height:40px;padding:0}
-body.l-rail:not(.peek) .ess span{display:none}
-body.l-rail:not(.peek) #main{padding:4px 10px;border-top:1px solid var(--line)}
-body.l-rail:not(.peek) .tab{justify-content:center;padding:0;height:40px}
-body.l-rail:not(.peek) .tab .dot{width:26px;height:26px;font-size:12px;border-radius:7px}
-body.l-rail:not(.peek) .tab .t{position:absolute;inset:0;font-size:0;color:transparent}
-body.l-rail:not(.peek) .tab :is(.x,.warn){display:none}
-body.l-rail:not(.peek) .row{justify-content:center;padding:0}
-body.l-rail:not(.peek) .row span{display:none}
-body.l-rail:not(.peek) #foot{flex-direction:column;padding:8px 0 10px}
-body.l-rail:not(.peek) #wsd{flex-direction:column;flex:none;width:36px}
-body.l-rail:not(.peek) .wd{flex:none;height:26px;padding:0}
-body.l-rail:not(.peek) .wd span{display:none}
-body.l-rail:not(.peek) #top.winctl{flex-direction:column;align-items:center;height:auto;padding:4px 0}
+body.l-rail:not(.peek):not(.settings){width:64px}
+body.l-rail:not(.peek):not(.settings) #nav{flex-direction:column;align-items:center;padding:0 0 8px;gap:2px}
+body.l-rail:not(.peek):not(.settings) #nav .sp{display:none}
+body.l-rail:not(.peek):not(.settings) #srch{display:inline-flex}
+body.l-rail:not(.peek):not(.settings) :is(#chips,#bar,#findbar,#site,#tabhead,#meter,#hint,#arch,#clo){display:none}
+body.l-rail:not(.peek):not(.settings) #ess{grid-template-columns:1fr;padding:0 12px 8px;gap:6px}
+body.l-rail:not(.peek):not(.settings) .ess{height:40px;padding:0}
+body.l-rail:not(.peek):not(.settings) .ess span{display:none}
+body.l-rail:not(.peek):not(.settings) #main{padding:4px 10px;border-top:1px solid var(--line)}
+body.l-rail:not(.peek):not(.settings) .tab{justify-content:center;padding:0;height:40px}
+body.l-rail:not(.peek):not(.settings) .tab .dot{width:26px;height:26px;font-size:12px;border-radius:7px}
+body.l-rail:not(.peek):not(.settings) .tab .t{position:absolute;inset:0;font-size:0;color:transparent}
+body.l-rail:not(.peek):not(.settings) .tab :is(.x,.warn){display:none}
+body.l-rail:not(.peek):not(.settings) .row{justify-content:center;padding:0}
+body.l-rail:not(.peek):not(.settings) .row span{display:none}
+body.l-rail:not(.peek):not(.settings) #foot{flex-direction:column;padding:8px 0 10px}
+body.l-rail:not(.peek):not(.settings) #wsd{flex-direction:column;flex:none;width:36px}
+body.l-rail:not(.peek):not(.settings) .wd{flex:none;height:26px;padding:0}
+body.l-rail:not(.peek):not(.settings) .wd span{display:none}
+body.l-rail:not(.peek):not(.settings) #top.winctl{flex-direction:column;align-items:center;height:auto;padding:4px 0}
 /* Top bar: one 48 px strip; the website card starts under it and gets the full width. */
 body.l-top:not(.settings){width:100%;height:48px;flex-direction:row;align-items:center;gap:6px;padding:0 8px}
 body.l-top:not(.settings) #top{position:absolute;inset:0 0 auto 0;height:48px;z-index:0;padding-top:0;align-items:center}

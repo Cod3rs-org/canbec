@@ -44,7 +44,7 @@
   </tr>
 </table>
 
-<img src="docs/img/real-wikipedia.png" alt="canbec screenshot">
+<img src="docs/img/ui-browsing.png" alt="canbec: an essay with two ads turned into grey hatching, three pinned sites, four tabs (one tagged as AI slop) and a status card saying the site is protected">
 
 ## Why I made this
 
@@ -60,7 +60,7 @@ a weak moment.
 1. 🔕 **Hard limits for weak moments.** Infinite feeds are gone. If you really need them, you have
    to go to settings and you get **6 hours max**. Adult content has **no off switch** at all.
 2. ⚠️ **Mark AI slop once, get warned forever.** One click on the shield, and the site gets an
-   orange frame on every visit. AI images get a spoiler, and search marks pages first seen after 2023.
+   red frame on every visit. AI images get a spoiler, and search marks pages first seen after 2023.
 3. 🗂️ **20 tabs, no hoarding.** Idle tabs move to folders by themselves and disappear after two
    months, but nothing is ever really deleted.
 4. 🪶 **Small and fast.** 4 MB app, opens in 0.3 s and uses about **2.7× less memory than Safari**
@@ -73,12 +73,14 @@ a weak moment.
 
 | | |
 |:-:|:-:|
-| <img src="docs/img/real-youtube-feed-locked.png" width="420" alt="YouTube with the recommendation feed removed"> | <img src="docs/img/real-slop-tagged.png" width="420" alt="A page tagged as AI slop, with an orange frame and banner"> |
+| <img src="docs/img/real-youtube-feed-locked.png" width="420" alt="YouTube with the recommendation feed removed"> | <img src="docs/img/ui-slop.png" width="420" alt="A content-farm page tagged as AI slop, with a red frame and banner"> |
 | 🔕 **No infinite feeds.** The YouTube home feed is just gone (also Reddit, X, Instagram, TikTok, Bluesky, Tumblr and more, plus your own in `feeds.txt`). Unlocking is only in settings, **6 hours max**. | ⚠️ **What you tag stays tagged.** One click on the shield, and the site has an orange frame on every visit. Share your list or follow others. Images whose metadata says "AI-generated" stay blurred until you click. |
 | <img src="docs/img/canbec-probe.png" width="420" alt="Engine probe page with an ad covered by grey hatching"> | <img src="docs/img/real-hn.png" width="420" alt="Hacker News in canbec"> |
 | 🚫 **Ads become grey hatching.** About 24k EasyList rules, updated every week. The layout stays the same, the ad just doesn't get your attention. | 🧘 **Calm by default.** Vertical tabs, max 20 open, idle tabs move to folders by themselves. |
-| <img src="docs/img/ads-easylist.png" width="420" alt="A test page where three ads became blurred grey stripes"> | <img src="docs/img/ui-settings.png" width="160" alt="The settings panel: feed lock with a 10 second wait, privacy, privacy tools, adult content, pinned sites, app icon"> |
-| 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Full-window settings** with search. Feeds unlock only after a 10 s wait, privacy tools like 10 Minute Mail, pinned sites, app icon. |
+| <img src="docs/img/ads-easylist.png" width="420" alt="A test page where three ads became blurred grey stripes"> | <img src="docs/img/ui-settings.png" width="420" alt="Full-window settings: an overview of status tiles for profiles, feeds, adult content, AI slop, privacy and more"> |
+| 🧪 **Even late ads get covered**, also the ones a page adds after it loaded. | ⚙️ **Full-window settings** with an overview of everything at a glance, and search. Feeds unlock only after a 10 s wait. |
+| <img src="docs/img/ui-layouts.png" width="420" alt="The four layouts: sidebar, compact, icon rail, and a slim top bar with its drop-down panel"> | <img src="docs/img/ui-dark.png" width="420" alt="canbec in dark mode"> |
+| 🪟 **As much browser as you want.** Sidebar, Compact, an icon Rail that opens when you type, or one slim Top bar with a ▾ panel. Settings → Appearance. | 🌙 **Light and dark**, following your system. Or write your own colours in `theme.css`. |
 
 And under the hood:
 - ⌨️ **Normal browser stuff works:** Cmd/Ctrl+T, W, L, R, D (pin), F (find), +/-/0 (zoom, kept per site), `[` `]` (back/forward per tab),
@@ -177,6 +179,7 @@ timeline
 | 45 | **Camera / microphone on Linux**: a prompt in the sidebar (Allow / Block), never saved; before, Linux always refused | ✅ | [13](docs/research/13-linux-hand-test.md) |
 | 46 | Two starts at the same instant make one canbec (OS file lock, freed on crash; the loser hands its link over); ad rules `~site#@#sel` (allowed everywhere but there) now apply | ✅ | |
 | 47 | The 90 MB AI text model download continues where it stopped (HTTP ranges, `.part` files) and streams to disk instead of memory | ✅ | [#25](https://github.com/Cod3rs-org/canbec/issues/25) |
+| 48 | **New icons and screenshots**: all seven app icons redrawn in the new look (same names, sprout still default); screenshots of the current UI, layouts and dark mode; fixed settings squeezed into the sidebar in the Compact and Rail layouts | ✅ | [12](docs/research/12-unifi-look.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 
@@ -231,7 +234,7 @@ pure-Rust option, and Chromium (CEF) or others can be plugged in later.
 |---|---|---|
 | 🧱 **Engine** | Real web apps (WASM, WebGL, Canvas) on 3 OSes, pluggable engines | `▓▓▓▓▓▓▓░░░` wry works; Servo adapter runs headless |
 | 🗂️ **Tab discipline** | At most 20 open, auto-archive into folders, soft delete after 2 months | `▓▓▓▓▓▓▓▓░░` works, recently closed tabs |
-| ⚠️ **Slop tagging** | One click, orange frame on every next visit | `▓▓▓▓▓▓▓▓░░` works, shared lists |
+| ⚠️ **Slop tagging** | One click, red frame on every next visit | `▓▓▓▓▓▓▓▓░░` works, shared lists |
 | 🔕 **Feed blocker** | Feeds hidden, unlock only in settings, max 6 h | `▓▓▓▓▓▓▓▓░░` works, 10 s wait, own site list |
 | 🚫 **No ads** | Ads blurred + grey hatching | `▓▓▓▓▓▓▓░░░` EasyList cosmetic rules, updated weekly |
 | 🔞 **Adult lock** | Every navigation checked + system DNS lock | `▓▓▓▓▓▓▓▓░░` browser + family DNS |
@@ -315,9 +318,13 @@ docs/               research, decisions, screenshots, logos
 ## 🎨 Icons
 
 **Default is `sprout`**, a mouse pointer with a sprout growing out of it, because you are taking your
-life back from the screen. All seven come with the app, you pick one in the `icon` file (see [Try it](#-try-it)).
+life back from the screen. All seven come with the app: pick one in Settings → Appearance, or write its
+name into the `icon` file (see [Try it](#-try-it)). They share one look: a white sign on the blue of the
+interface, with green for the human part.
 
 | <img src="docs/img/logos/05-sprout-cursor.svg" width="72"> | <img src="docs/img/logo.svg" width="72"> | <img src="docs/img/logos/01-fingerprint.svg" width="72"> | <img src="docs/img/logos/02-not-a-parrot.svg" width="72"> | <img src="docs/img/logos/03-broken-link.svg" width="72"> | <img src="docs/img/logos/04-spoiler.svg" width="72"> | <img src="docs/img/logos/06-calm-eye.svg" width="72"> |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | **`sprout`** ⭐ | `strings` | `fingerprint` | `parrot` | `broken-link` | `spoiler` | `calm-eye` |
-| growing back online | cut puppet strings | human uniqueness | not a parrot | break the scroll | AI hidden | calm, protected |
+| your life growing back | strings cut, a free person | your own fingerprint, a C | your own words, not repeated | the scroll habit, cut | AI hidden under hatching | a calm eye on the human web |
+
+<img src="docs/img/ui-appearance.png" width="560" alt="Settings, Appearance: the four layouts and the seven app icons to pick from">

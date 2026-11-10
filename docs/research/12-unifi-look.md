@@ -58,3 +58,20 @@ runs again on every size change. Checked in the real app under Xvfb, sidebar and
 
 ponytail: one-pixel rows, not anti-aliased (same as Windows). Wayland isn't covered: there wry
 uses a GtkFixed without a container window; shaping the widget should be enough, not tested.
+
+## Icons and screenshots
+
+The seven app icons were dark tiles with cream and orange, from the first look. They are redrawn
+in the new one: a white sign on the interface's blue, green only for the human part (the sprout,
+the person, the check, the iris). Same names and ideas, so an `icon` file keeps working; `sprout`
+is still the default. Each Windows `.ico` size (16 to 256 px) is rendered from the SVG, so the
+small ones stay sharp.
+
+Screenshots come from the real app on Linux at 2x, on fictional demo sites
+(`test/fixtures/demo`, served by host name with `tools/demo_server.py`; point
+`journal.example garden.example aiboost.example fieldkit.example` at 127.0.0.1 first). Taking
+them found a bug: in the Compact and Rail layouts the settings page was squeezed to the sidebar's
+width, because those layouts' width rules outranked it. They now apply only outside settings.
+
+Still to retake on a machine with internet: the shots of real sites (Wikipedia, Hacker News,
+YouTube) in `docs/img/real-*.png` show the first look.

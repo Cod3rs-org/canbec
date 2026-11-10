@@ -1,6 +1,6 @@
 //! Cosmetic ad rules in EasyList syntax: `##sel` hides everywhere, `a.com,b.com##sel` only on
-//! those sites, `~a.com##sel` everywhere but there, `a.com#@#sel` makes an exception there. Script
-//! and extended syntaxes are skipped.
+//! those sites, `~a.com##sel` everywhere but there, `a.com#@#sel` makes an exception there,
+//! `~a.com#@#sel` one everywhere but there. Script and extended syntaxes are skipped.
 
 use crate::host_matches;
 
@@ -11,6 +11,8 @@ pub struct CosmeticRules {
     /// (sites, sites excluded, selector)
     specific: Vec<(Vec<String>, Vec<String>, String)>,
     exceptions: Vec<(Vec<String>, String)>,
+    /// (sites where the selector stays hidden, selector): allowed everywhere else.
+    exceptions_except: Vec<(Vec<String>, String)>,
 }
 
 /// What to add for one site on top of the generic selectors.
@@ -40,11 +42,18 @@ impl CosmeticRules {
             let (excluded, domains): (Vec<String>, Vec<String>) =
                 domains.split(',').filter(|d| !d.is_empty()).map(str::to_ascii_lowercase).partition(|d| d.starts_with('~'));
             let excluded: Vec<String> = excluded.into_iter().map(|d| d[1..].to_owned()).collect();
-            // ponytail: `~site.com#@#sel` (an exception everywhere but a site) is skipped.
-            if selector.is_empty() || exception && !excluded.is_empty() {
+            if selector.is_empty() {
                 continue;
             }
             let selector = selector.to_owned();
+            if exception && !excluded.is_empty() {
+                // `~a.com#@#sel`: allowed everywhere but a.com (with sites listed too: only there).
+                match domains.is_empty() {
+                    true => rules.exceptions_except.push((excluded, selector)),
+                    false => rules.exceptions.push((domains.into_iter().filter(|d| !excluded.iter().any(|x| host_matches(d, x))).collect(), selector)),
+                }
+                continue;
+            }
             match (domains.is_empty(), exception) {
                 (true, false) if !excluded.is_empty() => {
                     rules.generic.push(selector.clone());
@@ -71,7 +80,10 @@ impl CosmeticRules {
     pub fn for_host(&self, host: &str) -> SiteCosmetics {
         let on = |ds: &[String]| ds.iter().any(|d| host_matches(host, d));
         let hide = self.specific.iter().filter(|(ds, not, _)| on(ds) && !on(not)).map(|(_, _, s)| s.clone()).collect();
-        let allow = self.exceptions.iter().filter(|(ds, _)| on(ds)).map(|(_, s)| s.clone()).collect();
+        let allow = self.exceptions.iter().filter(|(ds, _)| on(ds)).map(|(_, s)| s.clone());
+        let allow_except = self.exceptions_except.iter().filter(|(not, _)| !on(not)).map(|(_, s)| s.clone());
+        let mut allow: Vec<String> = allow.chain(allow_except).collect();
+        allow.dedup();
         SiteCosmetics { hide, allow }
     }
 }

@@ -112,10 +112,15 @@ fn cosmetic_rules_parse_generic_specific_and_exceptions() {
     assert_eq!(rules.for_host("skip.example").allow, [".neg"], "~site: everywhere but there");
     assert_eq!(rules.for_host("old.news.example").hide, [".promo"], "excluded subdomain");
     assert_eq!(rules.for_host("news.example").hide, [".promo", ".nag"]);
-    assert_eq!(rules.for_host("m.news.example"), SiteCosmetics { hide: vec![".promo".into(), ".nag".into()], allow: vec![] });
-    assert_eq!(rules.for_host("shop.example").allow, [".ad-banner"]);
+    // `~x.example#@#.neg`: an exception everywhere but x.example, so .neg stays hidden only there.
+    assert_eq!(rules.for_host("m.news.example"), SiteCosmetics { hide: vec![".promo".into(), ".nag".into()], allow: vec![".neg".into()] });
+    assert!(rules.for_host("x.example").allow.is_empty(), "still hidden on the excluded site");
+    assert_eq!(rules.for_host("shop.example").allow, [".ad-banner", ".neg"]);
     assert_eq!(rules.for_host("example.org").hide, ["div:has(> .ad)"]);
-    assert_eq!(rules.for_host("other.example"), SiteCosmetics::default());
+    assert_eq!(rules.for_host("other.example"), SiteCosmetics { hide: vec![], allow: vec![".neg".into()] });
+    let listed = CosmeticRules::parse("##.ad\na.example,b.example,~b.example#@#.ad\n");
+    assert_eq!(listed.for_host("a.example").allow, [".ad"]);
+    assert!(listed.for_host("b.example").allow.is_empty(), "listed and excluded: excluded wins");
 }
 
 #[test]

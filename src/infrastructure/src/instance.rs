@@ -5,7 +5,8 @@
 //! Windows: 127.0.0.1 TCP; `<config>/instance` holds `port token`, and only callers that can read
 //! that file know the token. ponytail: a site probing localhost ports can tell a port is open on
 //! Windows; AF_UNIX via windows-sys would hide it.
-//! ponytail: two starts in the same instant can both become the running one (no lock).
+//! Two starts in the same instant: `claim` takes `<config>/instance.lock` (an OS file lock, freed
+//! even if the process crashes), so only one becomes the running canbec.
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::path::Path;
@@ -17,6 +18,37 @@ const FILE: &str = "instance.sock";
 #[cfg(windows)]
 const FILE: &str = "instance";
 const WAIT: Duration = Duration::from_secs(2);
+const LOCK: &str = "instance.lock";
+
+/// The running instance's lock, held until `release` or exit.
+static HELD: std::sync::Mutex<Option<std::fs::File>> = std::sync::Mutex::new(None);
+
+/// After `hand_over` found nobody: `true` = this process is the running canbec now. `false` =
+/// another start won the race (or is still quitting for an update) and took `url` meanwhile.
+pub fn claim(config: &Path, url: &str) -> bool {
+    let _ = std::fs::create_dir_all(config);
+    let start = std::time::Instant::now();
+    loop {
+        let file = std::fs::OpenOptions::new().create(true).truncate(false).write(true).open(config.join(LOCK));
+        match file {
+            Ok(f) if f.try_lock().is_ok() => {
+                *HELD.lock().unwrap_or_else(|e| e.into_inner()) = Some(f);
+                return true;
+            }
+            Err(_) => return true, // can't lock (read-only config?): behave as before
+            Ok(_) => {}
+        }
+        // The winner listens once its window is up; hand the URL over then.
+        if hand_over(config, url) {
+            return false;
+        }
+        if start.elapsed() > Duration::from_secs(10) {
+            eprintln!("canbec: another canbec holds the lock but doesn't answer");
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+}
 
 /// Sends `url` (empty = just come to the front) to a running canbec. `true` when one took it.
 pub fn hand_over(config: &Path, url: &str) -> bool {
@@ -81,6 +113,7 @@ pub fn listen(config: &Path, on_url: impl Fn(String) + Send + Sync + 'static) ->
 /// Stops later starts from handing over to this process (on quit, or before an update relaunch).
 pub fn release(config: &Path) {
     let _ = std::fs::remove_file(config.join(FILE));
+    HELD.lock().unwrap_or_else(|e| e.into_inner()).take(); // closing the file frees the lock
 }
 
 trait ReadWrite: Read + Write {}

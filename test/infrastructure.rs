@@ -290,3 +290,21 @@ fn a_second_start_hands_its_url_to_the_running_instance() {
     release(&dir);
     assert!(!hand_over(&dir, "https://b.example/"), "after quit (or before an update relaunch) nobody takes it");
 }
+
+#[test]
+fn two_starts_at_once_make_one_running_instance() {
+    use canbec_infrastructure::instance::{claim, listen, release};
+    let dir = temp_dir("instance-race");
+    assert!(claim(&dir, ""), "the first start becomes the running canbec");
+    // The second start finds the lock taken and waits for the first one to listen.
+    let d = dir.clone();
+    let second = std::thread::spawn(move || claim(&d, "https://late.example/"));
+    std::thread::sleep(std::time::Duration::from_millis(300));
+    let (tx, rx) = std::sync::mpsc::channel();
+    listen(&dir, move |url| tx.send(url).unwrap()).unwrap();
+    assert!(!second.join().unwrap(), "the second start hands over instead of running too");
+    assert_eq!(rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(), "https://late.example/");
+    release(&dir);
+    assert!(claim(&dir, ""), "after release (update relaunch) the next start can run");
+    release(&dir);
+}

@@ -161,7 +161,7 @@ fn main() -> wry::Result<()> {
     let dir = config_dir();
     // A link clicked elsewhere (or a second start) goes to the canbec that's already running.
     let start_url = std::env::args().nth(1).filter(|a| !a.starts_with('-')).unwrap_or_default();
-    if instance::hand_over(&dir, &start_url) {
+    if instance::hand_over(&dir, &start_url) || !instance::claim(&dir, &start_url) {
         return Ok(());
     }
     let event_loop = EventLoopBuilder::<AppEvent>::with_user_event().build();

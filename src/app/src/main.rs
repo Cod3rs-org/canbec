@@ -585,7 +585,7 @@ fn main() -> wry::Result<()> {
                     Ok(None) => service.set_ai_text_mode(AiTextMode::On, now()),
                     Err(e) => {
                         service.set_ai_text_mode(AiTextMode::Off, now());
-                        service.notify(format!("AI text model download failed: {e}"));
+                        service.notify(format!("AI text model download stopped ({e}). Turn it on again to continue where it stopped."));
                     }
                 }
                 true

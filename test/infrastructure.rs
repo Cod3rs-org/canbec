@@ -308,3 +308,57 @@ fn two_starts_at_once_make_one_running_instance() {
     assert!(claim(&dir, ""), "after release (update relaunch) the next start can run");
     release(&dir);
 }
+
+/// A one-file HTTP server for download tests: answers range requests with 206 when `ranges`,
+/// otherwise always sends everything. Returns its URL and the Range headers it saw.
+fn file_server(body: Vec<u8>, ranges: bool) -> (String, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
+    use std::io::{BufRead, BufReader, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}/file", listener.local_addr().unwrap());
+    let seen = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let log = seen.clone();
+    std::thread::spawn(move || {
+        for mut s in listener.incoming().flatten() {
+            let mut range = None;
+            for line in BufReader::new(s.try_clone().unwrap()).lines().map_while(Result::ok) {
+                if line.is_empty() {
+                    break;
+                }
+                if let Some(v) = line.strip_prefix("Range: ").or_else(|| line.strip_prefix("range: ")) {
+                    log.lock().unwrap().push(v.to_owned());
+                    range = v.strip_prefix("bytes=").and_then(|r| r.trim_end_matches('-').parse::<usize>().ok());
+                }
+            }
+            let from = range.filter(|_| ranges).unwrap_or(0);
+            let status = if from > 0 { "206 Partial Content" } else { "200 OK" };
+            let part = &body[from..];
+            let _ = write!(s, "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", part.len());
+            let _ = s.write_all(part);
+        }
+    });
+    (url, seen)
+}
+
+#[test]
+fn a_broken_model_download_continues_where_it_stopped() {
+    use canbec_infrastructure::ai_text::download;
+    const SHA: &str = "c9bc7e496b2319d2fa1e198c46ced9b9a9d1d35aebb16e7bde7060961131a5f8";
+    let body = b"canbec-".repeat(50_000);
+    let dir = temp_dir("download");
+    for ranges in [true, false] {
+        let path = dir.join(format!("model-{ranges}.bin"));
+        std::fs::write(path.with_extension("part"), &body[..123_456]).unwrap(); // an earlier try broke here
+        let (url, seen) = file_server(body.clone(), ranges);
+        let mut last = 0;
+        download(&url, &path, body.len() as u64, SHA, |got| last = got).unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), body, "ranges supported: {ranges}");
+        assert_eq!(last, body.len() as u64);
+        assert_eq!(seen.lock().unwrap().as_slice(), ["bytes=123456-"]);
+        assert!(!path.with_extension("part").exists());
+    }
+    // Wrong bytes are thrown away, so the next try starts clean.
+    let path = dir.join("bad.bin");
+    let (url, _) = file_server(b"not the model".to_vec(), true);
+    assert!(download(&url, &path, 13, SHA, |_| {}).is_err());
+    assert!(!path.exists() && !path.with_extension("part").exists());
+}

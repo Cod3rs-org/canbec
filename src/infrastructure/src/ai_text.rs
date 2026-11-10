@@ -29,45 +29,27 @@ pub fn installed(config: &Path) -> bool {
 }
 
 /// Downloads every file that's missing or doesn't match its checksum; `progress` gets the percent
-/// done as bytes arrive. On failure the folder is deleted, so nothing half-done stays behind.
-/// ponytail: no resume; a broken download starts over.
+/// done as bytes arrive. A broken download keeps its `.part` file, and trying again continues
+/// from there; `installed` only counts complete files, and `remove` clears partial ones too.
 pub fn install(config: &Path, progress: impl Fn(u8)) -> Result<(), String> {
-    let result = fetch_all(&dir(config), progress);
-    if result.is_err() {
-        remove(config);
-    }
-    result
+    fetch_all(&dir(config), progress)
 }
 
 fn fetch_all(dir: &Path, progress: impl Fn(u8)) -> Result<(), String> {
-    use std::io::Read;
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let total: u64 = FILES.iter().map(|f| f.3).sum();
     let (mut done, mut shown) = (0, 0);
-    let agent: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(std::time::Duration::from_secs(600))).build().into();
     for (name, base, sha, size) in FILES {
         let path = dir.join(name);
-        if !std::fs::read(&path).is_ok_and(|b| sha256_is(&b, sha)) {
-            let mut response = agent.get(&format!("{base}/{name}")).call().map_err(|e| format!("{name}: {e}"))?;
-            let mut reader = response.body_mut().with_config().limit(size + 1).reader();
-            let (mut bytes, mut chunk) = (Vec::with_capacity(size as usize), vec![0; 1 << 20]);
-            loop {
-                let n = reader.read(&mut chunk).map_err(|e| format!("{name}: {e}"))?;
-                if n == 0 {
-                    break;
-                }
-                bytes.extend_from_slice(&chunk[..n]);
-                let pct = ((done + bytes.len() as u64) * 100 / total) as u8;
+        if !file_is(&path, sha) {
+            download(&format!("{base}/{name}"), &path, size, sha, |got| {
+                let pct = ((done + got) * 100 / total) as u8;
                 if pct != shown {
                     shown = pct;
                     progress(pct);
                 }
-            }
-            if !sha256_is(&bytes, sha) {
-                return Err(format!("{name} doesn't match its checksum"));
-            }
-            let part = path.with_extension("part");
-            std::fs::write(&part, &bytes).and_then(|_| std::fs::rename(&part, &path)).map_err(|e| e.to_string())?;
+            })
+            .map_err(|e| format!("{name}: {e}"))?;
         }
         done += size;
     }
@@ -75,13 +57,63 @@ fn fetch_all(dir: &Path, progress: impl Fn(u8)) -> Result<(), String> {
     Ok(())
 }
 
-pub fn remove(config: &Path) {
-    let _ = std::fs::remove_dir_all(dir(config));
+/// Downloads `url` to `path` (`size` bytes, checked against `sha`), streaming to `path.part`.
+/// A `.part` left by an earlier try is continued with an HTTP range request; a server that
+/// ignores ranges sends everything again, and a part that turns out wrong is deleted.
+/// `progress` gets the bytes of this file so far.
+pub fn download(url: &str, path: &Path, size: u64, sha: &str, mut progress: impl FnMut(u64)) -> Result<(), String> {
+    use std::io::{Read, Write};
+    let part = path.with_extension("part");
+    let have = part.metadata().map(|m| m.len()).unwrap_or(0).min(size);
+    if have == size && file_is(&part, sha) {
+        return std::fs::rename(&part, path).map_err(|e| e.to_string()); // finished last time
+    }
+    let agent: ureq::Agent = ureq::Agent::config_builder().timeout_global(Some(std::time::Duration::from_secs(600))).build().into();
+    let mut request = agent.get(url);
+    if have > 0 {
+        request = request.header("Range", format!("bytes={have}-"));
+    }
+    let mut response = request.call().map_err(|e| e.to_string())?;
+    let resumed = have > 0 && response.status() == 206;
+    let mut out = std::fs::OpenOptions::new().create(true).append(resumed).write(true).truncate(!resumed).open(&part).map_err(|e| e.to_string())?;
+    let mut got = if resumed { have } else { 0 };
+    let mut reader = response.body_mut().with_config().limit(size - got + 1).reader();
+    let mut chunk = vec![0; 1 << 20];
+    loop {
+        let n = reader.read(&mut chunk).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        out.write_all(&chunk[..n]).map_err(|e| e.to_string())?;
+        got += n as u64;
+        progress(got);
+    }
+    drop(out);
+    if !file_is(&part, sha) {
+        let _ = std::fs::remove_file(&part); // wrong bytes: the next try starts clean
+        return Err("doesn't match its checksum".into());
+    }
+    std::fs::rename(&part, path).map_err(|e| e.to_string())
 }
 
-fn sha256_is(bytes: &[u8], hex: &str) -> bool {
-    let digest = ring::digest::digest(&ring::digest::SHA256, bytes);
-    digest.as_ref().iter().map(|b| format!("{b:02x}")).collect::<String>() == hex
+/// Whether the file at `path` has the SHA-256 `hex` (read in chunks, not all at once).
+fn file_is(path: &Path, hex: &str) -> bool {
+    use std::io::Read;
+    let Ok(mut f) = std::fs::File::open(path) else { return false };
+    let mut ctx = ring::digest::Context::new(&ring::digest::SHA256);
+    let mut buf = vec![0; 1 << 20];
+    loop {
+        match f.read(&mut buf) {
+            Ok(0) => break,
+            Ok(n) => ctx.update(&buf[..n]),
+            Err(_) => return false,
+        }
+    }
+    ctx.finish().as_ref().iter().map(|b| format!("{b:02x}")).collect::<String>() == hex
+}
+
+pub fn remove(config: &Path) {
+    let _ = std::fs::remove_dir_all(dir(config));
 }
 
 /// A file for the hidden page, with its MIME type: the built-in page and script, or one of

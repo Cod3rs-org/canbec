@@ -176,6 +176,7 @@ timeline
 | 44 | **Linux hand test** (X11): trackers, isolated world, persona, adult block, find, zoom, tabs, slop tag, settings all pass; fixed shortcuts that jump to the address/find bar not taking typing | ✅ | [13](docs/research/13-linux-hand-test.md) [#2](https://github.com/Cod3rs-org/canbec/issues/2) [#12](https://github.com/Cod3rs-org/canbec/issues/12) |
 | 45 | **Camera / microphone on Linux**: a prompt in the sidebar (Allow / Block), never saved; before, Linux always refused | ✅ | [13](docs/research/13-linux-hand-test.md) |
 | 46 | Two starts at the same instant make one canbec (OS file lock, freed on crash; the loser hands its link over); ad rules `~site#@#sel` (allowed everywhere but there) now apply | ✅ | |
+| 47 | The 90 MB AI text model download continues where it stopped (HTTP ranges, `.part` files) and streams to disk instead of memory | ✅ | [#25](https://github.com/Cod3rs-org/canbec/issues/25) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

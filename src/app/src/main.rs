@@ -71,9 +71,9 @@ fn now() -> u64 {
 /// The sidebar webview fills the window (its background is the frame); the website floats
 /// on top as an inset card, rounded by `round_corners` (macOS, Windows).
 /// `layout` (Settings → Appearance) decides how much room the chrome takes.
-fn bounds(window: &Window, sidebar: bool, layout: Layout) -> Rect {
+fn bounds(window: &Window, sidebar: bool, layout: Layout, peek: bool) -> Rect {
     let size = window.inner_size().to_logical::<f64>(window.scale_factor());
-    let (x, y, w, h) = if sidebar { (0.0, 0.0, size.width, size.height) } else { layout.card(size.width, size.height) };
+    let (x, y, w, h) = if sidebar { (0.0, 0.0, size.width, size.height) } else { layout.card(size.width, size.height, peek) };
     Rect { position: dpi::LogicalPosition::new(x, y).into(), size: dpi::LogicalSize::new(w.max(0.0), h.max(0.0)).into() }
 }
 
@@ -169,8 +169,8 @@ fn main() -> wry::Result<()> {
     let icon = load_icon(&dir);
     // `<config>/layout`: sidebar | compact | rail | top (Settings → Appearance).
     let mut layout = Layout::parse(&std::fs::read_to_string(dir.join("layout")).unwrap_or_default());
-    // What's on screen: the rail widens to the full sidebar while the address bar is in use.
-    let mut shown = layout;
+    // The rail widens to a full sidebar to type; the top bar drops a panel (`peek` command).
+    let mut peek = false;
     let builder = WindowBuilder::new()
         .with_window_icon(Icon::from_rgba(icon.rgba.clone(), icon.width, icon.height).ok())
         .with_title("canbec")
@@ -204,7 +204,7 @@ fn main() -> wry::Result<()> {
             .with_initialization_script(theme_script())
             .with_initialization_script(format!("window.__platform={:?};window.__version={:?};window.__layout={:?}", std::env::consts::OS, env!("CARGO_PKG_VERSION"), layout.name()))
             .with_initialization_script(icons_script(&icon.source))
-            .with_bounds(bounds(&window, true, layout))
+            .with_bounds(bounds(&window, true, layout, false))
             // The sidebar has the trusted IPC channel, so it may never load anything else.
             .with_navigation_handler(|url| url.starts_with("about:") || url.starts_with("data:"))
             .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny)
@@ -238,7 +238,7 @@ fn main() -> wry::Result<()> {
         page_world
             .iter()
             .fold(builder, |b, (script, main_only)| b.with_initialization_script_for_main_only(script.as_str(), *main_only))
-            .with_bounds(bounds(&window, false, layout))
+            .with_bounds(bounds(&window, false, layout, false))
             .with_permission_handler(permission)
             // Adult blocking can't be bypassed from the UI: every navigation is checked here.
             .with_navigation_handler(move |url| {
@@ -418,8 +418,8 @@ fn main() -> wry::Result<()> {
                 false
             }
             Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {
-                let _ = sidebar.set_bounds(bounds(&window, true, layout));
-                let _ = service.engine().view.set_bounds(bounds(&window, false, shown));
+                let _ = sidebar.set_bounds(bounds(&window, true, layout, false));
+                let _ = service.engine().view.set_bounds(bounds(&window, false, layout, peek));
                 round_corners(&service.engine().view);
                 false
             }
@@ -438,19 +438,19 @@ fn main() -> wry::Result<()> {
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"setLayout""#) => {
                 let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
                 layout = Layout::parse(msg["name"].as_str().unwrap_or_default());
-                shown = layout;
+                peek = false;
                 if let Err(e) = std::fs::create_dir_all(&dir).and_then(|_| std::fs::write(dir.join("layout"), layout.name())) {
                     eprintln!("canbec: could not save layout: {e}");
                 }
-                let _ = service.engine().view.set_bounds(bounds(&window, false, shown));
+                let _ = service.engine().view.set_bounds(bounds(&window, false, layout, peek));
                 round_corners(&service.engine().view);
                 let _ = sidebar.evaluate_script(&format!("window.canbec.setLayout({:?})", layout.name()));
                 false
             }
             Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"peek""#) => {
                 let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
-                shown = if msg["open"].as_bool() == Some(true) && layout == Layout::Rail { Layout::Sidebar } else { layout };
-                let _ = service.engine().view.set_bounds(bounds(&window, false, shown));
+                peek = msg["open"].as_bool() == Some(true);
+                let _ = service.engine().view.set_bounds(bounds(&window, false, layout, peek));
                 round_corners(&service.engine().view);
                 false
             }

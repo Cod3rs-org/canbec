@@ -42,5 +42,7 @@ navigating, on picking a tab, or when focus goes back to the page.
 Settings stay a full-window page in every layout: the chrome webview always spans the window,
 and the card is hidden while settings are open.
 
-ponytail: the top bar hides the site card, archive and recently closed (Cmd/Ctrl+Shift+T still
-reopens). A dropdown for them needs the card to step aside like `peek` does; add it if missed.
+The top bar has a **▾ panel** (also `peek`): the card steps right by 312 px and the site card,
+pinned sites, tab meter, profile switch, archive and recently closed drop down under the strip.
+They are the same elements, moved into the panel while the layout is Top bar (`placeDrop`), so
+there is one copy of each to keep working. Escape, picking a tab or clicking the page folds it.

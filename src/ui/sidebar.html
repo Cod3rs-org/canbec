@@ -161,7 +161,12 @@ kbd{font:12px ui-monospace,monospace;background:var(--bg);border:1px solid var(-
 .lay .win{position:relative;height:64px;border-radius:6px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
 .lay .win i{position:absolute;border-radius:3px;background:var(--acc);opacity:.18}
 .lay .win u{position:absolute;border-radius:3px;background:var(--card);border:1px solid var(--line)}
-#srch{display:none}
+#srch,#more,#drop{display:none}
+/* Top bar panel: the sidebar's other parts move in here (placeDrop) and drop down on ▾. */
+body.l-top.peek:not(.settings) #drop{display:block;position:fixed;top:48px;left:0;bottom:0;width:312px;overflow-y:auto;padding:4px 4px 12px 10px;z-index:2}
+#drop #site{margin:0 0 8px}#drop #ess{padding:0 0 10px}#drop #tabhead{padding:2px 4px 0}#drop #meter{margin:5px 4px 8px}#drop #wsd{flex:none;margin:6px 0 2px}
+body.l-top:not(.settings) #more{display:inline-flex}
+body.l-top.peek #more{color:var(--acc);background:var(--hov)}body.l-top.peek #more svg{transform:rotate(180deg)}
 /* Compact: same sidebar, 240 px. */
 body.l-compact{width:240px}
 body.l-compact #ess{grid-template-columns:repeat(3,1fr)}
@@ -193,7 +198,7 @@ body.l-rail:not(.peek) #top.winctl{flex-direction:column;align-items:center;heig
 body.l-top:not(.settings){width:100%;height:48px;flex-direction:row;align-items:center;gap:6px;padding:0 8px}
 body.l-top:not(.settings) #top{position:absolute;inset:0 0 auto 0;height:48px;z-index:0;padding-top:0;align-items:center}
 body.l-top:not(.settings)>:not(#top){position:relative;z-index:1}
-body.l-top:not(.settings) :is(#site,#ess,#tabhead,#meter,#hint,#arch,#clo,#wsd){display:none}
+body.l-top:not(.settings) #hint{display:none}
 body.l-top:not(.settings) #nav{margin:0;padding:0}
 body.l-top:not(.settings) #nav .sp{display:none}
 body.l-top:not(.settings) :is(#bar,#findbar){flex:0 1 380px;min-width:160px;margin:0;height:32px}
@@ -290,7 +295,9 @@ body.l-top:not(.settings):has(#top.winctl){padding-right:104px}
   <div class="sec"><div class="st" id="ver"></div><p id="upst"></p><div class="btns"><button class="btn pri" id="upi" hidden>Install update</button><button class="lnk" data-go="https://github.com/Cod3rs-org/canbec/releases">What's new</button><button class="lnk" data-go="https://github.com/Cod3rs-org/canbec/issues">Report a problem</button><button class="lnk" data-go="https://github.com/Cod3rs-org/canbec">Source code</button></div></div></section>
  </div>
 </div>
+<div id="drop" role="region" aria-label="Site, pinned sites, archive and profiles"></div>
 <div id="foot">
+ <button class="ib" id="more" aria-label="Site, archive and profiles" aria-expanded="false" title="Site, archive and profiles"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
  <div id="wsd" role="group" aria-label="Workspaces"></div>
  <button class="ib" id="gear" aria-label="Settings" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </div>
@@ -484,7 +491,7 @@ $("simp").onclick=function(){$("sfile").click()};
 $("sfile").onchange=function(){var f=this.files[0];this.value="";if(!f||f.size>2e6)return;var r=new FileReader();r.onload=function(){send({type:"importSlop",text:String(r.result)})};r.readAsText(f)};
 var baseRender=render;render=function(s){baseRender(s);if(document.body.classList.contains("settings"))renderSettings()};
 // Find in page: Enter = next, Shift+Enter = previous, Esc closes.
-function openFind(){peek(true);$("findbar").hidden=false;$("fq").focus();$("fq").select()}
+function openFind(){if(window.__layout==="rail")peek(true);$("findbar").hidden=false;$("fq").focus();$("fq").select()}
 function find(back){var t=$("fq").value;if(t)send({type:"find",text:t,backwards:!!back})}
 $("findbar").onsubmit=function(e){e.preventDefault()};
 $("fq").onkeydown=function(e){if(e.key==="Enter"){e.preventDefault();find(e.shiftKey)}else if(e.key==="Escape"){$("findbar").hidden=true;peek(false)}};
@@ -494,11 +501,16 @@ $("fx").onclick=function(){$("findbar").hidden=true;peek(false)};
 var LAYS=[["sidebar","Sidebar","Everything at hand",[[0,0,30,100]],[34,6,62,88]],["compact","Compact","A narrower sidebar",[[0,0,22,100]],[26,6,70,88]],
  ["rail","Rail","Icons only, 64 px",[[0,0,9,100]],[13,6,83,88]],["top","Top bar","One slim strip on top",[[0,0,100,14]],[4,20,92,74]]];
 function pct(r){return"left:"+r[0]+"%;top:"+r[1]+"%;width:"+r[2]+"%;height:"+r[3]+"%"}
-function setLayout(n){window.__layout=n;document.body.className=document.body.className.replace(/\bl-\w+/g,"").trim();document.body.classList.add("l-"+(n||"sidebar"));peek(false);
+function setLayout(n){window.__layout=n;document.body.className=document.body.className.replace(/\bl-\w+/g,"").trim();document.body.classList.add("l-"+(n||"sidebar"));peek(false);placeDrop(n==="top");
  $("lays").innerHTML=LAYS.map(function(l){return'<button class="lay'+(l[0]===(n||"sidebar")?" act":"")+'" data-lay="'+l[0]+'" aria-pressed="'+(l[0]===(n||"sidebar"))+'"><span class="win">'+l[3].map(function(r){return'<i style="'+pct(r)+'"></i>'}).join("")+'<u style="'+pct(l[4])+'"></u></span><b>'+l[1]+"</b>"+l[2]+"</button>"}).join("")}
 $("lays").onclick=function(e){var b=e.target.closest("[data-lay]");if(b){setLayout(b.dataset.lay);send({type:"setLayout",name:b.dataset.lay})}};
 var peeking=false;
-function peek(on){if(on&&window.__layout!=="rail")on=false;if(on===peeking)return;peeking=on;document.body.classList.toggle("peek",on);send({type:"peek",open:on})}
+function peek(on){if(on&&window.__layout!=="rail"&&window.__layout!=="top")on=false;if(on===peeking)return;peeking=on;document.body.classList.toggle("peek",on);$("more").setAttribute("aria-expanded",on);send({type:"peek",open:on})}
+// Top bar: these parts live in the drop-down panel; other layouts put them back where they were.
+var DROP=["site","ess","tabhead","meter","wsd","arch","clo"].map(function(id){var e=$(id);return{e:e,parent:e.parentNode,next:e.nextSibling}});
+function placeDrop(top){if(top)DROP.forEach(function(d){$("drop").appendChild(d.e)});else DROP.slice().reverse().forEach(function(d){d.parent.insertBefore(d.e,d.next)})}
+$("more").onclick=function(){peek(!peeking)};
+addEventListener("keydown",function(e){if(e.key==="Escape"&&peeking&&!document.body.classList.contains("settings"))peek(false)});
 $("srch").onclick=function(){window.canbec.focusUrl()};
 addEventListener("blur",function(){peek(false)});
 $("url").addEventListener("keydown",function(e){if(e.key==="Escape"){$("url").blur();peek(false)}});
@@ -507,7 +519,7 @@ $("tabs").addEventListener("click",function(){peek(false)});
 setLayout(window.__layout||"sidebar");
 if((window.__platform||"macos")==="macos")document.body.classList.add("mac");
 window.canbec={render:render,setLayout:setLayout,setIcon:function(n){window.__icon=n;renderSettings()},setDefaultBrowser:function(v){window.__defaultBrowser=v;if(document.body.classList.contains("settings"))renderSettings()},toggleSettings:toggleSettings,closeSettings:function(){if(document.body.classList.contains("settings"))setSettings(false)},find:openFind,
- focusUrl:function(){peek(true);$("url").focus();$("url").select()}};
+ focusUrl:function(){if(window.__layout==="rail")peek(true);$("url").focus();$("url").select()}};
 // Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,
  k=e.key.length===1?e.key.toLowerCase():e.key,a,inSet=document.body.classList.contains("settings");

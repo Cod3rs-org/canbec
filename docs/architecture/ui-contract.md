@@ -60,7 +60,7 @@ App-level messages, handled in `src/app` (not browser state):
 | `window` | `action`: `drag` \| `minimize` \| `maximize` \| `close` | Own window buttons (Windows / Linux) |
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
 | `setLayout` | `name`: `sidebar` \| `compact` \| `rail` \| `top` | Saves `<config>/layout` and moves the website card (`domain::layout`); the app answers with `window.canbec.setLayout(name)`. The start value comes as `window.__layout` |
-| `peek` | `open` | Rail layout only: while `open`, the card makes room for the full sidebar (address bar, find) |
+| `peek` | `open` | While `open`, the card makes room: the rail widens to the full sidebar (address bar, find), the top bar drops its panel (site status, pinned sites, archive, recently closed, profiles). No effect in the other layouts |
 | `openConfig` | | Shows the config folder in the file manager |
 | `openDownloads` | | Shows the Downloads folder in the file manager |
 | `makeDefaultBrowser` | | Registers canbec as a browser and asks the OS to make it the default (macOS confirms, Windows opens Default apps, Linux runs `xdg-settings`); the app pushes `window.canbec.setDefaultBrowser(bool \| null)` when settings open and when the window gets focus while they're open |

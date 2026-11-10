@@ -44,9 +44,19 @@ impl Layout {
         }
     }
 
+    /// Where the card goes while the chrome "peeks" open: the rail widens to a full sidebar to
+    /// type an address, the top bar drops a 312 px panel (site, archive, closed tabs, profiles).
+    pub fn peek_inset(self) -> (f64, f64) {
+        match self {
+            Layout::Rail => Layout::Sidebar.inset(),
+            Layout::Top => (312.0, 48.0),
+            other => other.inset(),
+        }
+    }
+
     /// The website card's (x, y, width, height) in a window of `width` × `height`.
-    pub fn card(self, width: f64, height: f64) -> (f64, f64, f64, f64) {
-        let (x, y) = self.inset();
+    pub fn card(self, width: f64, height: f64, peek: bool) -> (f64, f64, f64, f64) {
+        let (x, y) = if peek { self.peek_inset() } else { self.inset() };
         (x, y, (width - x - CARD_GAP).max(0.0), (height - y - CARD_GAP).max(0.0))
     }
 }

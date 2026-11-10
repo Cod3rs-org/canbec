@@ -355,18 +355,28 @@ mod layout {
     #[test]
     fn smaller_chrome_leaves_more_room_for_the_page() {
         let area = |l: Layout| {
-            let (_, _, w, h) = l.card(1400.0, 900.0);
+            let (_, _, w, h) = l.card(1400.0, 900.0, false);
             w * h
         };
         assert!(area(Layout::Compact) > area(Layout::Sidebar));
         assert!(area(Layout::Rail) > area(Layout::Compact));
         assert!(area(Layout::Top) > area(Layout::Compact));
-        assert_eq!(Layout::Top.card(1400.0, 900.0), (CARD_GAP, 48.0, 1400.0 - 2.0 * CARD_GAP, 900.0 - 48.0 - CARD_GAP));
+        assert_eq!(Layout::Top.card(1400.0, 900.0, false), (CARD_GAP, 48.0, 1400.0 - 2.0 * CARD_GAP, 900.0 - 48.0 - CARD_GAP));
+    }
+
+    #[test]
+    fn peeking_makes_room_only_where_the_chrome_is_small() {
+        assert_eq!(Layout::Rail.card(1400.0, 900.0, true), Layout::Sidebar.card(1400.0, 900.0, false));
+        let (x, y, _, _) = Layout::Top.card(1400.0, 900.0, true);
+        assert_eq!((x, y), (312.0, 48.0));
+        for l in [Layout::Sidebar, Layout::Compact] {
+            assert_eq!(l.card(1400.0, 900.0, true), l.card(1400.0, 900.0, false));
+        }
     }
 
     #[test]
     fn a_tiny_window_never_gets_a_negative_card() {
-        let (_, _, w, h) = Layout::Sidebar.card(100.0, 4.0);
+        let (_, _, w, h) = Layout::Sidebar.card(100.0, 4.0, false);
         assert_eq!((w, h), (0.0, 0.0));
     }
 }

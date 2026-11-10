@@ -15,12 +15,12 @@ pre{background:#f3f3f3;padding:10px;border-radius:8px;font-size:11px;white-space
 function st(n){
  var tabs=[["Example Domain","https://example.org/"],["Hacker News","https://news.ycombinator.com/"],["GitHub - canbec","https://github.com/canbec"],["10 AI tips that will change your life","https://aislop.example/tips"],["Rust docs","https://doc.rust-lang.org/"],["Wikipedia","https://wikipedia.org/"]];
  var a=[];for(var i=0;i<n;i++){var t=tabs[i]||["Extra tab "+(i+1),"https://example.com/"+i];a.push({id:i+1,title:t[0],url:t[1],active:i==0,slop:i==3})}
- return{current:{url:"https://example.org/",title:"Example Domain",slop:false,loading:false,canGoBack:true,canGoForward:false,adsHidden:3},
+ return{current:{url:"https://example.org/",title:"Example Domain",slop:false,loading:false,canGoBack:true,canGoForward:false,adsHidden:3,aiImages:2,aiText:84},
  tabs:a,tabLimit:20,
  archive:[{folder:"GitHub",tabs:[{id:101,title:"Issue #42: fix tabs",url:"https://github.com/x/y/issues/42",idleDays:4},{id:102,title:"Pull request: sidebar",url:"https://github.com/x/y/pull/7",idleDays:6}]},{folder:"Docs",tabs:[{id:103,title:"MDN: details element",url:"https://developer.mozilla.org/",idleDays:3}]}],
  essentials:[{title:"Mail",url:"https://mail.example/"},{title:"Calendar",url:"https://cal.example/"},{title:"Notes",url:"https://notes.example/"}],
  workspaces:[{id:"personal",name:"Personal",color:"#ff7a45",active:true},{id:"work",name:"Work",color:"#4a90d9",active:false},{id:"read",name:"Reading",color:"#5bb974",active:false}],
- feedLock:{locked:true,unlockedUntil:null}}}
+ feedLock:{locked:true,unlockedUntil:null},slopCount:12,sharedSlopCount:340,stayLoggedIn:["github.com"],extensions:["Dark Reader"],aiText:{state:"on"},closed:[{id:201,title:"Old search",url:"https://noai.duckduckgo.com/",idleDays:1}]}}
 var cur=6,f=document.getElementById("f"),log=[];
 function go(n){cur=n;f.contentWindow.postMessage({canbecState:st(n)},"*")}
 addEventListener("message",function(e){var d=e.data||{};if(d.canbecReady)go(cur);

@@ -9,6 +9,7 @@ pub mod feed_lock;
 pub mod match_pattern;
 pub mod persona;
 pub mod first_seen;
+pub mod layout;
 pub mod privacy;
 pub mod profiles;
 pub mod slop;

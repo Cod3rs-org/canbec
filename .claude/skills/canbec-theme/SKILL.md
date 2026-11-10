@@ -18,11 +18,12 @@ Config folder: `~/Library/Application Support/canbec` (macOS), `~/.config/canbec
 | `--bg` | window frame and sidebar background |
 | `--fg` | main text and icons |
 | `--mut` | secondary text, section titles |
-| `--card` | chips, address bar, essentials tiles, settings boxes (usually `--fg` at 6–7% alpha) |
+| `--card` | cards: site status, address bar, essentials, settings boxes and overview tiles (an opaque surface or `--fg` at 6–7% alpha; cards also get a `--line` border) |
 | `--hov` | hover background (usually `--fg` at 9–11% alpha) |
 | `--act` | active tab, focused address bar, buttons |
 | `--line` | thin separators |
-| `--acc` | accent: slop shield, focus ring, links, warnings |
+| `--acc` | accent: active tab border, focus ring, links, primary buttons, essentials |
+| `--ok` | green status dots and the tab-budget meter (optional, defaults to green) |
 | `--amber` / `--red` | tab counter near / at the 20-tab limit, error notices |
 | `--sh` | shadow under the active tab and buttons |
 

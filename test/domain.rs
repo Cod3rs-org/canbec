@@ -338,3 +338,35 @@ fn ai_text_hints_need_a_high_score() {
     assert_eq!(hint(f64::NAN), None);
     assert_eq!(hint(1.5), None);
 }
+
+mod layout {
+    use canbec_domain::layout::{Layout, CARD_GAP};
+
+    #[test]
+    fn unknown_or_empty_names_fall_back_to_the_sidebar() {
+        assert_eq!(Layout::parse(""), Layout::Sidebar);
+        assert_eq!(Layout::parse("huge"), Layout::Sidebar);
+        assert_eq!(Layout::parse("top\n"), Layout::Top);
+        for l in Layout::ALL {
+            assert_eq!(Layout::parse(l.name()), l);
+        }
+    }
+
+    #[test]
+    fn smaller_chrome_leaves_more_room_for_the_page() {
+        let area = |l: Layout| {
+            let (_, _, w, h) = l.card(1400.0, 900.0);
+            w * h
+        };
+        assert!(area(Layout::Compact) > area(Layout::Sidebar));
+        assert!(area(Layout::Rail) > area(Layout::Compact));
+        assert!(area(Layout::Top) > area(Layout::Compact));
+        assert_eq!(Layout::Top.card(1400.0, 900.0), (CARD_GAP, 48.0, 1400.0 - 2.0 * CARD_GAP, 900.0 - 48.0 - CARD_GAP));
+    }
+
+    #[test]
+    fn a_tiny_window_never_gets_a_negative_card() {
+        let (_, _, w, h) = Layout::Sidebar.card(100.0, 4.0);
+        assert_eq!((w, h), (0.0, 0.0));
+    }
+}

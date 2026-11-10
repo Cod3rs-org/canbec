@@ -59,6 +59,8 @@ App-level messages, handled in `src/app` (not browser state):
 |---|---|---|
 | `window` | `action`: `drag` \| `minimize` \| `maximize` \| `close` | Own window buttons (Windows / Linux) |
 | `setIcon` | `name` (a built-in icon) | Saves `<config>/icon` and swaps the icon live; the app answers with `window.canbec.setIcon(name)` |
+| `setLayout` | `name`: `sidebar` \| `compact` \| `rail` \| `top` | Saves `<config>/layout` and moves the website card (`domain::layout`); the app answers with `window.canbec.setLayout(name)`. The start value comes as `window.__layout` |
+| `peek` | `open` | Rail layout only: while `open`, the card makes room for the full sidebar (address bar, find) |
 | `openConfig` | | Shows the config folder in the file manager |
 | `openDownloads` | | Shows the Downloads folder in the file manager |
 | `makeDefaultBrowser` | | Registers canbec as a browser and asks the OS to make it the default (macOS confirms, Windows opens Default apps, Linux runs `xdg-settings`); the app pushes `window.canbec.setDefaultBrowser(bool \| null)` when settings open and when the window gets focus while they're open |
@@ -74,8 +76,8 @@ App-level messages, handled in `src/app` (not browser state):
 The settings page is part of the sidebar webview, which spans the window: the gear (or Cmd/Ctrl+,)
 opens it full-window with a category menu and a search box; Done, Esc, any browser shortcut or a
 link that navigates closes it. The app also injects
-`window.__platform`, `window.__version`, `window.__icons` (built-in icons with previews) and
-`window.__icon` (the active one).
+`window.__platform`, `window.__version`, `window.__icons` (built-in icons with previews),
+`window.__icon` (the active one) and `window.__layout` (sidebar, compact, rail or top).
 
 ## Rules
 

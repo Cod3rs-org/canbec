@@ -129,6 +129,8 @@ dependencies = [
  "canbec-domain",
  "canbec-infrastructure",
  "embed-resource",
+ "gdkx11",
+ "gtk",
  "objc2",
  "objc2-app-kit",
  "objc2-foundation",
@@ -142,6 +144,7 @@ dependencies = [
  "windows-core",
  "windows-sys 0.61.2",
  "wry",
+ "x11-dl",
 ]
 
 [[package]]

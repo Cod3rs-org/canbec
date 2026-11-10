@@ -28,6 +28,11 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphic
 # Tracker blocking on Linux: WebKitGTK's content-filter store (same crate and version wry uses).
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
+# Rounded website card: shape the WebKit widget's window (already in the tree through wry).
+gtk = "0.18"
+# ...and wry's black X11 container window around it, via XFixes (also already in the tree).
+gdkx11 = "0.18"
+x11-dl = "2.21"
 
 # Rounded content card + Dock icon on macOS (same objc2 crates wry already uses).
 [target.'cfg(target_os = "macos")'.dependencies]

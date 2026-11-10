@@ -46,3 +46,15 @@ The top bar has a **▾ panel** (also `peek`): the card steps right by 312 px an
 pinned sites, tab meter, profile switch, archive and recently closed drop down under the strip.
 They are the same elements, moved into the panel while the layout is Top bar (`placeDrop`), so
 there is one copy of each to keep working. Escape, picking a tab or clicking the page folds it.
+
+## Rounded card on Linux (#15)
+
+GTK3 can't clip a WebKit widget with CSS, and shaping the widget alone left **black corners**:
+on X11 wry puts each child webview in its own `XCreateSimpleWindow` container (background pixel
+0) wrapped as a *foreign* GDK window, and GDK ignores shape requests on foreign windows. So
+`round_corners` shapes both: the WebKit widget through GTK, the container through XFixes
+(`XFixesSetWindowShapeRegion`, x11-dl + gdkx11 are already in the tree through wry and tao). It
+runs again on every size change. Checked in the real app under Xvfb, sidebar and top bar layouts.
+
+ponytail: one-pixel rows, not anti-aliased (same as Windows). Wayland isn't covered: there wry
+uses a GtkFixed without a container window; shaping the widget should be enough, not tested.

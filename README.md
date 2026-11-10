@@ -170,6 +170,7 @@ timeline
 | 39 | **One canbec at a time** (a second start hands its link to the running one) and **default browser** on macOS, Windows and Linux; Linux benchmarks on a CI VM | ✅ / 🧪 | [11](docs/research/11-settings.md) [#17](https://github.com/Cod3rs-org/canbec/issues/17) |
 | 40 | **UniFi-style look**: grey frame, bordered cards, blue accent; site status card, segmented tab-budget meter, profile switch, settings overview grid with menu icons | ✅ | [12](docs/research/12-unifi-look.md) |
 | 41 | **Layouts**: Sidebar, Compact, icon Rail (peeks open to type) or a slim Top bar with a ▾ panel for site status, archive and profiles, so the page gets more of the window | ✅ | [12](docs/research/12-unifi-look.md) |
+| 42 | **Rounded website card on Linux** (X11): the WebKit widget and wry's container X window get a rounded shape (XFixes), like the Windows GDI region | ✅ | [#15](https://github.com/Cod3rs-org/canbec/issues/15) [12](docs/research/12-unifi-look.md) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

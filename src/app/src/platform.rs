@@ -6,7 +6,7 @@ use canbec_infrastructure::icon::AppIcon;
 use wry::WebViewBuilder;
 
 /// Corner radius of the website card.
-#[cfg_attr(not(any(target_os = "macos", windows)), allow(dead_code))]
+#[cfg_attr(not(any(target_os = "macos", windows, target_os = "linux")), allow(dead_code))]
 const CARD_RADIUS: f64 = 12.0;
 
 /// macOS ignores window icons; the Dock icon is set on the application instead.
@@ -487,8 +487,7 @@ pub fn round_corners(view: &wry::WebView) {
 }
 
 /// Windows: clips wry's container window (sized to the card) to a rounded region. Called again
-/// on every resize. ponytail: GDI regions aren't anti-aliased; Linux stays square (GTK3 can't
-/// clip a WebKit widget to rounded corners).
+/// on every resize. ponytail: GDI regions aren't anti-aliased (Linux: same, see below).
 #[cfg(windows)]
 pub fn round_corners(view: &wry::WebView) {
     use windows_sys::Win32::Foundation::{HWND, RECT};
@@ -514,7 +513,70 @@ pub fn round_corners(view: &wry::WebView) {
     }
 }
 
-#[cfg(not(any(target_os = "macos", windows)))]
+/// Linux: shapes the WebKit widget's own GDK window to a rounded rectangle, again on every size
+/// change (hooked once). ponytail: a shape is pixel-exact, not anti-aliased, like Windows' GDI
+/// region; a smooth edge needs GTK4's rounded clipping.
+#[cfg(target_os = "linux")]
+pub fn round_corners(view: &wry::WebView) {
+    use gtk::prelude::*;
+    use wry::WebViewExtUnix;
+    const HOOKED: &str = "canbec-rounded";
+    let webview = view.webview();
+    let widget = webview.upcast_ref::<gtk::Widget>();
+    // SAFETY: the key is only ever set to `bool` here.
+    if unsafe { widget.data::<bool>(HOOKED) }.is_some() {
+        return;
+    }
+    unsafe { widget.set_data(HOOKED, true) };
+    widget.connect_size_allocate(|w, a| shape(w, a.width(), a.height()));
+    let a = widget.allocation();
+    shape(widget, a.width(), a.height());
+}
+
+/// Applies the rounded shape to the webview and to the X window wry wraps it in (on X11 each
+/// child webview sits in its own embedded GtkWindow, which would show black in the corners).
+#[cfg(target_os = "linux")]
+fn shape(widget: &gtk::Widget, w: i32, h: i32) {
+    use gtk::prelude::*;
+    let region = rounded_region(w, h, CARD_RADIUS as i32);
+    widget.shape_combine_region(Some(&region));
+    // wry's container is an X window GDK only wraps, so GDK won't shape it: ask X directly.
+    let Some(outer) = widget.toplevel().filter(|t| t != widget).and_then(|t| t.window()) else { return };
+    let Ok(display) = outer.display().downcast::<gdkx11::X11Display>() else { return };
+    let Ok(outer) = outer.downcast::<gdkx11::X11Window>() else { return };
+    let Ok(xfixes) = x11_dl::xfixes::Xlib::open() else { return };
+    let s = widget.scale_factor();
+    let scaled = if s == 1 { region } else { rounded_region(w * s, h * s, CARD_RADIUS as i32 * s) };
+    let mut rects: Vec<x11_dl::xlib::XRectangle> = (0..scaled.num_rectangles())
+        .map(|i| scaled.rectangle(i))
+        .map(|r| x11_dl::xlib::XRectangle { x: r.x() as i16, y: r.y() as i16, width: r.width() as u16, height: r.height() as u16 })
+        .collect();
+    // SAFETY: GDK's own Xlib display and a live window; the region is freed right after use.
+    unsafe {
+        let dpy = gdkx11::ffi::gdk_x11_display_get_xdisplay(display.as_ptr()) as *mut x11_dl::xlib::Display;
+        let xregion = (xfixes.XFixesCreateRegion)(dpy, rects.as_mut_ptr(), rects.len() as i32);
+        (xfixes.XFixesSetWindowShapeRegion)(dpy, outer.xid(), 0 /* ShapeBounding */, 0, 0, xregion);
+        (xfixes.XFixesDestroyRegion)(dpy, xregion);
+    }
+}
+
+/// A `w` × `h` rectangle with `radius` corners, as one-pixel rows where the corners curve.
+#[cfg(target_os = "linux")]
+fn rounded_region(w: i32, h: i32, radius: i32) -> gtk::cairo::Region {
+    use gtk::cairo::{RectangleInt, Region};
+    let r = radius.min(w / 2).min(h / 2).max(0);
+    let region = Region::create_rectangle(&RectangleInt::new(0, r, w, (h - 2 * r).max(0)));
+    for y in 0..r {
+        let dy = r as f64 - y as f64 - 0.5;
+        let dx = (r as f64 - (r as f64 * r as f64 - dy * dy).max(0.0).sqrt()).round() as i32;
+        for row in [y, h - 1 - y] {
+            let _ = region.union_rectangle(&RectangleInt::new(dx, row, w - 2 * dx, 1));
+        }
+    }
+    region
+}
+
+#[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
 pub fn round_corners(_view: &wry::WebView) {}
 
 /// macOS: whether canbec opens http(s) links from other apps. `None` outside the app bundle (a

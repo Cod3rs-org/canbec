@@ -30,7 +30,8 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphic
 webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 # Rounded website card: shape the WebKit widget's window (already in the tree through wry).
 gtk = "0.18"
-# ...and wry's black X11 container window around it, via XFixes (also already in the tree).
+# ...and wry's black X11 container window around it via XFixes, plus X keyboard focus for
+# shortcuts that jump to the sidebar (both crates already in the tree through wry and tao).
 gdkx11 = "0.18"
 x11-dl = "2.21"
 

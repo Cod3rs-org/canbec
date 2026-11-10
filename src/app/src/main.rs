@@ -150,7 +150,7 @@ fn open_folder(dir: &std::path::Path) {
 mod mcp;
 mod platform;
 
-use platform::{block_trackers, browser_args, evaluate_in_world, is_default_browser, isolate, make_default_browser, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
+use platform::{block_trackers, browser_args, evaluate_in_world, focus, is_default_browser, isolate, make_default_browser, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
 
 fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
@@ -477,7 +477,7 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(AppEvent::Key(key)) => {
                 if let Some(call) = canbec_application::ui::key_sidebar_call(&key) {
-                    let _ = sidebar.focus();
+                    focus(&sidebar);
                     let _ = sidebar.evaluate_script(&format!("window.canbec.{call}()"));
                 }
                 let cmd = canbec_application::ui::key_command(&key, &service.state(now()));

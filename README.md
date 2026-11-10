@@ -173,6 +173,7 @@ timeline
 | 41 | **Layouts**: Sidebar, Compact, icon Rail (peeks open to type) or a slim Top bar with a ▾ panel for site status, archive and profiles, so the page gets more of the window | ✅ | [12](docs/research/12-unifi-look.md) |
 | 42 | **Rounded website card on Linux** (X11): the WebKit widget and wry's container X window get a rounded shape (XFixes), like the Windows GDI region | ✅ | [#15](https://github.com/Cod3rs-org/canbec/issues/15) [12](docs/research/12-unifi-look.md) |
 | 43 | **Servo window** (`canbec-servo --window`): the same sidebar, layouts, settings and core on Servo, with mouse, keyboard, scrolling and sidebar ↔ core messages; shortcuts now shared between engines | 🧪 | [05](docs/research/05-engine-bakeoff.md) [#32](https://github.com/Cod3rs-org/canbec/issues/32) |
+| 44 | **Linux hand test** (X11): trackers, isolated world, persona, adult block, find, zoom, tabs, slop tag, settings all pass; fixed shortcuts that jump to the address/find bar not taking typing | ✅ | [13](docs/research/13-linux-hand-test.md) [#2](https://github.com/Cod3rs-org/canbec/issues/2) [#12](https://github.com/Cod3rs-org/canbec/issues/12) |
 
 📚 **All docs:** [docs/README.md](docs/README.md) · 🗺️ **What's next:** [ROADMAP](docs/ROADMAP.md) / [issues](https://github.com/Cod3rs-org/canbec/issues)
 

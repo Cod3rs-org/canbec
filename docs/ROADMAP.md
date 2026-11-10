@@ -11,7 +11,7 @@ Downloadable, works on macOS end to end, Windows and Linux verified by hand.
 | # | Issue | Area | Done |
 |--:|---|---|:-:|
 | [#1](https://github.com/Cod3rs-org/canbec/issues/1) | Publish v0.1.0 release | release | ✅ |
-| [#2](https://github.com/Cod3rs-org/canbec/issues/2) | Test Windows and Linux by hand | release, windows, linux | |
+| [#2](https://github.com/Cod3rs-org/canbec/issues/2) | Test Windows and Linux by hand | release, windows, linux | Linux ✅ ([13](research/13-linux-hand-test.md)), Windows open |
 | [#3](https://github.com/Cod3rs-org/canbec/issues/3) | Sign and notarize the macOS app | release, macos | |
 | [#4](https://github.com/Cod3rs-org/canbec/issues/4) | Windows: icon in the .exe (and maybe an installer) | release, windows | ✅ |
 | [#5](https://github.com/Cod3rs-org/canbec/issues/5) | Publish the GitHub wiki | documentation | |
@@ -29,7 +29,7 @@ Windows and Linux get everything macOS has (tracker blocking, rounded card, DNS 
 
 | # | Issue | Area | Done |
 |--:|---|---|:-:|
-| [#12](https://github.com/Cod3rs-org/canbec/issues/12) | Tracker blocking on Linux (WebKitGTK) | privacy, linux | 🧪 |
+| [#12](https://github.com/Cod3rs-org/canbec/issues/12) | Tracker blocking on Linux (WebKitGTK) | privacy, linux | ✅ (tested, [13](research/13-linux-hand-test.md)) |
 | [#13](https://github.com/Cod3rs-org/canbec/issues/13) | Tracker blocking on Windows (WebView2) | privacy, windows | 🧪 |
 | [#14](https://github.com/Cod3rs-org/canbec/issues/14) | Block third-party cookies within a session on Windows | privacy, windows | 🧪 |
 | [#15](https://github.com/Cod3rs-org/canbec/issues/15) | Rounded content card on Windows and Linux | ui, windows, linux | 🧪 Windows; ✅ Linux X11 (seen under Xvfb) |
@@ -37,10 +37,10 @@ Windows and Linux get everything macOS has (tracker blocking, rounded card, DNS 
 | [#17](https://github.com/Cod3rs-org/canbec/issues/17) | Benchmarks on Windows and Linux | release | ✅ Linux on a CI VM |
 | [#18](https://github.com/Cod3rs-org/canbec/issues/18) | Encrypt the saved logins with the OS keychain | privacy | ✅ |
 | [#19](https://github.com/Cod3rs-org/canbec/issues/19) | Stay-logged-in sites: keep localStorage/IndexedDB too | privacy | ✅ |
-| [#20](https://github.com/Cod3rs-org/canbec/issues/20) | Content scripts in an isolated world | privacy, blocking | 🧪 |
+| [#20](https://github.com/Cod3rs-org/canbec/issues/20) | Content scripts in an isolated world | privacy, blocking | 🧪 macOS; ✅ Linux tested |
 | [#21](https://github.com/Cod3rs-org/canbec/issues/21) | EasyPrivacy path rules and site exceptions | blocking | ✅ |
 | [#22](https://github.com/Cod3rs-org/canbec/issues/22) | More feed-lock sites and a user list | blocking | ✅ |
-| [#34](https://github.com/Cod3rs-org/canbec/issues/34) | Fake device persona: common hardware, never the real values | privacy, windows, linux, macos | 🧪 |
+| [#34](https://github.com/Cod3rs-org/canbec/issues/34) | Fake device persona: common hardware, never the real values | privacy, windows, linux, macos | 🧪; ✅ Linux tested |
 
 ## v0.3 · the human web
 

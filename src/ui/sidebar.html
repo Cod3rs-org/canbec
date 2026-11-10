@@ -435,16 +435,17 @@ function renderSettings(){
 // The same map as the key handler below (and scripts/content.js).
 var KEYS=[["New tab","T"],["Close tab","W"],["Reopen closed tab","T",1],["Address bar","L"],["Reload","R"],["Back / forward","[ ]"],["Find in page","F"],["Pin this page","D"],["Zoom in / out / reset","= - 0"],["Settings",","]];
 // Overview: one tile per area with a status dot, like UniFi's Site Manager. Click → that section.
+function pl(n,w){return n+" "+w+(n===1?"":"s")}
 function bar(n,k){var b="";for(var i=0;i<n;i++)b+='<i class="'+(k[i]||"")+'"></i>';return'<div class="tb">'+b+"</div>"}
 function renderOverview(s,f,ai,dns,kept){
  var n=(s.tabs||[]).length,lim=s.tabLimit||20,w=(s.workspaces||[]).filter(function(x){return x.active})[0],db=window.__defaultBrowser,
   lv=n>=lim?"red":n>=lim*0.8?"amber":"ok",left=f.locked?0:Math.max(1,Math.ceil((f.unlockedUntil-Date.now()/1000)/3600)),
   tb=[],fb=[];for(var i=0;i<lim;i++)tb.push(i<n?lv:"");for(i=0;i<6;i++)fb.push(f.locked?"ok":i<left?"amber":"");
  var T=[
-  ["s-profiles","Profiles",lv,(w?w.name:"Profile")+" · "+n+" of "+lim+" tabs",bar(lim,tb),[(s.workspaces||[]).length+" profiles",(s.archive||[]).reduce(function(a,x){return a+(x.tabs||[]).length},0)+" archived"]],
+  ["s-profiles","Profiles",lv,(w?w.name:"Profile")+" · "+n+" of "+lim+" tabs",bar(lim,tb),[pl((s.workspaces||[]).length,"profile"),(s.archive||[]).reduce(function(a,x){return a+(x.tabs||[]).length},0)+" archived"]],
   ["s-feeds","News feeds",f.locked?"ok":"amber",f.locked?"Locked":"Unlocked until "+fmt(f.unlockedUntil),bar(6,fb),["Unlock","6 h max"]],
   ["s-adult","Adult content","ok","Always blocked",bar(6,["ok","ok","ok","ok","ok","ok"]),["This browser",dns==null?"System: …":dns?"System: on":"System: off"]],
-  ["s-slop","AI slop","ok",(s.slopCount||0)+" sites tagged",null,["By you",(s.sharedSlopCount||0)+" from lists"]],
+  ["s-slop","AI slop","ok",pl(s.slopCount||0,"site")+" tagged",null,["By you",(s.sharedSlopCount||0)+" from lists"]],
   ["s-privacy","Privacy","ok","Fresh on every start",null,["Fingerprint noise","Logged in: "+kept.length]],
   ["s-aitext","AI text hints",ai.state==="on"?"ok":ai.state==="downloading"?"acc":"",ai.state==="on"?"On":ai.state==="downloading"?"Downloading "+ai.percent+"%":"Off",null,["Local model","Optional"]],
   ["s-default","Default browser",db?"ok":"",db?"canbec is default":db===false?"Not default":"Unknown",null,["Links from apps","open here"]],

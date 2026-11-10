@@ -579,6 +579,30 @@ fn rounded_region(w: i32, h: i32, radius: i32) -> gtk::cairo::Region {
 #[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
 pub fn round_corners(_view: &wry::WebView) {}
 
+/// Gives a webview the keyboard (shortcuts from the page that open the address or find bar).
+/// Linux/X11: each webview sits in its own X window (see `round_corners`), and GTK's focus
+/// alone leaves X sending keys to the page's window, so X input focus moves too.
+pub fn focus(view: &wry::WebView) {
+    let _ = view.focus();
+    #[cfg(target_os = "linux")]
+    {
+        use gtk::prelude::*;
+        use wry::WebViewExtUnix;
+        let webview = view.webview();
+        let widget = webview.upcast_ref::<gtk::Widget>();
+        // The webview's own X window: GDK listens for keys there, not on wry's foreign container.
+        let Some(own) = widget.window() else { return };
+        let Ok(display) = own.display().downcast::<gdkx11::X11Display>() else { return };
+        let Ok(own) = own.downcast::<gdkx11::X11Window>() else { return };
+        let Ok(xlib) = x11_dl::xlib::Xlib::open() else { return };
+        // SAFETY: GDK's own Xlib display and a live, mapped window.
+        unsafe {
+            let dpy = gdkx11::ffi::gdk_x11_display_get_xdisplay(display.as_ptr()) as *mut x11_dl::xlib::Display;
+            (xlib.XSetInputFocus)(dpy, own.xid(), x11_dl::xlib::RevertToParent, x11_dl::xlib::CurrentTime);
+        }
+    }
+}
+
 /// macOS: whether canbec opens http(s) links from other apps. `None` outside the app bundle (a
 /// dev build has no bundle id, so Launch Services can't pick it).
 #[cfg(target_os = "macos")]

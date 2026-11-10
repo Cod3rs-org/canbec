@@ -579,6 +579,58 @@ fn rounded_region(w: i32, h: i32, radius: i32) -> gtk::cairo::Region {
 #[cfg(not(any(target_os = "macos", windows, target_os = "linux")))]
 pub fn round_corners(_view: &wry::WebView) {}
 
+/// Camera / microphone on Linux: WebKitGTK has no prompt of its own, so canbec asks in the
+/// sidebar (`ask` gets an id and what the site wants) and answers later with `answer_media`.
+/// Answers aren't saved: the next visit asks again. macOS and Windows: the engine's own prompt
+/// (see `permission` in main.rs), so these do nothing there.
+#[cfg(target_os = "linux")]
+pub fn ask_media(view: &wry::WebView, ask: impl Fn(u64, &'static str) + 'static) {
+    use webkit2gtk::glib::Cast;
+    use webkit2gtk::{SettingsExt, UserMediaPermissionRequest, UserMediaPermissionRequestExt, WebViewExt};
+    use wry::WebViewExtUnix;
+    let webview = view.webview();
+    if let Some(settings) = WebViewExt::settings(&webview) {
+        settings.set_enable_media_stream(true); // off in WebKitGTK unless asked for
+    }
+    // Runs after wry's handler, which leaves camera/mic to us (`PermissionResponse::Default`).
+    webview.connect_permission_request(move |_, request| {
+        let Some(media) = request.downcast_ref::<UserMediaPermissionRequest>() else { return false };
+        let what = match (media.is_for_video_device(), media.is_for_audio_device()) {
+            (true, true) => "camera and microphone",
+            (true, false) => "camera",
+            (false, true) => "microphone",
+            _ => return false, // screen sharing: WebKitGTK's default (deny)
+        };
+        let id = MEDIA_NEXT.with(|n| {
+            n.set(n.get() + 1);
+            n.get()
+        });
+        MEDIA_ASKS.with(|a| a.borrow_mut().insert(id, request.clone()));
+        ask(id, what);
+        true
+    });
+}
+
+#[cfg(target_os = "linux")]
+thread_local! {
+    static MEDIA_ASKS: std::cell::RefCell<std::collections::HashMap<u64, webkit2gtk::PermissionRequest>> = Default::default();
+    static MEDIA_NEXT: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
+}
+
+/// The person's answer to `ask_media` (an unknown or stale id does nothing).
+#[cfg(target_os = "linux")]
+pub fn answer_media(id: u64, allow: bool) {
+    use webkit2gtk::PermissionRequestExt;
+    if let Some(request) = MEDIA_ASKS.with(|a| a.borrow_mut().remove(&id)) {
+        if allow { request.allow() } else { request.deny() }
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn ask_media(_view: &wry::WebView, _ask: impl Fn(u64, &'static str) + 'static) {}
+#[cfg(not(target_os = "linux"))]
+pub fn answer_media(_id: u64, _allow: bool) {}
+
 /// Gives a webview the keyboard (shortcuts from the page that open the address or find bar).
 /// Linux/X11: each webview sits in its own X window (see `round_corners`), and GTK's focus
 /// alone leaves X sending keys to the page's window, so X input focus moves too.

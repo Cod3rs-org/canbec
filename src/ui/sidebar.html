@@ -41,6 +41,10 @@ svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 #fq{flex:1;min-width:0;background:none;border:0;outline:0;color:inherit;font:inherit;user-select:text;-webkit-user-select:text}
 /* Current site: a status card like a UniFi device tile. */
 #site{margin:0 10px 8px;padding:9px 10px 6px}
+/* Camera / mic prompt (Linux: the engine has none). */
+#perm{margin:0 10px 8px;padding:10px;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 15%,transparent)}
+#perm .ph{display:flex;gap:8px;align-items:flex-start;font-size:13px}#perm .ph svg{color:var(--acc);margin-top:1px}
+#perm p{font-size:11px;color:var(--mut);margin:4px 0 8px 24px}#perm .btns{margin-left:24px}
 #site[hidden]{display:none}
 .sh{display:flex;align-items:center;gap:6px}
 .sh b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -234,6 +238,11 @@ body.l-top:not(.settings):has(#top.winctl){padding-right:104px}
  <button type="button" class="ib" id="fnext" aria-label="Next match"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
  <button type="button" class="ib" id="fx" aria-label="Close find"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </form>
+<div id="perm" class="card" role="alertdialog" aria-labelledby="permq" hidden>
+ <div class="ph"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 11l5-3v8l-5-3"/></svg><b id="permq"></b></div>
+ <p>Until you close canbec. The answer is never saved.</p>
+ <div class="btns"><button class="btn pri" id="pyes">Allow</button><button class="btn" id="pno">Block</button></div>
+</div>
 <div id="site" class="card" hidden>
  <div class="sh"><b id="shost"></b></div>
  <div class="ss" id="sstat"></div>
@@ -340,6 +349,7 @@ function render(s){
  var sh=$("shield");sh.classList.toggle("on",!!c.slop);sh.setAttribute("aria-pressed",!!c.slop);
  sh.setAttribute("aria-label",c.slop?"Remove AI slop tag":"Tag this site as AI slop");sh.title=sh.getAttribute("aria-label");
  var ch="",host=hostOf(c.url),fl=s.feedLock||{locked:true};
+ if(permId!=null&&host!==permHost)answerPermission(false); // left the site without answering
  // Current site card: host, one status line, and what canbec did on this page.
  $("site").hidden=!host;
  if(host){$("shost").textContent=host;$("shost").title=c.url;
@@ -508,7 +518,7 @@ $("lays").onclick=function(e){var b=e.target.closest("[data-lay]");if(b){setLayo
 var peeking=false;
 function peek(on){if(on&&window.__layout!=="rail"&&window.__layout!=="top")on=false;if(on===peeking)return;peeking=on;document.body.classList.toggle("peek",on);$("more").setAttribute("aria-expanded",on);send({type:"peek",open:on})}
 // Top bar: these parts live in the drop-down panel; other layouts put them back where they were.
-var DROP=["site","ess","tabhead","meter","wsd","arch","clo"].map(function(id){var e=$(id);return{e:e,parent:e.parentNode,next:e.nextSibling}});
+var DROP=["perm","site","ess","tabhead","meter","wsd","arch","clo"].map(function(id){var e=$(id);return{e:e,parent:e.parentNode,next:e.nextSibling}});
 function placeDrop(top){if(top)DROP.forEach(function(d){$("drop").appendChild(d.e)});else DROP.slice().reverse().forEach(function(d){d.parent.insertBefore(d.e,d.next)})}
 $("more").onclick=function(){peek(!peeking)};
 addEventListener("keydown",function(e){if(e.key==="Escape"&&peeking&&!document.body.classList.contains("settings"))peek(false)});
@@ -519,7 +529,12 @@ $("bar").addEventListener("submit",function(){peek(false)});
 $("tabs").addEventListener("click",function(){peek(false)});
 setLayout(window.__layout||"sidebar");
 if((window.__platform||"macos")==="macos")document.body.classList.add("mac");
-window.canbec={render:render,setLayout:setLayout,setIcon:function(n){window.__icon=n;renderSettings()},setDefaultBrowser:function(v){window.__defaultBrowser=v;if(document.body.classList.contains("settings"))renderSettings()},toggleSettings:toggleSettings,closeSettings:function(){if(document.body.classList.contains("settings"))setSettings(false)},find:openFind,
+// A site asks for the camera / microphone. One question at a time; a newer one replaces it.
+var permId=null,permHost="";
+function askPermission(a){permId=a.id;permHost=a.host||"";$("permq").textContent=(a.host||"This site")+" wants to use your "+a.what;$("perm").hidden=false;peek(true);$("pyes").focus()}
+function answerPermission(allow){if(permId==null)return;send({type:"answerPermission",id:permId,allow:allow});permId=null;$("perm").hidden=true}
+$("pyes").onclick=function(){answerPermission(true)};$("pno").onclick=function(){answerPermission(false)};
+window.canbec={render:render,setLayout:setLayout,askPermission:askPermission,setIcon:function(n){window.__icon=n;renderSettings()},setDefaultBrowser:function(v){window.__defaultBrowser=v;if(document.body.classList.contains("settings"))renderSettings()},toggleSettings:toggleSettings,closeSettings:function(){if(document.body.classList.contains("settings"))setSettings(false)},find:openFind,
  focusUrl:function(){if(window.__layout==="rail")peek(true);$("url").focus();$("url").select()}};
 // Same shortcuts as the content script (scripts/content.js), for when the sidebar has focus.
 addEventListener("keydown",function(e){var mac=(window.__platform||"macos")==="macos",mod=mac?e.metaKey&&!e.ctrlKey:e.ctrlKey&&!e.metaKey,

@@ -25,5 +25,16 @@ was selected but typing never arrived. A mouse click worked because X moves focu
 container window is "foreign" to GDK, which doesn't listen for keys on it, so focusing that one
 didn't help either.
 
-Not covered here: Wayland, a real GPU, camera/mic (denied on Linux until there's a prompt),
+## Camera and microphone on Linux
+
+WebKitGTK has no permission prompt of its own, and wry's handler must answer on the spot, so
+camera and microphone were simply denied on Linux. Now `platform::ask_media` takes the request
+from WebKitGTK's own `permission-request` signal (after wry's handler passes it on), switches
+media streams on (`enable-media-stream`, off by default in WebKitGTK) and asks in the sidebar:
+"127.0.0.1 wants to use your camera and microphone · Allow / Block". Checked with WebKitGTK's
+mock capture devices: Allow gives the page video+audio, Block gives `NotAllowedError`. WebKit
+keeps the answer for that site until canbec quits; canbec never saves it. Leaving the site
+without answering blocks.
+
+Not covered here: Wayland, a real GPU, a real camera,
 downloads, and anything needing outside sites (feed lock on real feeds, list downloads, updates).

@@ -41,6 +41,8 @@ enum AppEvent {
     Crashed,
     /// A new tracker list finished compiling (the first page loaded without it).
     TrackersReady,
+    /// A site asks for the camera / microphone (Linux: canbec draws the prompt).
+    AskMedia(u64, &'static str),
     /// Download started (file name) or finished (`None` name, success flag).
     Download(Option<String>, bool),
     SidebarReady,
@@ -102,7 +104,7 @@ fn icons_script(current: &str) -> String {
 /// Site permissions. Without a handler wry grants camera/mic silently; `Default` makes the engine
 /// ask the user with its own per-site prompt instead. Things that only help tracking or nagging
 /// (notifications, sensors, local fonts for fingerprinting) are refused outright.
-/// ponytail: Linux treats `Default` as deny, so camera/mic stay off there until we draw a prompt.
+/// Linux has no engine prompt: `ask_media` hands camera/mic to the sidebar instead.
 fn permission(kind: PermissionKind) -> PermissionResponse {
     match kind {
         PermissionKind::Notifications
@@ -150,7 +152,7 @@ fn open_folder(dir: &std::path::Path) {
 mod mcp;
 mod platform;
 
-use platform::{block_trackers, browser_args, evaluate_in_world, focus, is_default_browser, isolate, make_default_browser, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
+use platform::{answer_media, ask_media, block_trackers, browser_args, evaluate_in_world, focus, is_default_browser, isolate, make_default_browser, on_crash, round_corners, set_dock_icon, set_main_menu, user_agent, watch_crashes, HAS_WORLDS};
 
 fn main() -> wry::Result<()> {
     if std::env::args().any(|a| a == "--mcp") {
@@ -292,6 +294,8 @@ fn main() -> wry::Result<()> {
     {
         let p = proxy.clone();
         block_trackers(&content, &blocklists::load_trackers(&trackers_cache), move || send(&p, AppEvent::TrackersReady));
+        let p = proxy.clone();
+        ask_media(&content, move |id, what| send(&p, AppEvent::AskMedia(id, what)));
     }
 
     let mut cookie_file = profile_dir.join("logins.json");
@@ -432,6 +436,18 @@ fn main() -> wry::Result<()> {
                     Some("maximize") => window.set_maximized(!window.is_maximized()),
                     Some("close") => *flow = ControlFlow::Exit,
                     _ => {}
+                }
+                false
+            }
+            Event::UserEvent(AppEvent::AskMedia(id, what)) => {
+                let ask = serde_json::json!({ "id": id, "what": what, "host": host_of(&last_url).unwrap_or_default() });
+                let _ = sidebar.evaluate_script(&format!("window.canbec.askPermission({ask})"));
+                false
+            }
+            Event::UserEvent(AppEvent::Ui(json)) if json.contains(r#""type":"answerPermission""#) => {
+                let msg: serde_json::Value = serde_json::from_str(&json).unwrap_or_default();
+                if let Some(id) = msg["id"].as_u64() {
+                    answer_media(id, msg["allow"].as_bool() == Some(true));
                 }
                 false
             }

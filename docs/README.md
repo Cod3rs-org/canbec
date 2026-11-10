@@ -26,6 +26,8 @@ Everything we've learned and decided, in reading order. These files are the sour
 | 09 | [Local AI text hints](research/09-local-ai-text-hints.md) | Small offline detectors: sizes, catch rates, false positives; why it stays opt-in |
 | 10 | [Isolated world](research/10-isolated-world.md) | content.js and extensions in canbec's own JS world on macOS/Linux; page-world IPC ignored |
 | 11 | [Settings](research/11-settings.md) | Chrome / Firefox / Safari settings compared; what canbec shows and leaves out |
+| 12 | [Look and layouts](research/12-unifi-look.md) | UniFi-style cards and status dots; Sidebar, Compact, Rail, Top bar; rounded card on Linux |
+| 13 | [Linux hand test](research/13-linux-hand-test.md) | Every Linux check under Xvfb; the keyboard focus fix; camera/mic prompt |
 
 ## Benchmarks
 
@@ -37,6 +39,7 @@ Everything we've learned and decided, in reading order. These files are the sour
 |:-:|:-:|
 | ![Wikipedia](img/real-wikipedia.png) Reading Wikipedia | ![YouTube](img/real-youtube-feed-locked.png) YouTube with the feed locked |
 | ![Slop](img/real-slop-tagged.png) A site you tagged as AI slop | ![Probe](img/canbec-probe.png) Engine probe: Blazor WASM + ad hatching |
+| ![Settings](img/settings-overview.png) Settings overview | ![Servo](img/servo-window.png) The same UI on Servo (`--window`) |
 
 ## Brand
 

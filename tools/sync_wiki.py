@@ -19,6 +19,11 @@ PAGES = {
     "docs/research/07-roadmap-notes.md": "07-Roadmap-Notes",
     "docs/research/08-privacy.md": "08-No-Tracking",
     "docs/research/09-local-ai-text-hints.md": "09-Local-AI-Text-Hints",
+    "docs/research/10-isolated-world.md": "10-Isolated-World",
+    "docs/research/11-settings.md": "11-Settings",
+    "docs/research/12-unifi-look.md": "12-Look-and-Layouts",
+    "docs/research/13-linux-hand-test.md": "13-Linux-Hand-Test",
+    "docs/family-dns.md": "Family-DNS",
     "docs/architecture/ui-contract.md": "UI-Contract",
     "docs/ROADMAP.md": "Roadmap",
     "docs/benchmarks/2026-10-25-macos.md": "Benchmarks",
@@ -41,6 +46,14 @@ SIDEBAR = """**[canbec](https://github.com/Cod3rs-org/canbec)** — Control AI, 
 * [06 Extensibility, MCP, profiles](06-Extensibility-MCP-Profiles)
 * [07 Roadmap notes](07-Roadmap-Notes)
 * [08 No tracking](08-No-Tracking)
+* [09 Local AI text hints](09-Local-AI-Text-Hints)
+* [10 Isolated world](10-Isolated-World)
+* [11 Settings](11-Settings)
+* [12 Look and layouts](12-Look-and-Layouts)
+* [13 Linux hand test](13-Linux-Hand-Test)
+
+**Guides**
+* [Family DNS](Family-DNS)
 """
 FOOTER = "\n\n---\n*Generated from [`{src}`](" + f"https://github.com/{REPO}/blob/main/" + "{src}). Edit it there, not here.*\n"
 

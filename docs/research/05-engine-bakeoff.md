@@ -121,7 +121,7 @@ Top bar layout, and the settings overview.
 | ![Servo window](../img/servo-window.png) | ![Servo settings](../img/servo-window-settings.png) |
 
 ponytail, in order of annoyance:
-- Servo 0.1 draws the sidebar's inline stroke-only SVG icons as filled blocks.
+- Servo 0.1 ignores CSS on inline SVG; the icons now carry `fill`/`stroke` attributes, so they draw as lines, but Servo still drops parts of curved paths (the shield, the search circle).
 - The card is square (the blit has no rounded clip) and there are no own window buttons beyond the sidebar's.
 - Its own tabs (`<config>/servo/state.json`), no profiles, logins, downloads, default browser,
   AI text model or update install yet: those settings say "Not in the Servo build yet".

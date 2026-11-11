@@ -75,3 +75,12 @@ width, because those layouts' width rules outranked it. They now apply only outs
 
 Still to retake on a machine with internet: the shots of real sites (Wikipedia, Hacker News,
 YouTube) in `docs/img/real-*.png` show the first look.
+
+## Idea: a corner layout (prototype only)
+
+The browser lives in one rounded panel in the top-left corner and the page wraps around it in an
+L shape (the same per-OS shaping as the rounded card). Folded, the panel is a small pill (site name
+and status dot); hover, click or Ctrl/Cmd+L opens it to the full sidebar contents. In a clickable
+HTML prototype on a 1100x690 window the page gets **94.9 %** of the window folded, against 90.5 %
+for the Top bar and 70.3 % for the Sidebar. The catch: whatever a site puts in its top-left corner
+(logo, menu, a docs sidebar) sits under the pill. Not built; worth trying on real sites first.

@@ -58,3 +58,29 @@ runs again on every size change. Checked in the real app under Xvfb, sidebar and
 
 ponytail: one-pixel rows, not anti-aliased (same as Windows). Wayland isn't covered: there wry
 uses a GtkFixed without a container window; shaping the widget should be enough, not tested.
+
+## Icons and screenshots
+
+The seven app icons were dark tiles with cream and orange, from the first look. They are redrawn
+in the new one: a white sign on the interface's blue, green only for the human part (the sprout,
+the person, the check, the iris). Same names and ideas, so an `icon` file keeps working; `sprout`
+is still the default. Each Windows `.ico` size (16 to 256 px) is rendered from the SVG, so the
+small ones stay sharp.
+
+Screenshots come from the real app on Linux at 2x, on fictional demo sites
+(`test/fixtures/demo`, served by host name with `tools/demo_server.py`; point
+`journal.example garden.example aiboost.example fieldkit.example` at 127.0.0.1 first). Taking
+them found a bug: in the Compact and Rail layouts the settings page was squeezed to the sidebar's
+width, because those layouts' width rules outranked it. They now apply only outside settings.
+
+Still to retake on a machine with internet: the shots of real sites (Wikipedia, Hacker News,
+YouTube) in `docs/img/real-*.png` show the first look.
+
+## Idea: a corner layout (prototype only)
+
+The browser lives in one rounded panel in the top-left corner and the page wraps around it in an
+L shape (the same per-OS shaping as the rounded card). Folded, the panel is a small pill (site name
+and status dot); hover, click or Ctrl/Cmd+L opens it to the full sidebar contents. In a clickable
+HTML prototype on a 1100x690 window the page gets **94.9 %** of the window folded, against 90.5 %
+for the Top bar and 70.3 % for the Sidebar. The catch: whatever a site puts in its top-left corner
+(logo, menu, a docs sidebar) sits under the pill. Not built; worth trying on real sites first.

@@ -9,13 +9,13 @@ pub const DEFAULT_ICON: &str = "sprout";
 
 /// (name, meaning, PNG bytes). Sources: docs/img/logo.svg and docs/img/logos/*.svg.
 pub const BUILT_IN: &[(&str, &str, &[u8])] = &[
-    ("sprout", "a human life growing back online", include_bytes!("icons/sprout.png")),
-    ("strings", "cut puppet strings above a free human", include_bytes!("icons/strings.png")),
-    ("fingerprint", "human uniqueness forming a C", include_bytes!("icons/fingerprint.png")),
-    ("parrot", "browse as a human, not a parrot", include_bytes!("icons/parrot.png")),
-    ("broken-link", "breaking the scroll habit", include_bytes!("icons/broken-link.png")),
-    ("spoiler", "AI hidden, the human kept", include_bytes!("icons/spoiler.png")),
-    ("calm-eye", "seeing the human web, protected", include_bytes!("icons/calm-eye.png")),
+    ("sprout", "a pointer with a sprout: your life growing back", include_bytes!("icons/sprout.png")),
+    ("strings", "puppet strings cut above a free person", include_bytes!("icons/strings.png")),
+    ("fingerprint", "your own fingerprint, shaped like the C of canbec", include_bytes!("icons/fingerprint.png")),
+    ("parrot", "your own words, not repeated ones", include_bytes!("icons/parrot.png")),
+    ("broken-link", "the scroll habit, cut in two", include_bytes!("icons/broken-link.png")),
+    ("spoiler", "AI hidden under hatching, the human kept", include_bytes!("icons/spoiler.png")),
+    ("calm-eye", "a calm eye on the human web", include_bytes!("icons/calm-eye.png")),
 ];
 
 /// Largest custom icon we decode (keeps a huge file from eating memory).

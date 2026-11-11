@@ -39,6 +39,7 @@ Everything we've learned and decided, in reading order. These files are the sour
 |:-:|:-:|
 | ![Wikipedia](img/real-wikipedia.png) Reading Wikipedia | ![YouTube](img/real-youtube-feed-locked.png) YouTube with the feed locked |
 | ![Slop](img/real-slop-tagged.png) A site you tagged as AI slop | ![Probe](img/canbec-probe.png) Engine probe: Blazor WASM + ad hatching |
+| ![Browsing](img/ui-browsing.png) The current look | ![Layouts](img/ui-layouts.png) Sidebar, Compact, Rail, Top bar |
 | ![Settings](img/settings-overview.png) Settings overview | ![Servo](img/servo-window.png) The same UI on Servo (`--window`) |
 
 ## Brand
